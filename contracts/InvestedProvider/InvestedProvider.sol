@@ -27,6 +27,7 @@ contract InvestedProvider is ProviderModifiers, DealProviderState {
 
     function _registerPool(uint256 poolId, uint256[] calldata params) internal {
         poolIdToAmount[poolId] = params[0];
+        emit UpdateParams(poolId, params);
     }
 
     function getParams(
@@ -42,17 +43,11 @@ contract InvestedProvider is ProviderModifiers, DealProviderState {
         withdrawalAmount = 0;
     }
 
-    function withdraw(
-        uint256
-    ) external pure returns (uint256, bool) {
+    function withdraw(uint256) external pure returns (uint256, bool) {
         revert("");
     }
 
-    function split(
-        uint256,
-        uint256,
-        uint256
-    ) external pure{
+    function split(uint256, uint256, uint256) external pure {
         revert("");
     }
 }
