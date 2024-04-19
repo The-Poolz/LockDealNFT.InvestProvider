@@ -15,4 +15,8 @@ abstract contract InvestInternal is InvestModifiers {
         pool.dispenserPoolId = params[6];
         emit UpdateParams(poolId, params);
     }
+
+    function _isDispenserProvider(uint256 poolId) internal view returns (bool) {
+        return lockDealNFT.poolIdToProvider(poolId) == dispenserProvider;
+    }
 }

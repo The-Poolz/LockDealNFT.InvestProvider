@@ -83,21 +83,14 @@ contract InvestProvider is InvestInternal {
         if (pool.collectedAmount + amount > pool.maxAmount)
             revert ExceededMaxAmount();
         if (pool.FCFSTime == pool.endTime || pool.FCFSTime == 0) {
-            whiteList.Register(
-                msg.sender,
-                pool.whiteListId,
-                amount
-            );
+            whiteList.Register(msg.sender, pool.whiteListId, amount);
         }
         _invest(amount, pool);
         emit Invested(poolId, msg.sender, amount);
     }
 
     function _invest(uint256 amount, IDO storage pool) internal {
-        if (
-            lockDealNFT.poolIdToProvider(pool.dispenserPoolId) ==
-            dispenserProvider
-        ) {
+        if (_isDispenserProvider(pool.dispenserPoolId)) {
             uint256[] memory params = new uint256[](1);
             params[0] =
                 dispenserProvider.getParams(pool.dispenserPoolId)[0] +
