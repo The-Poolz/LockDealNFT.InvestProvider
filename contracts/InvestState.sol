@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@poolzfinance/lockdeal-nft/contracts/SimpleProviders/Provider/ProviderState.sol";
 import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
+import "@poolzfinance/poolz-helper-v2/contracts/interfaces/IWhiteList.sol";
 import "./interfaces/IInvestProvider.sol";
 import "./interfaces/IDispenserProvider.sol";
 
@@ -13,7 +14,7 @@ abstract contract InvestState is
 {
     IProvider investedProvider;
     IDispenserProvider dispenserProvider;
-    address whiteListAdress;
+    IWhiteList whiteList;
 
     mapping(uint256 => IDO) poolIdToPool;
 

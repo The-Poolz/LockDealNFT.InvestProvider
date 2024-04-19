@@ -2,19 +2,18 @@
 pragma solidity ^0.8.0;
 
 import "./InvestInternal.sol";
-import "@poolzfinance/poolz-helper-v2/contracts/interfaces/IWhiteList.sol";
 
 contract InvestProvider is InvestInternal {
     constructor(
         ILockDealNFT _lockDealNFT,
         IProvider _investedProvider,
         IDispenserProvider _dispenserProvider,
-        address _whiteListAdress
+        IWhiteList _whiteList
     ) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_investedProvider) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
-        if (_whiteListAdress == address(0)) revert NoZeroAddress();
+        if (address(_whiteList) == address(0)) revert NoZeroAddress();
         if (
             keccak256(abi.encodePacked(_investedProvider.name())) !=
             keccak256(abi.encodePacked(("InvestedProvider")))
@@ -22,7 +21,7 @@ contract InvestProvider is InvestInternal {
         lockDealNFT = _lockDealNFT;
         investedProvider = _investedProvider;
         dispenserProvider = _dispenserProvider;
-        whiteListAdress = _whiteListAdress;
+        whiteList = _whiteList;
         name = "InvestProvider";
     }
 
@@ -84,7 +83,7 @@ contract InvestProvider is InvestInternal {
         if (pool.collectedAmount + amount > pool.maxAmount)
             revert ExceededMaxAmount();
         if (pool.FCFSTime == pool.endTime || pool.FCFSTime == 0) {
-            IWhiteList(whiteListAdress).Register(
+            whiteList.Register(
                 msg.sender,
                 pool.whiteListId,
                 amount
