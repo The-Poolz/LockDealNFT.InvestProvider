@@ -9,7 +9,13 @@ interface IInvestProvider is IProvider {
     /// @notice Invest in a IDO pool
     /// @param poolId - the ID of the pool
     /// @param amount - the amount of tokens to invest
-    function invest(uint256 poolId, uint256 amount) external;
+    function invest(uint256 poolId, uint256 amount, bytes calldata data) external;
+
+    function createNewPool(
+        IDO calldata pool,
+        bytes calldata data,
+        uint256 sourcePoolId
+    ) external returns (uint256 poolId);
 
     struct IDO {
         uint256 maxAmount;

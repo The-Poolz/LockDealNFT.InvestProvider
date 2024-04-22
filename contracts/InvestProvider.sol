@@ -14,9 +14,11 @@ contract InvestProvider is InvestInternal {
 
     function createNewPool(
         IDO calldata pool,
+        bytes calldata data,
         uint256 sourcePoolId
     )
         external
+        override
         firewallProtected
         notZeroAmount(pool.maxAmount)
         notZeroAmount(pool.startTime)
@@ -27,16 +29,17 @@ contract InvestProvider is InvestInternal {
         if (pool.FCFSTime > pool.endTime) revert InvalidTime();
         if (pool.FCFSTime < pool.startTime && pool.FCFSTime != 0)
             revert InvalidTime();
-
         poolId = lockDealNFT.mintForProvider(msg.sender, this);
         lockDealNFT.cloneVaultId(sourcePoolId, poolId);
         poolIdToPool[poolId] = pool;
+        pool.investedProvider.onCreation(poolId, data);
         emit NewPoolCreated(poolId, pool);
     }
 
     function invest(
         uint256 poolId,
-        uint256 amount
+        uint256 amount,
+        bytes calldata data
     )
         external
         override
@@ -49,6 +52,7 @@ contract InvestProvider is InvestInternal {
         if (block.timestamp > pool.endTime) revert Ended();
         if (pool.collectedAmount + amount > pool.maxAmount)
             revert ExceededMaxAmount();
+        pool.investedProvider.onInvest(poolId, amount, data);
         if (pool.FCFSTime == pool.endTime || pool.FCFSTime == 0) {
             whiteList.Register(msg.sender, pool.whiteListId, amount);
         }
