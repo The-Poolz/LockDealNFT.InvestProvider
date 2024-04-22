@@ -5,17 +5,9 @@ import "@poolzfinance/lockdeal-nft/contracts/SimpleProviders/Provider/ProviderSt
 import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/interfaces/IWhiteList.sol";
 import "./interfaces/IInvestProvider.sol";
-import "./interfaces/IDispenserProvider.sol";
 
-abstract contract InvestState is
-    IInvestProvider,
-    FirewallConsumer,
-    ProviderState
-{
-    IProvider investedProvider;
-    IDispenserProvider dispenserProvider;
+abstract contract InvestState is IInvestProvider, FirewallConsumer, ProviderState {
     IWhiteList whiteList;
-
     mapping(uint256 => IDO) poolIdToPool;
 
     function currentParamsTargetLength()
@@ -24,6 +16,6 @@ abstract contract InvestState is
         override(IProvider, ProviderState)
         returns (uint256)
     {
-        return 7;
+        return 6;
     }
 }

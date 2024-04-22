@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./IInvestedProvider.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/interfaces/IProvider.sol";
 
-interface IInvestProvider is IERC721Receiver, IProvider {
+interface IInvestProvider is IProvider {
     /// @notice Invest in a IDO pool
     /// @param poolId - the ID of the pool
     /// @param amount - the amount of tokens to invest
@@ -18,8 +18,7 @@ interface IInvestProvider is IERC721Receiver, IProvider {
         uint256 endTime;
         uint256 FCFSTime;
         uint256 whiteListId;
-        uint256 dispenserPoolId; // If 0, no dispenser
-        IERC20 token;
+        IInvestedProvider investedProvider;
     }
 
     event Invested(
