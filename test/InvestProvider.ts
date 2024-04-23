@@ -1,4 +1,4 @@
-import { MockVaultManager, InvestedProviderMock, InvestProvider } from "../typechain-types"
+import { MockVaultManager, InvestedProviderMock, InvestProvider, WhiteList } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -8,6 +8,7 @@ describe("InvestProvider", function () {
     let token: ERC20Token
     let mockVaultManager: MockVaultManager
     let investProvider: InvestProvider
+    let whiteList: WhiteList
     let investedMock: InvestedProviderMock
     let owner: SignerWithAddress
     let user: SignerWithAddress
@@ -20,6 +21,13 @@ describe("InvestProvider", function () {
         const LockDealNFT = await ethers.getContractFactory(LockDealNFTArtifact.abi, LockDealNFTArtifact.bytecode)
         mockVaultManager = await (await ethers.getContractFactory("MockVaultManager")).deploy()
         lockDealNFT = await LockDealNFT.deploy(await mockVaultManager.getAddress(), "")
+        investedMock = await (
+            await ethers.getContractFactory("InvestedProviderMock")
+        ).deploy(await lockDealNFT.getAddress())
+        const WhiteList = await ethers.getContractFactory("WhiteList")
+        whiteList = await WhiteList.deploy()
+        const InvestProvider = await ethers.getContractFactory("InvestProvider")
+        investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress(), await whiteList.getAddress())
     })
 
     beforeEach(async () => {})
