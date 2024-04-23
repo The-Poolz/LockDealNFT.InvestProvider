@@ -52,11 +52,11 @@ contract InvestProvider is InvestInternal {
         if (block.timestamp > pool.endTime) revert Ended();
         if (pool.collectedAmount + amount > pool.maxAmount)
             revert ExceededMaxAmount();
-        pool.investedProvider.onInvest(poolId, amount, data);
         if (pool.FCFSTime == pool.endTime || pool.FCFSTime == 0) {
             whiteList.Register(msg.sender, pool.whiteListId, amount);
         }
         _invest(poolId, amount, pool);
+        pool.investedProvider.onInvest(poolId, amount, data);
         emit Invested(poolId, msg.sender, amount);
     }
 
@@ -121,7 +121,7 @@ contract InvestProvider is InvestInternal {
         uint256 poolID
     )
         public
-        view
+        pure
         override(IProvider, ProviderState)
         returns (uint256[] memory poolIds)
     {
