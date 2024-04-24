@@ -22,7 +22,7 @@ describe("InvestProvider", function () {
     let poolId: string
 
     before(async () => {
-        [owner, user] = await ethers.getSigners()
+        ;[owner, user] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
@@ -83,5 +83,55 @@ describe("InvestProvider", function () {
         await expect(events[events.length - 1].args.pool[4]).to.equal(IDOSettings.FCFSTime)
         await expect(events[events.length - 1].args.pool[5]).to.equal(IDOSettings.whiteListId)
         await expect(events[events.length - 1].args.pool[6]).to.equal(IDOSettings.investedProvider)
+    })
+
+    it("should revert zero max amount", async () => {
+        await expect(
+            investProvider.createNewPool(
+                { ...IDOSettings, maxAmount: ethers.toBigInt(0) },
+                ethers.toUtf8Bytes(""),
+                sourcePoolId
+            )
+        ).to.be.revertedWithCustomError(investProvider, "NoZeroAmount")
+    })
+
+    it("should revert zero invested provider address", async () => {
+        await expect(
+            investProvider.createNewPool(
+                { ...IDOSettings, investedProvider: ethers.ZeroAddress },
+                ethers.toUtf8Bytes(""),
+                sourcePoolId
+            )
+        ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
+    })
+
+    it("start time should be less than end time", async () => {
+        await expect(
+            investProvider.createNewPool(
+                { ...IDOSettings, startTime: IDOSettings.endTime },
+                ethers.toUtf8Bytes(""),
+                sourcePoolId
+            )
+        ).to.be.revertedWithCustomError(investProvider, "InvalidTime")
+    })
+
+    it("start time should be greater than current time", async () => {
+        await expect(
+            investProvider.createNewPool(
+                { ...IDOSettings, startTime: Math.floor(Date.now() / 1000) - 1000 },
+                ethers.toUtf8Bytes(""),
+                sourcePoolId
+            )
+        ).to.be.revertedWithCustomError(investProvider, "InvalidTime")
+    })
+
+    it("should revert if FCFS time is greater than end time", async () => {
+        await expect(
+            investProvider.createNewPool(
+                { ...IDOSettings, FCFSTime: IDOSettings.endTime + "1" },
+                ethers.toUtf8Bytes(""),
+                sourcePoolId
+            )
+        ).to.be.revertedWithCustomError(investProvider, "InvalidTime")
     })
 })

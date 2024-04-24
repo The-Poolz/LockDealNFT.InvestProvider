@@ -21,11 +21,11 @@ contract InvestProvider is InvestInternal {
         override
         firewallProtected
         notZeroAmount(pool.maxAmount)
-        notZeroAmount(pool.startTime)
-        notZeroAmount(pool.endTime)
+        notZeroAddress(address(pool.investedProvider))
         returns (uint256 poolId)
     {
-        if (pool.startTime > pool.endTime) revert InvalidTime();
+        if (pool.startTime >= pool.endTime || pool.startTime < block.timestamp)
+            revert InvalidTime();
         if (pool.FCFSTime > pool.endTime) revert InvalidTime();
         if (pool.FCFSTime < pool.startTime && pool.FCFSTime != 0)
             revert InvalidTime();

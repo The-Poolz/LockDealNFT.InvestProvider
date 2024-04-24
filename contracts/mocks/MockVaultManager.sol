@@ -25,7 +25,7 @@ contract MockVaultManager {
     function _depositByToken(
         address _tokenAddress
     ) internal returns (uint vaultId) {
-        if (tokenToVaultId[_tokenAddress] != 0) {
+        if (tokenToVaultId[_tokenAddress] == 0) {
             vaultId = ++Id;
             vaultIdtoToken[vaultId] = _tokenAddress;
             tokenToVaultId[_tokenAddress] = vaultId;
