@@ -6,9 +6,9 @@ import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/interfaces/IWhiteList.sol";
 import "./interfaces/IInvestProvider.sol";
 
-abstract contract InvestState is IInvestProvider, FirewallConsumer, ProviderState {
-    IWhiteList whiteList;
-    mapping(uint256 => IDO) poolIdToPool;
+abstract contract InvestState is IInvestProvider,FirewallConsumer, ProviderState {
+    IWhiteList public whiteList;
+    mapping(uint256 => IDO) public poolIdToPool;
 
     function currentParamsTargetLength()
         public
