@@ -46,15 +46,11 @@ contract InvestProvider is InvestInternal {
             revert ExceededMaxAmount();
         pool.investedProvider.onInvest(poolId, amount, data);
         whiteList.handleInvestment(msg.sender, pool.whiteListId, amount);
-        _invest(poolId, amount, pool);
+        _invest(amount, pool);
         emit Invested(poolId, msg.sender, amount);
     }
 
-    function _invest(
-        uint256 poolId,
-        uint256 amount,
-        IDO storage pool
-    ) internal {
+    function _invest(uint256 amount,IDO storage pool) internal {
         pool.collectedAmount += amount;
         assert(pool.collectedAmount <= pool.maxAmount);
     }
