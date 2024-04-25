@@ -36,7 +36,6 @@ interface IInvestProvider is IProvider {
     error InvalidProvider();
     error InvalidPoolId();
     error NoZeroAddress();
-    error InvalidTime();
     error NoZeroAmount();
     error NotStarted();
     error Ended();
