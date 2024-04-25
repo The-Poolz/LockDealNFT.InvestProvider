@@ -12,14 +12,18 @@ interface IInvestProvider is IProvider {
     function invest(uint256 poolId, uint256 amount, bytes calldata data) external;
 
     function createNewPool(
-        IDO calldata pool,
+        Pool calldata pool,
         bytes calldata data,
         uint256 sourcePoolId
     ) external returns (uint256 poolId);
 
     struct IDO {
-        uint256 maxAmount;
+        Pool pool;
         uint256 leftAmount;
+    }
+
+    struct Pool {
+        uint256 maxAmount;
         uint256 startTime;
         uint256 endTime;
         uint256 FCFSTime;
