@@ -50,8 +50,7 @@ contract InvestProvider is InvestInternal {
         IDO storage pool = poolIdToPool[poolId];
         if (block.timestamp < pool.startTime) revert NotStarted();
         if (block.timestamp > pool.endTime) revert Ended();
-        if (pool.collectedAmount + amount > pool.maxAmount)
-            revert ExceededMaxAmount();
+        if (pool.leftAmount - amount > 0) revert ExceededMaxAmount();
         pool.investedProvider.onInvest(poolId, amount, data);
         if (pool.FCFSTime == pool.endTime || pool.FCFSTime == 0) {
             whiteList.Register(msg.sender, pool.whiteListId, amount);
@@ -75,8 +74,8 @@ contract InvestProvider is InvestInternal {
         uint256[] memory params = new uint256[](1);
         params[0] = amount;
         investedProvider.registerPool(userPoolId, params);
-        pool.collectedAmount += amount;
-        assert(pool.collectedAmount <= pool.maxAmount);
+        pool.leftAmount -= amount;
+        assert(pool.leftAmount >= 0);
     }
 
     function registerPool(
@@ -96,7 +95,7 @@ contract InvestProvider is InvestInternal {
         IDO storage pool = poolIdToPool[poolId];
         params = new uint256[](6);
         params[0] = pool.maxAmount;
-        params[1] = pool.collectedAmount;
+        params[1] = pool.leftAmount;
         params[2] = pool.startTime;
         params[3] = pool.endTime;
         params[4] = pool.FCFSTime;

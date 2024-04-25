@@ -19,7 +19,7 @@ interface IInvestProvider is IProvider {
 
     struct IDO {
         uint256 maxAmount;
-        uint256 collectedAmount;
+        uint256 leftAmount;
         uint256 startTime;
         uint256 endTime;
         uint256 FCFSTime;
