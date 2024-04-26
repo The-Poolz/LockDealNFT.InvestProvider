@@ -134,4 +134,19 @@ describe("IDO creation tests", function () {
             "OnlyLockDealNFT"
         )
     })
+
+    it("should call register from another provider", async () => {
+        await investedMock.callRegister(await investProvider.getAddress(), poolId, [0, 0, 0])
+        const updatedData = await investProvider.getParams(poolId)
+        expect(updatedData[0]).to.be.equal(0)
+        expect(updatedData[1]).to.be.equal(0)
+        expect(updatedData[2]).to.be.equal(0)
+    })
+
+    it("should revert call register not from approved provider", async () => {
+        await expect(investProvider.connect(owner).registerPool(poolId, [0, 0, 0])).to.be.revertedWithCustomError(
+            investProvider,
+            "InvalidProvider"
+        )
+    })
 })

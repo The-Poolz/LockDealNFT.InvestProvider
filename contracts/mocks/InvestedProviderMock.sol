@@ -20,4 +20,12 @@ contract InvestedProviderMock is DealProvider, IInvestedProvider {
     ) external override {
         // Do nothing
     }
+
+    function callRegister(
+        IProvider provider,
+        uint256 poolId,
+        uint256[] memory params
+    ) external {
+        provider.registerPool(poolId, params);
+    }
 }
