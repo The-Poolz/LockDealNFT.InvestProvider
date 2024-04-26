@@ -20,9 +20,6 @@ interface IInvestProvider is IProvider {
     struct IDO {
         uint256 maxAmount;
         uint256 collectedAmount;
-        uint256 startTime;
-        uint256 endTime;
-        uint256 FCFSTime;
         uint256 whiteListId;
         IInvestedProvider investedProvider;
     }
@@ -39,10 +36,7 @@ interface IInvestProvider is IProvider {
     error InvalidProvider();
     error InvalidPoolId();
     error NoZeroAddress();
-    error InvalidTime();
     error NoZeroAmount();
-    error NotStarted();
-    error Ended();
     error ExceededMaxAmount();
     /// @dev Error thrown when the length of parameters is invalid
     error InvalidParamsLength(uint256 paramsLength, uint256 minLength);
