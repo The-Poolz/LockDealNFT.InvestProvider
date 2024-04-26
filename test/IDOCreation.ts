@@ -36,11 +36,9 @@ describe("IDO creation tests", function () {
         whiteList = await WhiteList.deploy()
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress(), await whiteList.getAddress())
-        const startTime = Math.floor(Date.now() / 1000) + 1000
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await investedMock.getAddress(), true)
         // startTime + 24 hours
-        const endTime = startTime + 86400
         IDOSettings = {
             maxAmount: amount,
             whiteListId: 0,
@@ -53,10 +51,10 @@ describe("IDO creation tests", function () {
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
+        await investProvider.connect(owner).createNewPool(IDOSettings, ethers.toUtf8Bytes(""), sourcePoolId)
     })
 
     it("should create new IDO", async () => {
-        await investProvider.createNewPool(IDOSettings, ethers.toUtf8Bytes(""), sourcePoolId)
         const data = await investProvider.poolIdToPool(poolId)
         expect(data.pool.maxAmount).to.equal(amount)
         expect(data.leftAmount).to.equal(amount)
@@ -65,6 +63,7 @@ describe("IDO creation tests", function () {
     })
 
     it("should emit NewPoolCreated event", async () => {
+        poolId = await lockDealNFT.totalSupply()
         const tx = await investProvider.createNewPool(IDOSettings, ethers.toUtf8Bytes(""), sourcePoolId)
         await tx.wait()
         const events = await investProvider.queryFilter(investProvider.filters.NewPoolCreated())
@@ -93,5 +92,46 @@ describe("IDO creation tests", function () {
                 sourcePoolId
             )
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
+    })
+
+    // @dev split is not implemented in the contract right now
+    it("should revert split", async () => {
+        const ratio = ethers.parseUnits("1", 21) / 2n // half of the amount
+        const packedData = ethers.AbiCoder.defaultAbiCoder().encode(
+            ["uint256", "address"],
+            [ratio, await user.getAddress()]
+        )
+        await expect(
+            lockDealNFT
+                .connect(owner)
+                [
+                    "safeTransferFrom(address,address,uint256,bytes)"
+                ](await owner.getAddress(), await lockDealNFT.getAddress(), poolId, packedData)
+        ).to.be.rejected
+    })
+
+    // @dev withdraw is not implemented in the contract right now
+    it("should revert withdraw", async () => {
+        await expect(
+            lockDealNFT
+                .connect(owner)
+                [
+                    "safeTransferFrom(address,address,uint256)"
+                ](await owner.getAddress(), await lockDealNFT.getAddress(), poolId)
+        ).to.be.rejected
+    })
+
+    it("should revert withdraw not from LockDealNFT", async () => {
+        await expect(investProvider.connect(owner).withdraw(poolId)).to.be.revertedWithCustomError(
+            investProvider,
+            "OnlyLockDealNFT"
+        )
+    })
+
+    it("should revert split not from LockDealNFT", async () => {
+        await expect(investProvider.connect(owner).split(poolId, poolId, poolId)).to.be.revertedWithCustomError(
+            investProvider,
+            "OnlyLockDealNFT"
+        )
     })
 })

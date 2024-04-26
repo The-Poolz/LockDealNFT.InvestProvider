@@ -39,6 +39,7 @@ interface IInvestProvider is IProvider {
     error InvalidInvestedProvider();
     error InvalidProvider();
     error InvalidPoolId();
+    error OnlyLockDealNFT();
     error NoZeroAddress();
     error NoZeroAmount();
     error ExceededLeftAmount();

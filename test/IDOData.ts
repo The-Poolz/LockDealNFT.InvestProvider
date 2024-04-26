@@ -5,7 +5,7 @@ import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import LockDealNFTArtifact from "@poolzfinance/lockdeal-nft/artifacts/contracts/LockDealNFT/LockDealNFT.sol/LockDealNFT.json"
 
-describe("IDO investment tests", function () {
+describe("IDO data tests", function () {
     let token: ERC20Token
     let USDT: ERC20Token
     let sourcePoolId: string
@@ -55,24 +55,22 @@ describe("IDO investment tests", function () {
         await investProvider.createNewPool(IDOSettings, ethers.toUtf8Bytes(""), sourcePoolId)
     })
 
-    it("should deacrease left amount after invest", async () => {
-        await investProvider.invest(poolId, amount / 2n, ethers.toUtf8Bytes(""))
+    it("should return currentParamsTargetLength", async () => {
+        expect(await investProvider.currentParamsTargetLength()).to.equal(3)
+    })
+
+    it("should return getSubProvidersPoolIds", async () => {
+        expect(await investProvider.getSubProvidersPoolIds(poolId)).to.deep.equal([poolId])
+    })
+
+    it("should return getParams", async () => {
         const poolData = await investProvider.getParams(poolId)
-        expect(poolData[1]).to.equal(maxAmount - amount / 2n)
+        expect(poolData[0]).to.equal(maxAmount)
+        expect(poolData[1]).to.equal(maxAmount)
+        expect(poolData[2]).to.equal(0)
     })
 
-    it("should emit Invested event", async () => {
-        const tx = await investProvider.invest(poolId, amount, ethers.toUtf8Bytes(""))
-        await tx.wait()
-        const events = await investProvider.queryFilter(investProvider.filters.Invested())
-        expect(events[events.length - 1].args.poolId).to.equal(poolId)
-        expect(events[events.length - 1].args.user).to.equal(await owner.getAddress())
-        expect(events[events.length - 1].args.amount).to.equal(amount)
-    })
-
-    it("should revert if invested amount is more than left amount", async () => {
-        await expect(
-            investProvider.invest(poolId, maxAmount + 1n, ethers.toUtf8Bytes(""))
-        ).to.be.revertedWithCustomError(investProvider, "ExceededLeftAmount")
+    it("should return getWithdrawableAmount", async () => {
+        expect(await investProvider.getWithdrawableAmount(poolId)).to.equal(0)
     })
 })

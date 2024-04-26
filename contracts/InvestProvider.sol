@@ -46,12 +46,16 @@ contract InvestProvider is InvestInternal {
         IDO storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
         poolData.pool.investedProvider.onInvest(poolId, amount, data);
-        whiteList.handleInvestment(msg.sender, poolData.pool.whiteListId, amount);
+        whiteList.handleInvestment(
+            msg.sender,
+            poolData.pool.whiteListId,
+            amount
+        );
         _invest(amount, poolData);
         emit Invested(poolId, msg.sender, amount);
     }
 
-    function _invest(uint256 amount,IDO storage pool) internal {
+    function _invest(uint256 amount, IDO storage pool) internal {
         pool.leftAmount -= amount;
         assert(pool.leftAmount >= 0);
     }
@@ -62,6 +66,7 @@ contract InvestProvider is InvestInternal {
     )
         external
         override
+        onlyProvider
         validParamsLength(params.length, currentParamsTargetLength())
     {
         _registerPool(poolId, params);
@@ -77,11 +82,11 @@ contract InvestProvider is InvestInternal {
         params[2] = poolData.pool.whiteListId;
     }
 
-    function withdraw(uint256) external pure returns (uint256, bool) {
+    function withdraw(uint256) external view onlyNFT returns (uint256, bool) {
         revert();
     }
 
-    function split(uint256, uint256, uint256) external pure {
+    function split(uint256, uint256, uint256) external view onlyNFT {
         revert();
     }
 
