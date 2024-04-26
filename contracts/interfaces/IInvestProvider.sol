@@ -12,14 +12,19 @@ interface IInvestProvider is IProvider {
     function invest(uint256 poolId, uint256 amount, bytes calldata data) external;
 
     function createNewPool(
-        IDO calldata pool,
+        Pool calldata pool,
         bytes calldata data,
         uint256 sourcePoolId
     ) external returns (uint256 poolId);
 
     struct IDO {
+        Pool pool;
+        uint256 leftAmount;
+    }
+
+    struct Pool {
         uint256 maxAmount;
-        uint256 collectedAmount;
+        uint256 leftAmount;
         uint256 whiteListId;
         IInvestedProvider investedProvider;
     }
@@ -37,7 +42,7 @@ interface IInvestProvider is IProvider {
     error InvalidPoolId();
     error NoZeroAddress();
     error NoZeroAmount();
-    error ExceededMaxAmount();
+    error ExceededLeftAmount();
     /// @dev Error thrown when the length of parameters is invalid
     error InvalidParamsLength(uint256 paramsLength, uint256 minLength);
 }
