@@ -1,15 +1,15 @@
-import { MockVaultManager, InvestedProviderMock, InvestProvider, WhiteList } from "../typechain-types"
-import { IInvestProvider } from "../typechain-types/contracts/InvestProvider.ts"
+import { VaultManagerMock, InvestedProviderMock, InvestProvider, WhiteList } from "../typechain-types"
+import { IInvestProvider } from "../typechain-types/contracts/InvestProvider"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import LockDealNFTArtifact from "@poolzfinance/lockdeal-nft/artifacts/contracts/LockDealNFT/LockDealNFT.sol/LockDealNFT.json"
 
-describe("InvestProvider", function () {
+describe("IDO creation tests", function () {
     let token: ERC20Token
     let USDT: ERC20Token
     let sourcePoolId: string
-    let mockVaultManager: MockVaultManager
+    let mockVaultManager: VaultManagerMock
     let investProvider: InvestProvider
     let whiteList: WhiteList
     let investedMock: InvestedProviderMock
@@ -22,12 +22,12 @@ describe("InvestProvider", function () {
     let poolId: string
 
     before(async () => {
-        ;[owner, user] = await ethers.getSigners()
+        [owner, user] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
         const LockDealNFT = await ethers.getContractFactory(LockDealNFTArtifact.abi, LockDealNFTArtifact.bytecode)
-        mockVaultManager = await (await ethers.getContractFactory("MockVaultManager")).deploy()
+        mockVaultManager = await (await ethers.getContractFactory("VaultManagerMock")).deploy()
         lockDealNFT = await LockDealNFT.deploy(await mockVaultManager.getAddress(), "")
         investedMock = await (
             await ethers.getContractFactory("InvestedProviderMock")

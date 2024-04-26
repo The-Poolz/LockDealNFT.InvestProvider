@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract MockVaultManager {
+contract VaultManagerMock {
     mapping(address => uint) public tokenToVaultId;
     mapping(uint256 => address) vaultIdtoToken;
     uint256 public Id = 0;

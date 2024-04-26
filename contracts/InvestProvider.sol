@@ -52,29 +52,19 @@ contract InvestProvider is InvestInternal {
         if (block.timestamp > pool.endTime) revert Ended();
         if (pool.collectedAmount + amount > pool.maxAmount)
             revert ExceededMaxAmount();
-        if (pool.FCFSTime == pool.endTime || pool.FCFSTime == 0) {
+        if (
+            pool.FCFSTime >= pool.startTime &&
+            pool.FCFSTime != 0 &&
+            pool.FCFSTime != pool.endTime
+        ) {
             whiteList.Register(msg.sender, pool.whiteListId, amount);
         }
-        _invest(poolId, amount, pool);
+        _invest(amount, pool);
         pool.investedProvider.onInvest(poolId, amount, data);
         emit Invested(poolId, msg.sender, amount);
     }
 
-    function _invest(
-        uint256 poolId,
-        uint256 amount,
-        IDO storage pool
-    ) internal {
-        IInvestedProvider investedProvider = pool.investedProvider;
-        uint256 userPoolId = lockDealNFT.mintAndTransfer(
-            msg.sender,
-            lockDealNFT.tokenOf(poolId),
-            amount,
-            pool.investedProvider
-        );
-        uint256[] memory params = new uint256[](1);
-        params[0] = amount;
-        investedProvider.registerPool(userPoolId, params);
+    function _invest(uint256 amount, IDO storage pool) internal {
         pool.collectedAmount += amount;
         assert(pool.collectedAmount <= pool.maxAmount);
     }
