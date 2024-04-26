@@ -37,8 +37,6 @@ interface IInvestProvider is IProvider {
     error InvalidPoolId();
     error NoZeroAddress();
     error NoZeroAmount();
-    error NotStarted();
-    error Ended();
     error ExceededMaxAmount();
     /// @dev Error thrown when the length of parameters is invalid
     error InvalidParamsLength(uint256 paramsLength, uint256 minLength);
