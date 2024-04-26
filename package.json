@@ -24,7 +24,6 @@
     "@ironblocks/firewall-consumer": "^1.0.5",
     "@openzeppelin/contracts": "^5.0.2",
     "@poolzfinance/lockdeal-nft": "^0.8.1",
-    "openzeppelin-solidity": "^3.4.2",
-    "poolz-whitelist": "^1.0.5"
+    "openzeppelin-solidity": "^3.4.2"
   }
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./InvestInternal.sol";
 
 contract InvestProvider is InvestInternal {
-    constructor(ILockDealNFT _lockDealNFT, IWhiteList _whiteList) {
+    constructor(ILockDealNFT _lockDealNFT, IWhiteListV2 _whiteList) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_whiteList) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
@@ -13,7 +13,7 @@ contract InvestProvider is InvestInternal {
     }
 
     function createNewPool(
-        IDO calldata pool,
+        Pool calldata pool,
         bytes calldata data,
         uint256 sourcePoolId
     )
@@ -24,16 +24,12 @@ contract InvestProvider is InvestInternal {
         notZeroAddress(address(pool.investedProvider))
         returns (uint256 poolId)
     {
-        if (pool.startTime >= pool.endTime || pool.startTime < block.timestamp)
-            revert InvalidTime();
-        if (pool.FCFSTime > pool.endTime) revert InvalidTime();
-        if (pool.FCFSTime < pool.startTime && pool.FCFSTime != 0)
-            revert InvalidTime();
         poolId = lockDealNFT.mintForProvider(msg.sender, this);
         lockDealNFT.cloneVaultId(sourcePoolId, poolId);
-        poolIdToPool[poolId] = pool;
+        poolIdToPool[poolId].pool = pool;
+        poolIdToPool[poolId].leftAmount = pool.maxAmount;
         pool.investedProvider.onCreation(poolId, data);
-        emit NewPoolCreated(poolId, pool);
+        emit NewPoolCreated(poolId, poolIdToPool[poolId]);
     }
 
     function invest(
@@ -47,26 +43,17 @@ contract InvestProvider is InvestInternal {
         notZeroAmount(amount)
         invalidProvider(poolId, this)
     {
-        IDO storage pool = poolIdToPool[poolId];
-        if (block.timestamp < pool.startTime) revert NotStarted();
-        if (block.timestamp > pool.endTime) revert Ended();
-        if (pool.collectedAmount + amount > pool.maxAmount)
-            revert ExceededMaxAmount();
-        if (
-            pool.FCFSTime >= pool.startTime &&
-            pool.FCFSTime != 0 &&
-            pool.FCFSTime != pool.endTime
-        ) {
-            whiteList.Register(msg.sender, pool.whiteListId, amount);
-        }
-        _invest(amount, pool);
-        pool.investedProvider.onInvest(poolId, amount, data);
+        IDO storage poolData = poolIdToPool[poolId];
+        if (poolData.leftAmount > amount) revert ExceededLeftAmount();
+        poolData.pool.investedProvider.onInvest(poolId, amount, data);
+        whiteList.handleInvestment(msg.sender, poolData.pool.whiteListId, amount);
+        _invest(amount, poolData);
         emit Invested(poolId, msg.sender, amount);
     }
 
-    function _invest(uint256 amount, IDO storage pool) internal {
-        pool.collectedAmount += amount;
-        assert(pool.collectedAmount <= pool.maxAmount);
+    function _invest(uint256 amount,IDO storage pool) internal {
+        pool.leftAmount -= amount;
+        assert(pool.leftAmount >= 0);
     }
 
     function registerPool(
@@ -83,14 +70,11 @@ contract InvestProvider is InvestInternal {
     function getParams(
         uint256 poolId
     ) external view returns (uint256[] memory params) {
-        IDO storage pool = poolIdToPool[poolId];
-        params = new uint256[](6);
-        params[0] = pool.maxAmount;
-        params[1] = pool.collectedAmount;
-        params[2] = pool.startTime;
-        params[3] = pool.endTime;
-        params[4] = pool.FCFSTime;
-        params[5] = pool.whiteListId;
+        IDO storage poolData = poolIdToPool[poolId];
+        params = new uint256[](3);
+        params[0] = poolData.pool.maxAmount;
+        params[1] = poolData.leftAmount;
+        params[2] = poolData.pool.whiteListId;
     }
 
     function withdraw(uint256) external pure returns (uint256, bool) {

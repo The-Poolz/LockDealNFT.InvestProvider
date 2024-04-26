@@ -4,7 +4,6 @@ import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import LockDealNFTArtifact from "@poolzfinance/lockdeal-nft/artifacts/contracts/LockDealNFT/LockDealNFT.sol/LockDealNFT.json"
-import { time } from '@nomicfoundation/hardhat-network-helpers';
 
 describe("IDO investment tests", function () {
     let token: ERC20Token
@@ -21,7 +20,7 @@ describe("IDO investment tests", function () {
     let amount = ethers.parseUnits("100", 18)
     const startTime = Math.floor(Date.now() / 1000) + 1000
     let halfTime: number
-    let IDOSettings: IInvestProvider.IDOStruct
+    let IDOSettings: IInvestProvider.PoolStruct
     let poolId: string
 
     before(async () => {
@@ -45,10 +44,6 @@ describe("IDO investment tests", function () {
         const endTime = startTime + 86400
         IDOSettings = {
             maxAmount: amount,
-            collectedAmount: 0,
-            startTime: startTime,
-            endTime: endTime,
-            FCFSTime: 0,
             whiteListId: 0,
             investedProvider: await investedMock.getAddress(),
         }
@@ -64,7 +59,6 @@ describe("IDO investment tests", function () {
     })
 
     it("should emit Invested event", async () => {
-        await time.setNextBlockTimestamp(startTime + halfTime / 2)
         const tx = await investProvider.invest(poolId, amount, ethers.toUtf8Bytes(""))
         await tx.wait()
         const events = await investProvider.queryFilter(investProvider.filters.Invested())

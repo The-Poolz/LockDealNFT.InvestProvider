@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@poolzfinance/lockdeal-nft/contracts/SimpleProviders/Provider/ProviderState.sol";
 import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
-import "@poolzfinance/poolz-helper-v2/contracts/interfaces/IWhiteList.sol";
+import "./interfaces/IWhiteListV2.sol";
 import "./interfaces/IInvestProvider.sol";
 
-abstract contract InvestState is IInvestProvider,FirewallConsumer, ProviderState {
-    IWhiteList public whiteList;
+abstract contract InvestState is IInvestProvider, FirewallConsumer, ProviderState {
+    IWhiteListV2 public whiteList;
     mapping(uint256 => IDO) public poolIdToPool;
 
     function currentParamsTargetLength()
@@ -16,6 +16,6 @@ abstract contract InvestState is IInvestProvider,FirewallConsumer, ProviderState
         override(IProvider, ProviderState)
         returns (uint256)
     {
-        return 6;
+        return 3;
     }
 }
