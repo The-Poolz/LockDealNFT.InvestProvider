@@ -8,10 +8,7 @@ abstract contract InvestInternal is InvestModifiers {
         IDO storage data = poolIdToPool[poolId];
         data.pool.maxAmount = params[0];
         data.leftAmount = params[1];
-        data.pool.startTime = params[2];
-        data.pool.endTime = params[3];
-        data.pool.FCFSTime = params[4];
-        data.pool.whiteListId = params[5];
+        data.pool.whiteListId = params[2];
         emit UpdateParams(poolId, params);
     }
 }
