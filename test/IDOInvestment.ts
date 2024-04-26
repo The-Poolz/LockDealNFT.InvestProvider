@@ -18,6 +18,7 @@ describe("IDO investment tests", function () {
     let user: SignerWithAddress
     let lockDealNFT: Contract
     let amount = ethers.parseUnits("100", 18)
+    let maxAmount = ethers.parseUnits("1000", 18)
     const startTime = Math.floor(Date.now() / 1000) + 1000
     let halfTime: number
     let IDOSettings: IInvestProvider.PoolStruct
@@ -43,14 +44,14 @@ describe("IDO investment tests", function () {
         // startTime + 24 hours
         const endTime = startTime + 86400
         IDOSettings = {
-            maxAmount: amount,
+            maxAmount: maxAmount,
             whiteListId: 0,
             investedProvider: await investedMock.getAddress(),
         }
         // create source pool
         await investedMock.createNewPool([await user.getAddress(), await USDT.getAddress()], [amount], signature)
         sourcePoolId = "0"
-        halfTime = (endTime - startTime) / 2;
+        halfTime = (endTime - startTime) / 2
     })
 
     beforeEach(async () => {
@@ -58,13 +59,24 @@ describe("IDO investment tests", function () {
         await investProvider.createNewPool(IDOSettings, ethers.toUtf8Bytes(""), sourcePoolId)
     })
 
+    it("should deacrease left amount after invest", async () => {
+        await investProvider.invest(poolId, amount / 2n, ethers.toUtf8Bytes(""))
+        const poolData = await investProvider.getParams(poolId)
+        expect(poolData[1]).to.equal(maxAmount - amount / 2n)
+    })
+
     it("should emit Invested event", async () => {
         const tx = await investProvider.invest(poolId, amount, ethers.toUtf8Bytes(""))
         await tx.wait()
         const events = await investProvider.queryFilter(investProvider.filters.Invested())
-        expect(events.length).to.equal(1)
-        expect(events[0].args.poolId).to.equal(poolId)
-        expect(events[0].args.user).to.equal(await owner.getAddress())
-        expect(events[0].args.amount).to.equal(amount)
+        expect(events[events.length - 1].args.poolId).to.equal(poolId)
+        expect(events[events.length - 1].args.user).to.equal(await owner.getAddress())
+        expect(events[events.length - 1].args.amount).to.equal(amount)
+    })
+
+    it("should revert if invested amount is more than left amount", async () => {
+        await expect(
+            investProvider.invest(poolId, maxAmount + 1n, ethers.toUtf8Bytes(""))
+        ).to.be.revertedWithCustomError(investProvider, "ExceededLeftAmount")
     })
 })

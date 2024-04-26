@@ -44,7 +44,7 @@ contract InvestProvider is InvestInternal {
         invalidProvider(poolId, this)
     {
         IDO storage poolData = poolIdToPool[poolId];
-        if (poolData.leftAmount > amount) revert ExceededLeftAmount();
+        if (poolData.leftAmount < amount) revert ExceededLeftAmount();
         poolData.pool.investedProvider.onInvest(poolId, amount, data);
         whiteList.handleInvestment(msg.sender, poolData.pool.whiteListId, amount);
         _invest(amount, poolData);
