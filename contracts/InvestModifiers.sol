@@ -26,6 +26,16 @@ abstract contract InvestModifiers is InvestState {
         _;
     }
 
+    modifier onlyProvider() {
+        _onlyProvider();
+        _;
+    }
+
+    modifier onlyNFT() {
+        _onlyNFT();
+        _;
+    }
+
     function _validParamsLength(
         uint256 paramsLength,
         uint256 minLength
@@ -45,6 +55,15 @@ abstract contract InvestModifiers is InvestState {
     /// @dev Internal function to check that an amount is not zero
     function _notZeroAmount(uint256 amount) internal pure {
         if (amount == 0) revert NoZeroAmount();
+    }
+
+    function _onlyNFT() internal view {
+        if (msg.sender != address(lockDealNFT)) revert OnlyLockDealNFT();
+    }
+
+    function _onlyProvider() private view {
+        if (!lockDealNFT.approvedContracts(msg.sender))
+            revert InvalidProvider();
     }
 
     /// @dev Internal function to check that an address is not zero

@@ -24,7 +24,6 @@ interface IInvestProvider is IProvider {
 
     struct Pool {
         uint256 maxAmount;
-        uint256 leftAmount;
         uint256 whiteListId;
         IInvestedProvider investedProvider;
     }
@@ -40,6 +39,7 @@ interface IInvestProvider is IProvider {
     error InvalidInvestedProvider();
     error InvalidProvider();
     error InvalidPoolId();
+    error OnlyLockDealNFT();
     error NoZeroAddress();
     error NoZeroAmount();
     error ExceededLeftAmount();
