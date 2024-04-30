@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./InvestState.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 abstract contract InvestModifiers is InvestState {
     /// @dev Modifier to ensure an address is not zero
@@ -33,6 +34,11 @@ abstract contract InvestModifiers is InvestState {
 
     modifier onlyNFT() {
         _onlyNFT();
+        _;
+    }
+
+    modifier validInvestedProvider(IProvider provider) {
+        _validInvestedProvider(provider);
         _;
     }
 
@@ -69,5 +75,14 @@ abstract contract InvestModifiers is InvestState {
     /// @dev Internal function to check that an address is not zero
     function _notZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert NoZeroAddress();
+    }
+
+    function _validInvestedProvider(IProvider provider) internal view {
+        if (
+            !ERC165Checker.supportsInterface(
+                address(provider),
+                type(IInvestedProvider).interfaceId
+            )
+        ) revert InvalidInvestedProvider();
     }
 }

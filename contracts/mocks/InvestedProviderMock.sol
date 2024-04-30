@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IInvestedProvider.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@poolzfinance/lockdeal-nft/contracts/SimpleProviders/DealProvider/DealProvider.sol";
 
 contract InvestedProviderMock is DealProvider, IInvestedProvider {
@@ -27,5 +28,13 @@ contract InvestedProviderMock is DealProvider, IInvestedProvider {
         uint256[] memory params
     ) external {
         provider.registerPool(poolId, params);
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override returns (bool) {
+        return
+            interfaceId == type(IERC165).interfaceId ||
+            interfaceId == type(IInvestedProvider).interfaceId;
     }
 }
