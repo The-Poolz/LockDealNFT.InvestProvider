@@ -1,0 +1,4 @@
+{
+    "filter_paths": "(contracts/mocks|mocks/|test/)",
+    "compile_force_framework": "hardhat"
+}
