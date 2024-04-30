@@ -22,7 +22,7 @@ describe("IDO creation tests", function () {
     let poolId: string
 
     before(async () => {
-        ;[owner, user] = await ethers.getSigners()
+        [owner, user] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
@@ -92,6 +92,20 @@ describe("IDO creation tests", function () {
                 sourcePoolId
             )
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
+    })
+
+    it("should support IInvestProvider interface", async () => {
+        expect(await investProvider.supportsInterface('0xa358958c')).to.equal(true);
+    })
+
+    it("should revert invalid investedProvider", async () => {
+        await expect(
+            investProvider.createNewPool(
+                { ...IDOSettings, investedProvider: await whiteList.getAddress() },
+                ethers.toUtf8Bytes(""),
+                sourcePoolId
+            )
+        ).to.be.revertedWithCustomError(investProvider, "InvalidInvestedProvider")  
     })
 
     // @dev split is not implemented in the contract right now

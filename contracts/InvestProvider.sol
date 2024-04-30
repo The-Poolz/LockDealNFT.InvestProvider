@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "./InvestInternal.sol";
 
 contract InvestProvider is InvestInternal {
+    bytes4 public temp = type(IInvestProvider).interfaceId;
+
     constructor(ILockDealNFT _lockDealNFT, IWhiteListV2 _whiteList) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_whiteList) == address(0)) revert NoZeroAddress();
