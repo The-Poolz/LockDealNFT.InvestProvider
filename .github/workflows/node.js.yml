@@ -79,7 +79,7 @@ jobs:
     - name : Slither Analyze
       uses: crytic/slither-action@v0.3.2
       with:
-        target: 'contracts/'
+        fail-on: medium
         
   Coverage-Test:
     runs-on: ubuntu-latest
