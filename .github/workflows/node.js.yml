@@ -81,7 +81,7 @@ jobs:
       id: slither
       with:
         node-version: "20.9.0"
-        fail-on: medium
+        fail-on: low
         slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
 
     - name: Create/update checklist as PR comment
