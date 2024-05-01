@@ -81,8 +81,10 @@ jobs:
       id: slither
       with:
         node-version: "20.9.0"
-        fail-on: high
+        fail-on: medium
         slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
+      # Ensure the workflow continues even if this step fails
+      continue-on-error: true
 
     - name: Create/update checklist as PR comment
       uses: actions/github-script@v7

@@ -7,18 +7,23 @@ module.exports = async ({ github, context, header, body }) => {
         issue_number: context.payload.number,
     })
 
-    const botComment = comments.find(
-        (comment) =>
-            // github-actions bot user
-            comment.user.id === 41898282 && comment.body.startsWith(header)
-    )
+    // Find the existing bot comment, if it exists
+    const botComment = comments.find((c) => c.user.id === 41898282 && c.body.startsWith(header))
 
-    const commentFn = botComment ? "updateComment" : "createComment"
+    // If there's an existing bot comment, delete it
+    if (botComment) {
+        await github.rest.issues.deleteComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            comment_id: botComment.id,
+        })
+    }
 
-    await github.rest.issues[commentFn]({
+    // Create a new comment
+    await github.rest.issues.createComment({
         owner: context.repo.owner,
         repo: context.repo.repo,
+        issue_number: context.payload.number,
         body: comment,
-        ...(botComment ? { comment_id: botComment.id } : { issue_number: context.payload.number }),
     })
 }
