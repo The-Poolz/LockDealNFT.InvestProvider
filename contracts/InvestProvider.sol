@@ -22,6 +22,7 @@ contract InvestProvider is InvestInternal {
         firewallProtected
         notZeroAmount(pool.maxAmount)
         notZeroAddress(address(pool.investedProvider))
+        validInvestedProvider(pool.investedProvider)
         returns (uint256 poolId)
     {
         poolId = lockDealNFT.mintForProvider(msg.sender, this);
