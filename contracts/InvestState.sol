@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "./interfaces/IWhiteListV2.sol";
 import "./interfaces/IInvestProvider.sol";
 
-abstract contract InvestState is IInvestProvider, FirewallConsumer, IERC165, ProviderState {
-    IWhiteListV2 public whiteList;
+abstract contract InvestState is IInvestProvider, FirewallConsumer, ProviderState {
+    IWhiteListV2 public immutable whiteList;
     mapping(uint256 => IDO) public poolIdToPool;
 
     function currentParamsTargetLength()

@@ -58,7 +58,6 @@ contract InvestProvider is InvestInternal {
 
     function _invest(uint256 amount, IDO storage pool) internal {
         pool.leftAmount -= amount;
-        assert(pool.leftAmount >= 0);
     }
 
     function registerPool(
