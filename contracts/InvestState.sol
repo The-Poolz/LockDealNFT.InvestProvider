@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "./interfaces/IWhiteListV2.sol";
 import "./interfaces/IInvestProvider.sol";
 
-abstract contract InvestState is IInvestProvider, FirewallConsumer, ProviderState {
+abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, ProviderState {
     IWhiteListV2 public immutable whiteList;
     mapping(uint256 => IDO) public poolIdToPool;
 
