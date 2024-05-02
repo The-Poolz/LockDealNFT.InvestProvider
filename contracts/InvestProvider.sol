@@ -2,8 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "./InvestInternal.sol";
+import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
 
 contract InvestProvider is InvestInternal {
+    using CalcUtils for uint256;
+
     constructor(ILockDealNFT _lockDealNFT, IWhiteListV2 _whiteList) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_whiteList) == address(0)) revert NoZeroAddress();
@@ -66,6 +69,7 @@ contract InvestProvider is InvestInternal {
     )
         external
         override
+        firewallProtected
         onlyProvider
         validParamsLength(params.length, currentParamsTargetLength())
     {
@@ -82,12 +86,30 @@ contract InvestProvider is InvestInternal {
         params[2] = poolData.pool.whiteListId;
     }
 
-    function withdraw(uint256) external view onlyNFT returns (uint256, bool) {
+    function withdraw(
+        uint256
+    ) external firewallProtected onlyNFT returns (uint256, bool) {
         revert();
     }
 
-    function split(uint256, uint256, uint256) external view onlyNFT {
-        revert();
+    function split(
+        uint256 oldPoolId,
+        uint256 newPoolId,
+        uint256 ratio
+    ) external firewallProtected onlyNFT {
+        uint256 newPoolMaxAmount = poolIdToPool[oldPoolId].pool.maxAmount.calcAmount(ratio);
+        uint256 newPoolLeftAmount = poolIdToPool[oldPoolId].leftAmount.calcAmount(ratio);
+
+        if (poolIdToPool[oldPoolId].pool.maxAmount < newPoolMaxAmount)
+            revert ExceededMaxAmount();
+        // reduce the max amount and leftAmount of the old pool
+        poolIdToPool[oldPoolId].pool.maxAmount -= newPoolMaxAmount;
+        poolIdToPool[oldPoolId].leftAmount -= newPoolLeftAmount;
+        // create a new pool with the new settings
+        poolIdToPool[newPoolId].pool.maxAmount = newPoolMaxAmount;
+        poolIdToPool[newPoolId].leftAmount = newPoolLeftAmount;
+        poolIdToPool[newPoolId].pool.whiteListId = poolIdToPool[oldPoolId].pool.whiteListId;
+        poolIdToPool[newPoolId].pool.investedProvider = poolIdToPool[oldPoolId].pool.investedProvider;
     }
 
     function getWithdrawableAmount(
