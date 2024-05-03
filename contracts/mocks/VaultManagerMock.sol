@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 contract VaultManagerMock {
     mapping(address => uint) public tokenToVaultId;
-    mapping(uint256 => address) vaultIdtoToken;
+    mapping(uint256 => address) public vaultIdToTokenAddress;
     uint256 public Id = 0;
 
     function safeDeposit(
@@ -26,12 +26,8 @@ contract VaultManagerMock {
     ) internal returns (uint vaultId) {
         if (tokenToVaultId[_tokenAddress] == 0) {
             vaultId = ++Id;
-            vaultIdtoToken[vaultId] = _tokenAddress;
+            vaultIdToTokenAddress[vaultId] = _tokenAddress;
             tokenToVaultId[_tokenAddress] = vaultId;
         }
-    }
-
-    function vaultIdToTokenAddress(uint _vaultId) external view returns (address) {
-        return vaultIdtoToken[_vaultId];
     }
 }

@@ -99,9 +99,6 @@ contract InvestProvider is InvestInternal {
     ) external firewallProtected onlyNFT {
         uint256 newPoolMaxAmount = poolIdToPool[oldPoolId].pool.maxAmount.calcAmount(ratio);
         uint256 newPoolLeftAmount = poolIdToPool[oldPoolId].leftAmount.calcAmount(ratio);
-
-        if (poolIdToPool[oldPoolId].pool.maxAmount < newPoolMaxAmount)
-            revert ExceededMaxAmount();
         // reduce the max amount and leftAmount of the old pool
         poolIdToPool[oldPoolId].pool.maxAmount -= newPoolMaxAmount;
         poolIdToPool[oldPoolId].leftAmount -= newPoolLeftAmount;
