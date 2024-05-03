@@ -42,7 +42,6 @@ interface IInvestProvider is IProvider {
     error NoZeroAddress();
     error NoZeroAmount();
     error ExceededLeftAmount();
-    error ExceededMaxAmount();
     /// @dev Error thrown when the length of parameters is invalid
     error InvalidParamsLength(uint256 paramsLength, uint256 minLength);
 }
