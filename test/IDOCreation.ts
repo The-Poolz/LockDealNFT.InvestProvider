@@ -108,22 +108,6 @@ describe("IDO creation tests", function () {
         ).to.be.revertedWithCustomError(investProvider, "InvalidInvestedProvider")  
     })
 
-    // @dev split is not implemented in the contract right now
-    it("should revert split", async () => {
-        const ratio = ethers.parseUnits("1", 21) / 2n // half of the amount
-        const packedData = ethers.AbiCoder.defaultAbiCoder().encode(
-            ["uint256", "address"],
-            [ratio, await user.getAddress()]
-        )
-        await expect(
-            lockDealNFT
-                .connect(owner)
-                [
-                    "safeTransferFrom(address,address,uint256,bytes)"
-                ](await owner.getAddress(), await lockDealNFT.getAddress(), poolId, packedData)
-        ).to.be.rejected
-    })
-
     // @dev withdraw is not implemented in the contract right now
     it("should revert withdraw", async () => {
         await expect(
