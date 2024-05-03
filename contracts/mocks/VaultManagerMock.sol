@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+
 contract VaultManagerMock {
     mapping(address => uint) public tokenToVaultId;
     mapping(uint256 => address) vaultIdtoToken;
@@ -28,5 +29,9 @@ contract VaultManagerMock {
             vaultIdtoToken[vaultId] = _tokenAddress;
             tokenToVaultId[_tokenAddress] = vaultId;
         }
+    }
+
+    function vaultIdToTokenAddress(uint _vaultId) external view returns (address) {
+        return vaultIdtoToken[_vaultId];
     }
 }

@@ -29,7 +29,7 @@ contract InvestProvider is InvestInternal {
         returns (uint256 poolId)
     {
         poolId = lockDealNFT.mintForProvider(msg.sender, this);
-        lockDealNFT.cloneVaultId(sourcePoolId, poolId);
+        lockDealNFT.cloneVaultId(poolId, sourcePoolId);
         poolIdToPool[poolId].pool = pool;
         poolIdToPool[poolId].leftAmount = pool.maxAmount;
         pool.investedProvider.onCreation(poolId, data);
