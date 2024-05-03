@@ -44,4 +44,5 @@ interface IInvestProvider is IProvider {
     error ExceededLeftAmount();
     /// @dev Error thrown when the length of parameters is invalid
     error InvalidParamsLength(uint256 paramsLength, uint256 minLength);
+    error NoAllowance(uint256 amountIn, uint256 allowance);
 }

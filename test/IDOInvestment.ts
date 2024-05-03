@@ -48,6 +48,7 @@ describe("IDO investment tests", function () {
         // create source pool
         await investedMock.createNewPool([await user.getAddress(), await USDT.getAddress()], [amount], signature)
         sourcePoolId = "0"
+        await USDT.approve(await investProvider.getAddress(), maxAmount)
     })
 
     beforeEach(async () => {
