@@ -51,25 +51,29 @@ contract InvestProvider is InvestInternal {
     {
         IDO storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
-        IERC20 token = IERC20(lockDealNFT.tokenOf(poolId));
 
         whiteList.handleInvestment(
             msg.sender,
             poolData.pool.whiteListId,
             amount
         );
-        token.safeTransferFrom(
-            msg.sender,
-            address(poolData.pool.investedProvider),
-            amount
-        );
-        poolData.pool.investedProvider.onInvest(poolId, amount, data);
-
-        _invest(amount, poolData);
+        _invest(poolId, amount, poolData, data);
         emit Invested(poolId, msg.sender, amount);
     }
 
-    function _invest(uint256 amount, IDO storage pool) internal {
+    function _invest(
+        uint256 poolId,
+        uint256 amount,
+        IDO storage pool,
+        bytes calldata data
+    ) internal {
+        IERC20 token = IERC20(lockDealNFT.tokenOf(poolId));
+        token.safeTransferFrom(
+            msg.sender,
+            address(pool.pool.investedProvider),
+            amount
+        );
+        pool.pool.investedProvider.onInvest(poolId, amount, data);
         pool.leftAmount -= amount;
     }
 

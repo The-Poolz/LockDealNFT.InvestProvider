@@ -71,6 +71,19 @@ describe("IDO investment tests", function () {
         expect(events[events.length - 1].args.amount).to.equal(amount)
     })
 
+    it("should transfer ERC20 tokens", async () => {
+        const before = await USDT.balanceOf(await investedMock.getAddress())
+        await investProvider.invest(poolId, amount, ethers.toUtf8Bytes(""))
+        const after = await USDT.balanceOf(await investedMock.getAddress())
+        expect(after).to.equal(before + amount)
+    })
+
+    it("should revert if no allowance", async () => {
+        await expect(
+            investProvider.connect(user).invest(poolId, amount, ethers.toUtf8Bytes(""))
+        ).to.be.revertedWithCustomError(USDT, "ERC20InsufficientAllowance")
+    })
+
     it("should revert if invested amount is more than left amount", async () => {
         await expect(
             investProvider.invest(poolId, maxAmount + 1n, ethers.toUtf8Bytes(""))
