@@ -3,9 +3,11 @@ pragma solidity ^0.8.0;
 
 import "./InvestInternal.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract InvestProvider is InvestInternal {
     using CalcUtils for uint256;
+    using SafeERC20 for IERC20;
 
     constructor(ILockDealNFT _lockDealNFT, IWhiteListV2 _whiteList) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
@@ -49,17 +51,29 @@ contract InvestProvider is InvestInternal {
     {
         IDO storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
-        poolData.pool.investedProvider.onInvest(poolId, amount, data);
+
         whiteList.handleInvestment(
             msg.sender,
             poolData.pool.whiteListId,
             amount
         );
-        _invest(amount, poolData);
+        _invest(poolId, amount, poolData, data);
         emit Invested(poolId, msg.sender, amount);
     }
 
-    function _invest(uint256 amount, IDO storage pool) internal {
+    function _invest(
+        uint256 poolId,
+        uint256 amount,
+        IDO storage pool,
+        bytes calldata data
+    ) internal {
+        IERC20 token = IERC20(lockDealNFT.tokenOf(poolId));
+        token.safeTransferFrom(
+            msg.sender,
+            address(pool.pool.investedProvider),
+            amount
+        );
+        pool.pool.investedProvider.onInvest(poolId, amount, data);
         pool.leftAmount -= amount;
     }
 

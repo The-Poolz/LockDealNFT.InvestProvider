@@ -48,6 +48,7 @@ describe("IDO investment tests", function () {
         // create source pool
         await investedMock.createNewPool([await user.getAddress(), await USDT.getAddress()], [amount], signature)
         sourcePoolId = "0"
+        await USDT.approve(await investProvider.getAddress(), maxAmount)
     })
 
     beforeEach(async () => {
@@ -68,6 +69,19 @@ describe("IDO investment tests", function () {
         expect(events[events.length - 1].args.poolId).to.equal(poolId)
         expect(events[events.length - 1].args.user).to.equal(await owner.getAddress())
         expect(events[events.length - 1].args.amount).to.equal(amount)
+    })
+
+    it("should transfer ERC20 tokens", async () => {
+        const before = await USDT.balanceOf(await investedMock.getAddress())
+        await investProvider.invest(poolId, amount, ethers.toUtf8Bytes(""))
+        const after = await USDT.balanceOf(await investedMock.getAddress())
+        expect(after).to.equal(before + amount)
+    })
+
+    it("should revert if no allowance", async () => {
+        await expect(
+            investProvider.connect(user).invest(poolId, amount, ethers.toUtf8Bytes(""))
+        ).to.be.revertedWithCustomError(USDT, "ERC20InsufficientAllowance")
     })
 
     it("should revert if invested amount is more than left amount", async () => {
