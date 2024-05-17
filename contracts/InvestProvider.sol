@@ -9,11 +9,11 @@ contract InvestProvider is InvestInternal {
     using CalcUtils for uint256;
     using SafeERC20 for IERC20;
 
-    constructor(ILockDealNFT _lockDealNFT, IWhiteListV2 _whiteList) {
+    constructor(ILockDealNFT _lockDealNFT, IWhiteListRouter _router) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
-        if (address(_whiteList) == address(0)) revert NoZeroAddress();
+        if (address(_router) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
-        whiteList = _whiteList;
+        whiteListRouter = _router;
         name = "InvestProvider";
     }
 
@@ -52,7 +52,7 @@ contract InvestProvider is InvestInternal {
         IDO storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
 
-        whiteList.handleInvestment(
+        whiteListRouter.handleInvestment(
             msg.sender,
             poolData.pool.whiteListId,
             amount

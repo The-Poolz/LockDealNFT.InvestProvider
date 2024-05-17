@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/IWhiteListV2.sol";
+import "../interfaces/IWhiteListRouter.sol";
 
-contract WhiteList is IWhiteListV2 {
+contract MockRouter is IWhiteListRouter {
     function handleInvestment(
         address investor,
         uint256 whiteListId,
