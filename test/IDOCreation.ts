@@ -3,7 +3,8 @@ import { IInvestProvider } from "../typechain-types/contracts/InvestProvider"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
-import LockDealNFTArtifact from "@poolzfinance/lockdeal-nft/artifacts/contracts/LockDealNFT/LockDealNFT.sol/LockDealNFT.json"
+import { LockDealNFT } from "../typechain-types/@poolzfinance/lockdeal-nft/contracts/LockDealNFT/LockDealNFT"
+import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
 
 describe("IDO creation tests", function () {
     let token: ERC20Token
@@ -16,7 +17,7 @@ describe("IDO creation tests", function () {
     let signature = ethers.toUtf8Bytes("signature")
     let owner: SignerWithAddress
     let user: SignerWithAddress
-    let lockDealNFT: Contract
+    let lockDealNFT: LockDealNFT
     let amount = ethers.parseUnits("100", 18)
     let IDOSettings: IInvestProvider.PoolStruct
     let poolId: string
@@ -26,9 +27,9 @@ describe("IDO creation tests", function () {
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
-        const LockDealNFT = await ethers.getContractFactory(LockDealNFTArtifact.abi, LockDealNFTArtifact.bytecode)
         mockVaultManager = await (await ethers.getContractFactory("VaultManagerMock")).deploy()
-        lockDealNFT = await LockDealNFT.deploy(await mockVaultManager.getAddress(), "")
+        const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
+        lockDealNFT = (await LockDealNFTFactory.deploy(await mockVaultManager.getAddress(), "")) as LockDealNFT
         investedMock = await (
             await ethers.getContractFactory("InvestedProviderMock")
         ).deploy(await lockDealNFT.getAddress())
@@ -95,7 +96,7 @@ describe("IDO creation tests", function () {
     })
 
     it("should support IInvestProvider interface", async () => {
-        expect(await investProvider.supportsInterface('0xa358958c')).to.equal(true);
+        expect(await investProvider.supportsInterface("0xa358958c")).to.equal(true)
     })
 
     it("should revert invalid investedProvider", async () => {
@@ -105,7 +106,7 @@ describe("IDO creation tests", function () {
                 ethers.toUtf8Bytes(""),
                 sourcePoolId
             )
-        ).to.be.revertedWithCustomError(investProvider, "InvalidInvestedProvider")  
+        ).to.be.revertedWithCustomError(investProvider, "InvalidInvestedProvider")
     })
 
     // @dev withdraw is not implemented in the contract right now

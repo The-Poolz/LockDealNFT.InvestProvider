@@ -7,23 +7,26 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "The Poolz @ Stan Goldin, Andrew Dmytrenko",
   "license": "MIT",
   "devDependencies": {
-    "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
-    "@nomicfoundation/hardhat-ethers": "^3.0.5",
-    "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
     "@nomicfoundation/hardhat-verify": "^2.0.6",
     "@truffle/dashboard-hardhat-plugin": "^0.2.15",
-    "ethers": "^6.12.0",
-    "hardhat": "^2.22.3",
-    "solidity-coverage": "^0.8.12"
+    "hardhat": "^2.22.15",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "solidity-coverage": "^0.8.13",
+    "hardhat-gas-reporter": "^2.1.1",
+    "ts-node": ">=8.0.0",
+    "typechain": "^8.3.2",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@ironblocks/firewall-consumer": "^1.0.5",
-    "@openzeppelin/contracts": "^5.0.2",
-    "@poolzfinance/lockdeal-nft": "^0.8.1",
-    "openzeppelin-solidity": "^3.4.2"
+    "@ironblocks/firewall-consumer": "^1.0.17",
+    "@openzeppelin/contracts": "^5.1.0",
+    "@poolzfinance/lockdeal-nft": "^1.0.4"
   }
 }
