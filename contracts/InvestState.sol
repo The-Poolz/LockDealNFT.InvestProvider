@@ -7,10 +7,22 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "./interfaces/IWhiteListRouter.sol";
 import "./interfaces/IInvestProvider.sol";
 
+/// @title InvestState
+/// @notice Manages the state of investment pools and provides common functions for interacting with them.
+/// @dev Implements IInvestProvider, IERC165, FirewallConsumer, and ProviderState for pool management and security.
 abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, ProviderState {
+    /// @notice The whitelist router for handling investments based on whitelist criteria.
     IWhiteListRouter public immutable whiteListRouter;
+
+    /// @notice Maps pool IDs to their respective investment pool data.
+    /// @dev Each pool ID corresponds to an `IDO` struct containing pool details.
     mapping(uint256 => IDO) public poolIdToPool;
 
+    /**
+     * @notice Returns the expected length of parameters required for pool functions.
+     * @dev This function overrides `currentParamsTargetLength` from both `IProvider` and `ProviderState`.
+     * @return The expected length of parameters for pool functions, set to 3.
+     */
     function currentParamsTargetLength()
         public
         pure
@@ -20,6 +32,12 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
         return 3;
     }
 
+    /**
+     * @notice Checks if the contract supports a given interface.
+     * @dev Supports `IERC165` and `IInvestProvider` interfaces.
+     * @param interfaceId The ID of the interface to check.
+     * @return True if the interface is supported, false otherwise.
+     */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IERC165).interfaceId || interfaceId == type(IInvestProvider).interfaceId;
     }
