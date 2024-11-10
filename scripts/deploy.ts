@@ -1,12 +1,14 @@
 import { ethers } from "hardhat"
 
 async function main() {
-    const TemplateContract = await ethers.getContractFactory("TemplateContract")
-    const templateContract = await TemplateContract.deploy()
+    // InvestProvider constructor parameters
+    const lockDealNFTAddress = "0x3d2C83bbBbfB54087d46B80585253077509c21AE"
+    const whiteListRouterAddress = "0x06eD6E9A15D1bae5835544E305e43f5cAB5DB525"
+    // Deploy InvestProvider contract
+    const InvestProviderFactory = await ethers.getContractFactory("InvestProvider")
+    const investProvider = await InvestProviderFactory.deploy(lockDealNFTAddress, whiteListRouterAddress)
 
-    await templateContract.deployed()
-
-    console.log("TemplateContract deployed to:", templateContract.address)
+    console.log("InvestProvider deployed to:", await investProvider.getAddress())
 }
 
 main().catch((error) => {
