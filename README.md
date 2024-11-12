@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/The-Poolz/LockDealNFT.InvestProvider/graph/badge.svg?token=LTNmiM9c1L)](https://codecov.io/gh/The-Poolz/LockDealNFT.InvestProvider)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/The-Poolz/LockDealNFT.InvestProvider/blob/master/LICENSE)
 
-**InvestProvider** is a contract that enables the creation and management of **Investment Pools (IDO Pools)**, allowing users to join pools by contributing funds (typically in stablecoins or other assets) in exchange for tokens issued by the pool. The contract handles pool creation, contributions, and token distribution while ensuring compliance with investment limits and tracking remaining available tokens.
+**InvestProvider** is a contract that enables the creation and management of **Investment Pools (IDO Pools)**, allowing users to join pools by contributing funds (typically in stablecoins or other assets) in exchange for tokens issued by the **IDO project**. The contract handles pool creation, contributions, while ensuring compliance with investment limits and tracking remaining available tokens.
 
 ### Navigation
 
