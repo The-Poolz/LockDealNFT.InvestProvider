@@ -4,14 +4,14 @@
 [![codecov](https://codecov.io/gh/The-Poolz/LockDealNFT.InvestProvider/graph/badge.svg?token=LTNmiM9c1L)](https://codecov.io/gh/The-Poolz/LockDealNFT.InvestProvider)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/The-Poolz/LockDealNFT.InvestProvider/blob/master/LICENSE)
 
-**InvestProvider** contract is part of a system designed to facilitate the creation and management of investment pools. Contract allows users to invest in token pools and track investments securely. It integrates with other protocols, such as [LockDealNFT](https://github.com/The-Poolz/LockDealNFT), to mint and manage tokens.
+**InvestProvider** is a contract that enables the creation and management of **Investment Pools (IDO Pools)**, allowing users to join pools by contributing funds (typically in stablecoins or other assets) in exchange for tokens issued by the pool. The contract handles pool creation, contributions, and token distribution while ensuring compliance with investment limits and tracking remaining available tokens.
 
 ### Navigation
 
 -   [Installation](#installation)
 -   [Overview](#overview)
 -   [UML](#contracts-diagram)
--   [Create New Invest pool](#create-invest-pool)
+-   [Create New IDO pool](#create-ido-pool)
 -   [Join the Pool](#join-pool)
 -   [License](#license)
 
@@ -53,7 +53,7 @@ npx hardhat run ./scripts/deploy.ts --network truffleDashboard
 
 ## Overview
 
-**InvestProvider** enables the creation and management of investment pools, where users can join and make investments in various token pools. It supports interaction with the **LockDealNFT** contract to mint and transfer tokens based on the investments made.
+**InvestProvider** facilitates the creation and management of investment pools, enabling users to join various token pools. It integrates with the [LockDealNFT](https://github.com/The-Poolz/LockDealNFT) contract to mint and transfer tokens based on users' investments.
 
 **Key Features**
 
@@ -64,19 +64,19 @@ npx hardhat run ./scripts/deploy.ts --network truffleDashboard
 
 ## Contracts Diagram
 
-## Create Invest Pool
+## Create IDO Pool
 
-`createNewPool` function allows the creation of a new investment pool and registers it with the system. This function takes a pool configuration, including the maximum investment amount and the provider responsible for managing the pool's investments. It also allows cloning an existing pool's settings from a source pool, ensuring that the new pool can inherit specific configurations from another.
+`createNewPool` function enables the creation of a new **IDO pool**, which is registered with the system. This function accepts a pool configuration, including the maximum investment amount, the provider managing the pool, and optionally cloning an existing pool's settings. This is ideal for creating **IDO pools** where the pool owner can manage the pool's parameters.
 
 ```solidity
     /**
-     * @notice Creates a new investment pool and registers it.
-     * @param pool The pool configuration, including `maxAmount`, `whiteListId`, and `investedProvider`.
-     * @param data Additional data for the pool creation.
-     * @param sourcePoolId The ID of the source pool to token clone.
-     * @return poolId The ID of the newly created pool.
-     * @dev Emits the `NewPoolCreated` event upon successful creation.
-     */
+    * @notice Creates a new IDO investment pool and registers it.
+    * @param pool The pool configuration, including `maxAmount`, `whiteListId`, and `investedProvider`.
+    * @param data Additional data for the pool creation.
+    * @param sourcePoolId The ID of the source pool to clone settings from.
+    * @return poolId The ID of the newly created pool.
+    * @dev Emits the `NewPoolCreated` event upon successful creation.
+    */
 function createNewPool(
         Pool calldata pool,
         bytes calldata data,
@@ -86,15 +86,26 @@ function createNewPool(
 
 ```solidity
     struct Pool {
-        uint256 maxAmount; // The maximum amount of tokens that can be invested in the pool
-        uint256 poolId;
-        IInvestedProvider investedProvider; // The provider that manages the invested funds for this pool
+        uint256 maxAmount; // Maximum amount of tokens that can be invested in the pool
+        uint256 poolId;    // Unique identifier for the pool
+        IInvestedProvider investedProvider; // Provider that manages the invested funds
     }
 ```
 
+This function allows you to set parameters like the maximum investment and the provider responsible for managing investments. It also supports cloning an existing pool's settings by referencing a `sourcePoolId`.
+
 ## Join Pool
 
+`invest` function allows users to join an **IDO pool** by contributing a specified amount. It processes the user's contribution and updates the pool’s data accordingly. This function requires the user to specify the pool ID, the amount to contribute, and additional data necessary for the transaction.
+
 ```solidity
+    /**
+     * @notice function allows users to invest in an IDO pool by specifying.
+     * @param poolId The ID of the pool to invest in.
+     * @param amount The amount to invest.
+     * @param data Additional data for the investment.
+     * @dev Emits the `Invested` event after a successful investment.
+     */
 function invest(
         uint256 poolId,
         uint256 amount,
