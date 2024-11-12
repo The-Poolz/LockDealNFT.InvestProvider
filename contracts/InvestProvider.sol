@@ -12,14 +12,11 @@ contract InvestProvider is InvestInternal {
     using CalcUtils for uint256;
     using SafeERC20 for IERC20;
 
-    /// @dev Constructor to initialize the contract with a `lockDealNFT` and `whiteListRouter`.
+    /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
-    /// @param _router The address of the `IWhiteListRouter` contract.
-    constructor(ILockDealNFT _lockDealNFT, IWhiteListRouter _router) {
+    constructor(ILockDealNFT _lockDealNFT) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
-        if (address(_router) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
-        whiteListRouter = _router;
         name = "InvestProvider";
     }
 
@@ -73,11 +70,7 @@ contract InvestProvider is InvestInternal {
         IDO storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
 
-        whiteListRouter.handleInvestment(
-            msg.sender,
-            poolData.pool.whiteListId,
-            amount
-        );
+        _validateSignature(poolId, amount, data);
         _invest(poolId, amount, poolData, data);
         emit Invested(poolId, msg.sender, amount);
     }
@@ -163,16 +156,25 @@ contract InvestProvider is InvestInternal {
         uint256 newPoolId,
         uint256 ratio
     ) external firewallProtected onlyNFT {
-        uint256 newPoolMaxAmount = poolIdToPool[oldPoolId].pool.maxAmount.calcAmount(ratio);
-        uint256 newPoolLeftAmount = poolIdToPool[oldPoolId].leftAmount.calcAmount(ratio);
+        uint256 newPoolMaxAmount = poolIdToPool[oldPoolId]
+            .pool
+            .maxAmount
+            .calcAmount(ratio);
+        uint256 newPoolLeftAmount = poolIdToPool[oldPoolId]
+            .leftAmount
+            .calcAmount(ratio);
         // reduce the max amount and leftAmount of the old pool
         poolIdToPool[oldPoolId].pool.maxAmount -= newPoolMaxAmount;
         poolIdToPool[oldPoolId].leftAmount -= newPoolLeftAmount;
         // create a new pool with the new settings
         poolIdToPool[newPoolId].pool.maxAmount = newPoolMaxAmount;
         poolIdToPool[newPoolId].leftAmount = newPoolLeftAmount;
-        poolIdToPool[newPoolId].pool.whiteListId = poolIdToPool[oldPoolId].pool.whiteListId;
-        poolIdToPool[newPoolId].pool.investedProvider = poolIdToPool[oldPoolId].pool.investedProvider;
+        poolIdToPool[newPoolId].pool.whiteListId = poolIdToPool[oldPoolId]
+            .pool
+            .whiteListId;
+        poolIdToPool[newPoolId].pool.investedProvider = poolIdToPool[oldPoolId]
+            .pool
+            .investedProvider;
     }
 
     /**

@@ -1,4 +1,4 @@
-import { VaultManagerMock, InvestedProviderMock, InvestProvider, MockRouter } from "../typechain-types"
+import { VaultManagerMock, InvestedProviderMock, InvestProvider } from "../typechain-types"
 import { IInvestProvider } from "../typechain-types/contracts/InvestProvider"
 import { expect } from "chai"
 import { ethers } from "hardhat"
@@ -12,7 +12,6 @@ describe("IDO data tests", function () {
     let sourcePoolId: string
     let mockVaultManager: VaultManagerMock
     let investProvider: InvestProvider
-    let whiteListRouter: MockRouter
     let investedMock: InvestedProviderMock
     let signature = ethers.toUtf8Bytes("signature")
     let owner: SignerWithAddress
@@ -37,10 +36,8 @@ describe("IDO data tests", function () {
         investedMock = await (
             await ethers.getContractFactory("InvestedProviderMock")
         ).deploy(await lockDealNFT.getAddress())
-        const WhiteListRouter = await ethers.getContractFactory("MockRouter")
-        whiteListRouter = await WhiteListRouter.deploy()
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
-        investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress(), await whiteListRouter.getAddress())
+        investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress())
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await investedMock.getAddress(), true)
         // startTime + 24 hours

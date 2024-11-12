@@ -4,16 +4,12 @@ pragma solidity ^0.8.0;
 import "@poolzfinance/lockdeal-nft/contracts/SimpleProviders/Provider/ProviderState.sol";
 import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import "./interfaces/IWhiteListRouter.sol";
 import "./interfaces/IInvestProvider.sol";
 
 /// @title InvestState
 /// @notice Manages the state of investment pools and provides common functions for interacting with them.
 /// @dev Implements IInvestProvider, IERC165, FirewallConsumer, and ProviderState for pool management and security.
 abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, ProviderState {
-    /// @notice The whitelist router for handling investments based on whitelist criteria.
-    IWhiteListRouter public immutable whiteListRouter;
-
     /// @notice Maps pool IDs to their respective investment pool data.
     /// @dev Each pool ID corresponds to an `IDO` struct containing pool details.
     mapping(uint256 => IDO) public poolIdToPool;

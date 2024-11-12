@@ -23,4 +23,12 @@ abstract contract InvestInternal is InvestModifiers {
         data.pool.whiteListId = params[2];
         emit UpdateParams(poolId, params);
     }
+
+    function _validateSignature(
+        uint256 poolId,
+        uint256 amount,
+        bytes calldata data
+    ) internal view {
+        // validate signature
+    }
 }
