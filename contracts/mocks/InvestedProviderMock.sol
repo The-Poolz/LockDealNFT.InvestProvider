@@ -10,8 +10,8 @@ contract InvestedProviderMock is DealProvider, IInvestedProvider {
         name = "InvestedProviderMock";
     }
 
-    function onCreation(uint256 poolId, bytes calldata data) external override {
-        // Do nothing
+    function onCreation(uint256 poolId, address signer, bytes calldata data) external override {
+        lockDealNFT.mintForProvider(signer, this);
     }
 
     function onInvest(

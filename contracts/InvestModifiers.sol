@@ -3,10 +3,15 @@ pragma solidity ^0.8.0;
 
 import "./InvestState.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title InvestModifiers
 /// @notice Provides various modifiers for validating inputs and conditions in investment-related contracts.
 abstract contract InvestModifiers is InvestState {
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
+
     /**
      * @dev Modifier to ensure an address is not the zero address.
      * @param _address The address to check.
@@ -67,6 +72,31 @@ abstract contract InvestModifiers is InvestState {
      */
     modifier validInvestedProvider(IProvider provider) {
         _validInvestedProvider(provider);
+        _;
+    }
+
+    /// @notice Validates the signature provided for the dispense action.
+    /// @dev Reverts with an `InvalidSignature` error if the signature is not valid.
+    /// @param poolId The pool ID for the dispensation.
+    /// @param validUntil The timestamp until which the dispensation is valid.
+    /// @param amount The amount to dispense.
+    /// @param signature The cryptographic signature to verify.
+    modifier isValidSignature(
+        uint256 poolId,
+        uint256 validUntil,
+        uint256 amount,
+        bytes calldata signature
+    ) {
+        address signer = lockDealNFT.getData(poolId + 1).owner;
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(poolId, msg.sender, validUntil, amount)
+        );
+        address expectedSigner = messageHash.toEthSignedMessageHash().recover(
+            signature
+        );
+        if (signer != expectedSigner) {
+            revert InvalidSignature(poolId, msg.sender);
+        }
         _;
     }
 

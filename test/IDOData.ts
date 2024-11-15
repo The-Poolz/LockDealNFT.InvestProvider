@@ -16,14 +16,16 @@ describe("IDO data tests", function () {
     let signature = ethers.toUtf8Bytes("signature")
     let owner: SignerWithAddress
     let user: SignerWithAddress
+    let signer: SignerWithAddress
+    let signerAddress: string
     let lockDealNFT: LockDealNFT
     let amount = ethers.parseUnits("100", 18)
     let maxAmount = ethers.parseUnits("1000", 18)
     let IDOSettings: IInvestProvider.PoolStruct
-    let poolId: string
+    let poolId: bigint
 
     before(async () => {
-        [owner, user] = await ethers.getSigners()
+        [owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
@@ -43,21 +45,21 @@ describe("IDO data tests", function () {
         // startTime + 24 hours
         IDOSettings = {
             maxAmount: maxAmount,
-            whiteListId: 0,
             investedProvider: await investedMock.getAddress(),
         }
         // create source pool
         await investedMock.createNewPool([await user.getAddress(), await USDT.getAddress()], [amount], signature)
         sourcePoolId = "0"
+        signerAddress = await signer.getAddress()
     })
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.createNewPool(IDOSettings, ethers.toUtf8Bytes(""), sourcePoolId)
+        await investProvider.createNewPool(IDOSettings, signer, ethers.toUtf8Bytes(""), sourcePoolId)
     })
 
     it("should return currentParamsTargetLength", async () => {
-        expect(await investProvider.currentParamsTargetLength()).to.equal(3)
+        expect(await investProvider.currentParamsTargetLength()).to.equal(2)
     })
 
     it("should return getSubProvidersPoolIds", async () => {
@@ -68,7 +70,6 @@ describe("IDO data tests", function () {
         const poolData = await investProvider.getParams(poolId)
         expect(poolData[0]).to.equal(maxAmount)
         expect(poolData[1]).to.equal(maxAmount)
-        expect(poolData[2]).to.equal(0)
     })
 
     it("should return getWithdrawableAmount", async () => {

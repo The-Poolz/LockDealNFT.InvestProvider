@@ -25,7 +25,7 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
         override(IProvider, ProviderState)
         returns (uint256)
     {
-        return 3;
+        return 2;
     }
 
     /**

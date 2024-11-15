@@ -23,6 +23,7 @@ contract InvestProvider is InvestInternal {
     /**
      * @notice Creates a new investment pool and registers it.
      * @param pool The pool configuration, including `maxAmount`, `whiteListId`, and `investedProvider`.
+     * @param signer The address of the signer for the pool creation.
      * @param data Additional data for the pool creation.
      * @param sourcePoolId The ID of the source pool to token clone.
      * @return poolId The ID of the newly created pool.
@@ -30,6 +31,7 @@ contract InvestProvider is InvestInternal {
      */
     function createNewPool(
         Pool calldata pool,
+        address signer,
         bytes calldata data,
         uint256 sourcePoolId
     )
@@ -45,7 +47,7 @@ contract InvestProvider is InvestInternal {
         lockDealNFT.cloneVaultId(poolId, sourcePoolId);
         poolIdToPool[poolId].pool = pool;
         poolIdToPool[poolId].leftAmount = pool.maxAmount;
-        pool.investedProvider.onCreation(poolId, data);
+        pool.investedProvider.onCreation(poolId, signer, data);
         emit NewPoolCreated(poolId, poolIdToPool[poolId]);
     }
 
@@ -53,12 +55,16 @@ contract InvestProvider is InvestInternal {
      * @notice Allows an address to invest a specified amount into a pool.
      * @param poolId The ID of the pool to invest in.
      * @param amount The amount to invest.
+     * @param signature The signature to validate the investment.
+     * @param validUntil The expiration time for the signature.
      * @param data Additional data for the investment.
      * @dev Emits the `Invested` event after a successful investment.
      */
     function invest(
         uint256 poolId,
         uint256 amount,
+        uint256 validUntil,
+        bytes calldata signature,
         bytes calldata data
     )
         external
@@ -66,11 +72,11 @@ contract InvestProvider is InvestInternal {
         firewallProtected
         notZeroAmount(amount)
         invalidProvider(poolId, this)
+        isValidSignature(poolId, validUntil, amount, signature)
     {
         IDO storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
 
-        _validateSignature(poolId, amount, data);
         _invest(poolId, amount, poolData, data);
         emit Invested(poolId, msg.sender, amount);
     }
@@ -127,10 +133,9 @@ contract InvestProvider is InvestInternal {
         uint256 poolId
     ) external view returns (uint256[] memory params) {
         IDO storage poolData = poolIdToPool[poolId];
-        params = new uint256[](3);
+        params = new uint256[](2);
         params[0] = poolData.pool.maxAmount;
         params[1] = poolData.leftAmount;
-        params[2] = poolData.pool.whiteListId;
     }
 
     /**
@@ -156,25 +161,15 @@ contract InvestProvider is InvestInternal {
         uint256 newPoolId,
         uint256 ratio
     ) external firewallProtected onlyNFT {
-        uint256 newPoolMaxAmount = poolIdToPool[oldPoolId]
-            .pool
-            .maxAmount
-            .calcAmount(ratio);
-        uint256 newPoolLeftAmount = poolIdToPool[oldPoolId]
-            .leftAmount
-            .calcAmount(ratio);
+        uint256 newPoolMaxAmount = poolIdToPool[oldPoolId].pool.maxAmount.calcAmount(ratio);
+        uint256 newPoolLeftAmount = poolIdToPool[oldPoolId].leftAmount.calcAmount(ratio);
         // reduce the max amount and leftAmount of the old pool
         poolIdToPool[oldPoolId].pool.maxAmount -= newPoolMaxAmount;
         poolIdToPool[oldPoolId].leftAmount -= newPoolLeftAmount;
         // create a new pool with the new settings
         poolIdToPool[newPoolId].pool.maxAmount = newPoolMaxAmount;
         poolIdToPool[newPoolId].leftAmount = newPoolLeftAmount;
-        poolIdToPool[newPoolId].pool.whiteListId = poolIdToPool[oldPoolId]
-            .pool
-            .whiteListId;
-        poolIdToPool[newPoolId].pool.investedProvider = poolIdToPool[oldPoolId]
-            .pool
-            .investedProvider;
+        poolIdToPool[newPoolId].pool.investedProvider = poolIdToPool[oldPoolId].pool.investedProvider;
     }
 
     /**

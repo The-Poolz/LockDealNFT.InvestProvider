@@ -21,6 +21,8 @@ interface IInvestProvider is IProvider {
     function invest(
         uint256 poolId,
         uint256 amount,
+        uint256 validUntil,
+        bytes calldata signature,
         bytes calldata data
     ) external;
 
@@ -35,6 +37,7 @@ interface IInvestProvider is IProvider {
      */
     function createNewPool(
         Pool calldata pool,
+        address signer,
         bytes calldata data,
         uint256 sourcePoolId
     ) external returns (uint256 poolId);
@@ -52,7 +55,6 @@ interface IInvestProvider is IProvider {
      */
     struct Pool {
         uint256 maxAmount; // The maximum amount of tokens that can be invested in the pool
-        uint256 whiteListId; // The ID of the whitelist that governs who can invest
         IInvestedProvider investedProvider; // The provider that manages the invested funds for this pool
     }
 
@@ -84,4 +86,5 @@ interface IInvestProvider is IProvider {
     error NoZeroAmount();
     error ExceededLeftAmount();
     error InvalidParamsLength(uint256 paramsLength, uint256 minLength);
+    error InvalidSignature(uint256 poolId, address owner);
 }

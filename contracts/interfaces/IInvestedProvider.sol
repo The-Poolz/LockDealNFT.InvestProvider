@@ -13,9 +13,10 @@ interface IInvestedProvider is IProvider {
      * @notice Called when a new investment pool is created.
      * @dev This function is expected to handle any setup or initialization logic for the new pool.
      * @param poolId The ID of the pool being created.
+     * @param signer The address that signed the creation transaction.
      * @param data Additional data passed during the creation of the pool.
      */
-    function onCreation(uint256 poolId, bytes calldata data) external;
+    function onCreation(uint256 poolId, address signer, bytes calldata data) external;
 
     /**
      * @notice Called when an investment is made in the pool.

@@ -20,15 +20,7 @@ abstract contract InvestInternal is InvestModifiers {
         IDO storage data = poolIdToPool[poolId];
         data.pool.maxAmount = params[0];
         data.leftAmount = params[1];
-        data.pool.whiteListId = params[2];
         emit UpdateParams(poolId, params);
     }
 
-    function _validateSignature(
-        uint256 poolId,
-        uint256 amount,
-        bytes calldata data
-    ) internal view {
-        // validate signature
-    }
 }
