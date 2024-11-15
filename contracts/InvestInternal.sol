@@ -22,5 +22,4 @@ abstract contract InvestInternal is InvestModifiers {
         data.leftAmount = params[1];
         emit UpdateParams(poolId, params);
     }
-
 }

@@ -115,4 +115,15 @@ describe("IDO investment tests", function () {
             investProvider.invest(poolId, maxAmount + 1n, validUntil, signature, ethers.toUtf8Bytes(""))
         ).to.be.revertedWithCustomError(investProvider, "ExceededLeftAmount")
     })
+
+    it("should revert invalid signature", async () => {
+        const packedData = ethers.solidityPackedKeccak256(
+            ["uint256", "address", "uint256", "uint256"],
+            [poolId, await owner.getAddress(), validUntil, amount]
+        )
+        const signature = await signer.signMessage(ethers.getBytes(packedData))
+        await expect(
+            investProvider.invest(poolId, amount, validUntil += 1, signature, ethers.toUtf8Bytes(""))
+        ).to.be.revertedWithCustomError(investProvider, "InvalidSignature")
+    })
 })
