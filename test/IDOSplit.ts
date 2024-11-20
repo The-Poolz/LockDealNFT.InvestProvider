@@ -26,7 +26,6 @@ describe("IDO split tests", function () {
     let ratio: bigint
     let packedData: string
     let vaultId: string
-    const whiteListId = 1
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()

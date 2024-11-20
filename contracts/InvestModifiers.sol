@@ -66,15 +66,6 @@ abstract contract InvestModifiers is InvestState {
         _;
     }
 
-    /**
-     * @dev Modifier to check that the provider implements the IInvestedProvider interface.
-     * @param provider The provider address to validate.
-     */
-    modifier validInvestedProvider(IProvider provider) {
-        _validInvestedProvider(provider);
-        _;
-    }
-
     /// @notice Validates the signature provided for the dispense action.
     /// @dev Reverts with an `InvalidSignature` error if the signature is not valid.
     /// @param poolId The pool ID for the dispensation.
@@ -161,19 +152,5 @@ abstract contract InvestModifiers is InvestState {
      */
     function _notZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert NoZeroAddress();
-    }
-
-    /**
-     * @notice Verifies that the given provider implements the `IInvestedProvider` interface.
-     * @param provider The provider address to validate.
-     * @dev Uses `ERC165Checker` to check for interface support and reverts with `InvalidInvestedProvider` if not supported.
-     */
-    function _validInvestedProvider(IProvider provider) internal view {
-        if (
-            !ERC165Checker.supportsInterface(
-                address(provider),
-                type(IInvestedProvider).interfaceId
-            )
-        ) revert InvalidInvestedProvider();
     }
 }

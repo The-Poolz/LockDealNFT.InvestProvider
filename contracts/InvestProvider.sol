@@ -3,51 +3,74 @@ pragma solidity ^0.8.0;
 
 import "./InvestInternal.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title InvestProvider
-/// @notice This contract provides functionality for creating investment pools, managing investments, and interacting with whitelisted users.
+/// @notice This contract provides functionality for creating investment pools, managing investments.
 /// @dev Inherits from `InvestInternal` and includes logic to create, invest, and split pools, as well as withdraw funds. It uses `SafeERC20` for token transfers and `CalcUtils` for mathematical operations.
 contract InvestProvider is InvestInternal {
     using CalcUtils for uint256;
-    using SafeERC20 for IERC20;
 
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
-    constructor(ILockDealNFT _lockDealNFT) {
+    /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
+    constructor(ILockDealNFT _lockDealNFT, IProvider _dispenserProvider) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
+        if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
+        dispenserProvider = _dispenserProvider;
         name = "InvestProvider";
     }
 
     /**
      * @notice Creates a new investment pool and registers it.
-     * @param pool The pool configuration, including `maxAmount`, `whiteListId`, and `investedProvider`.
-     * @param signer The address of the signer for the pool creation.
-     * @param data Additional data for the pool creation.
+     * @param poolAmount The amount to allocate to the pool.
+     * @param investSigner The address of the signer for investments.
+     * @param dispenserSigner The address of the signer for dispenses.
      * @param sourcePoolId The ID of the source pool to token clone.
      * @return poolId The ID of the newly created pool.
      * @dev Emits the `NewPoolCreated` event upon successful creation.
      */
     function createNewPool(
-        Pool calldata pool,
-        address signer,
-        bytes calldata data,
+        uint256 poolAmount,
+        address investSigner,
+        address dispenserSigner,
         uint256 sourcePoolId
     )
         external
         override
         firewallProtected
-        notZeroAmount(pool.maxAmount)
-        notZeroAddress(address(pool.investedProvider))
-        validInvestedProvider(pool.investedProvider)
+        notZeroAddress(investSigner)
+        notZeroAddress(dispenserSigner)
+        notZeroAmount(poolAmount)
         returns (uint256 poolId)
     {
-        poolId = lockDealNFT.mintForProvider(msg.sender, this);
-        lockDealNFT.cloneVaultId(poolId, sourcePoolId);
-        poolIdToPool[poolId].pool = pool;
-        poolIdToPool[poolId].leftAmount = pool.maxAmount;
-        pool.investedProvider.onCreation(poolId, signer, data);
+        uint256 investPoolId = _createPool(
+            investSigner,
+            dispenserSigner,
+            sourcePoolId
+        );
+        poolIdToPool[investPoolId].maxAmount = poolAmount;
+        poolIdToPool[investPoolId].leftAmount = poolAmount;
+        emit NewPoolCreated(poolId, poolIdToPool[poolId]);
+    }
+
+    function createNewPool(
+        uint256 poolAmount,
+        uint256 sourcePoolId
+    )
+        external
+        override
+        firewallProtected
+        notZeroAmount(poolAmount)
+        returns (uint256 poolId)
+    {
+        uint256 investPoolId = _createPool(
+            msg.sender,
+            msg.sender,
+            sourcePoolId
+        );
+        poolIdToPool[investPoolId].maxAmount = poolAmount;
+        poolIdToPool[investPoolId].leftAmount = poolAmount;
         emit NewPoolCreated(poolId, poolIdToPool[poolId]);
     }
 
@@ -57,15 +80,13 @@ contract InvestProvider is InvestInternal {
      * @param amount The amount to invest.
      * @param signature The signature to validate the investment.
      * @param validUntil The expiration time for the signature.
-     * @param data Additional data for the investment.
      * @dev Emits the `Invested` event after a successful investment.
      */
     function invest(
         uint256 poolId,
         uint256 amount,
         uint256 validUntil,
-        bytes calldata signature,
-        bytes calldata data
+        bytes calldata signature
     )
         external
         override
@@ -77,38 +98,14 @@ contract InvestProvider is InvestInternal {
         IDO storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
 
-        _invest(poolId, amount, poolData, data);
+        _invest(poolId, amount, poolData);
         emit Invested(poolId, msg.sender, amount);
-    }
-
-    /**
-     * @notice Internal function to process the investment by transferring tokens to the invested provider.
-     * @param poolId The ID of the pool being invested in.
-     * @param amount The amount being invested.
-     * @param pool The pool data associated with the investment.
-     * @param data Additional data for the investment.
-     * @dev Reduces the left amount of the pool and calls the `onInvest` method of the invested provider.
-     */
-    function _invest(
-        uint256 poolId,
-        uint256 amount,
-        IDO storage pool,
-        bytes calldata data
-    ) internal {
-        IERC20 token = IERC20(lockDealNFT.tokenOf(poolId));
-        token.safeTransferFrom(
-            msg.sender,
-            address(pool.pool.investedProvider),
-            amount
-        );
-        pool.pool.investedProvider.onInvest(poolId, amount, data);
-        pool.leftAmount -= amount;
     }
 
     /**
      * @notice Registers a new pool with the specified parameters.
      * @param poolId The ID of the pool to register.
-     * @param params The parameters for the pool, including `maxAmount`, `leftAmount`, and `whiteListId`.
+     * @param params The parameters for the pool, including `maxAmount`, `leftAmount`
      * @dev Ensures that the parameters match the expected length and are valid.
      */
     function registerPool(
@@ -127,14 +124,14 @@ contract InvestProvider is InvestInternal {
     /**
      * @notice Retrieves the current parameters for a pool.
      * @param poolId The ID of the pool to fetch parameters for.
-     * @return params The parameters for the pool, including `maxAmount`, `leftAmount`, and `whiteListId`.
+     * @return params The parameters for the pool, including `maxAmount`, `leftAmount``.
      */
     function getParams(
         uint256 poolId
-    ) external view returns (uint256[] memory params) {
+    ) external view override returns (uint256[] memory params) {
         IDO storage poolData = poolIdToPool[poolId];
         params = new uint256[](2);
-        params[0] = poolData.pool.maxAmount;
+        params[0] = poolData.maxAmount;
         params[1] = poolData.leftAmount;
     }
 
@@ -161,15 +158,14 @@ contract InvestProvider is InvestInternal {
         uint256 newPoolId,
         uint256 ratio
     ) external firewallProtected onlyNFT {
-        uint256 newPoolMaxAmount = poolIdToPool[oldPoolId].pool.maxAmount.calcAmount(ratio);
+        uint256 newPoolMaxAmount = poolIdToPool[oldPoolId].maxAmount.calcAmount(ratio);
         uint256 newPoolLeftAmount = poolIdToPool[oldPoolId].leftAmount.calcAmount(ratio);
         // reduce the max amount and leftAmount of the old pool
-        poolIdToPool[oldPoolId].pool.maxAmount -= newPoolMaxAmount;
+        poolIdToPool[oldPoolId].maxAmount -= newPoolMaxAmount;
         poolIdToPool[oldPoolId].leftAmount -= newPoolLeftAmount;
         // create a new pool with the new settings
-        poolIdToPool[newPoolId].pool.maxAmount = newPoolMaxAmount;
+        poolIdToPool[newPoolId].maxAmount = newPoolMaxAmount;
         poolIdToPool[newPoolId].leftAmount = newPoolLeftAmount;
-        poolIdToPool[newPoolId].pool.investedProvider = poolIdToPool[oldPoolId].pool.investedProvider;
     }
 
     /**

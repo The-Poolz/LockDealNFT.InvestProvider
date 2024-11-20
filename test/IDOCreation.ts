@@ -1,4 +1,4 @@
-import { VaultManagerMock, InvestedProviderMock, InvestProvider } from "../typechain-types"
+import { VaultManagerMock, InvestProvider } from "../typechain-types"
 import { IInvestProvider } from "../typechain-types/contracts/InvestProvider"
 import { expect } from "chai"
 import { ethers } from "hardhat"
@@ -12,7 +12,6 @@ describe("IDO creation tests", function () {
     let sourcePoolId: string
     let mockVaultManager: VaultManagerMock
     let investProvider: InvestProvider
-    let investedMock: InvestedProviderMock
     let signature = ethers.toUtf8Bytes("signature")
     let owner: SignerWithAddress
     let user: SignerWithAddress
@@ -20,31 +19,19 @@ describe("IDO creation tests", function () {
     let signerAddress: string
     let lockDealNFT: LockDealNFT
     let amount = ethers.parseUnits("100", 18)
-    let IDOSettings: IInvestProvider.PoolStruct
     let poolId: bigint
 
     before(async () => {
-        [owner, user, signer] = await ethers.getSigners()
+        ;[owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
         mockVaultManager = await (await ethers.getContractFactory("VaultManagerMock")).deploy()
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
         lockDealNFT = (await LockDealNFTFactory.deploy(await mockVaultManager.getAddress(), "")) as LockDealNFT
-        investedMock = await (
-            await ethers.getContractFactory("InvestedProviderMock")
-        ).deploy(await lockDealNFT.getAddress())
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress())
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
-        await lockDealNFT.setApprovedContract(await investedMock.getAddress(), true)
-        // startTime + 24 hours
-        IDOSettings = {
-            maxAmount: amount,
-            investedProvider: await investedMock.getAddress(),
-        }
-        // create source pool
-        await investedMock.createNewPool([await user.getAddress(), await USDT.getAddress()], [amount], signature)
         // create source pool
         signerAddress = await signer.getAddress()
         sourcePoolId = "0"
@@ -52,62 +39,33 @@ describe("IDO creation tests", function () {
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.connect(owner).createNewPool(IDOSettings, signerAddress, ethers.toUtf8Bytes(""), sourcePoolId)
+        await investProvider.connect(owner).createNewPool(amount, signerAddress, sourcePoolId)
     })
 
     it("should create new IDO", async () => {
         const data = await investProvider.poolIdToPool(poolId)
-        expect(data.pool.maxAmount).to.equal(amount)
-        expect(data.leftAmount).to.equal(amount)
-        expect(data.pool.investedProvider).to.equal(IDOSettings.investedProvider)
+        expect(data.maxAmount).to.equal(amount)
+        //expect(data.leftAmount).to.equal(amount)
     })
 
     it("should emit NewPoolCreated event", async () => {
         poolId = await lockDealNFT.totalSupply()
-        const tx = await investProvider.createNewPool(IDOSettings, signerAddress, ethers.toUtf8Bytes(""), sourcePoolId)
+        const tx = await investProvider.createNewPool(amount, signerAddress, sourcePoolId)
         await tx.wait()
         const events = await investProvider.queryFilter(investProvider.filters.NewPoolCreated())
         await expect(events[events.length - 1].args.poolId).to.equal(poolId)
-        await expect(events[events.length - 1].args.pool.pool.maxAmount).to.equal(IDOSettings.maxAmount)
-        await expect(events[events.length - 1].args.pool.leftAmount).to.equal(IDOSettings.maxAmount)
-        await expect(events[events.length - 1].args.pool.pool.investedProvider).to.equal(IDOSettings.investedProvider)
+        await expect(events[events.length - 1].args.pool.maxAmount).to.equal(amount)
+        await expect(events[events.length - 1].args.pool.leftAmount).to.equal(amount)
     })
 
     it("should revert zero max amount", async () => {
         await expect(
-            investProvider.createNewPool(
-                { ...IDOSettings, maxAmount: ethers.toBigInt(0) },
-                signerAddress,
-                ethers.toUtf8Bytes(""),
-                sourcePoolId
-            )
+            investProvider.createNewPool(ethers.toBigInt(0), signerAddress, sourcePoolId)
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAmount")
-    })
-
-    it("should revert zero invested provider address", async () => {
-        await expect(
-            investProvider.createNewPool(
-                { ...IDOSettings, investedProvider: ethers.ZeroAddress },
-                signerAddress,
-                ethers.toUtf8Bytes(""),
-                sourcePoolId
-            )
-        ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
 
     it("should support IInvestProvider interface", async () => {
         expect(await investProvider.supportsInterface("0x8658d6bd")).to.equal(true)
-    })
-
-    it("should revert invalid investedProvider", async () => {
-        await expect(
-            investProvider.createNewPool(
-                { ...IDOSettings, investedProvider: await owner.getAddress() },
-                signerAddress,
-                ethers.toUtf8Bytes(""),
-                sourcePoolId
-            )
-        ).to.be.revertedWithCustomError(investProvider, "InvalidInvestedProvider")
     })
 
     // @dev withdraw is not implemented in the contract right now
@@ -133,13 +91,6 @@ describe("IDO creation tests", function () {
             investProvider,
             "OnlyLockDealNFT"
         )
-    })
-
-    it("should call register from another provider", async () => {
-        await investedMock.callRegister(await investProvider.getAddress(), poolId, [0, 0])
-        const updatedData = await investProvider.getParams(poolId)
-        expect(updatedData[0]).to.be.equal(0)
-        expect(updatedData[1]).to.be.equal(0)
     })
 
     it("should revert call register not from approved provider", async () => {

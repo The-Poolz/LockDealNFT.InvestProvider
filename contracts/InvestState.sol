@@ -14,6 +14,8 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
     /// @dev Each pool ID corresponds to an `IDO` struct containing pool details.
     mapping(uint256 => IDO) public poolIdToPool;
 
+    IProvider public immutable dispenserProvider;
+
     /**
      * @notice Returns the expected length of parameters required for pool functions.
      * @dev This function overrides `currentParamsTargetLength` from both `IProvider` and `ProviderState`.

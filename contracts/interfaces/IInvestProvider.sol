@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./IInvestedProvider.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/interfaces/IProvider.sol";
 
 /**
@@ -13,32 +12,43 @@ interface IInvestProvider is IProvider {
     /**
      * @notice Allows an address to invest in a specific IDO (Initial DEX Offering) pool.
      * @dev The function is used to transfer a specified amount of tokens into the pool.
-     * It will trigger an investment in the associated provider, which implements the IInvestedProvider interface.
      * @param poolId The ID of the pool where the investment will occur.
      * @param amount The amount of tokens to be invested in the pool.
-     * @param data Additional data associated with the investment process.
      */
     function invest(
         uint256 poolId,
         uint256 amount,
         uint256 validUntil,
-        bytes calldata signature,
-        bytes calldata data
+        bytes calldata signature
     ) external;
 
     /**
      * @notice Creates a new investment pool.
      * @dev This function is used to create a new pool with the specified parameters, copying the settings of an existing source pool.
      * It will initialize the new pool with the given details and return its poolId.
-     * @param pool The pool details to create the new pool.
-     * @param data Additional data associated with the pool creation.
+     * @param poolAmount The maximum amount of tokens that can be invested in the pool.
+     * @param investSigner The address of the signer for investments.
+     * @param dispenserSigner The address of the signer for dispenses.
      * @param sourcePoolId The ID of the source pool to copy settings from.
      * @return poolId The ID of the newly created pool.
      */
     function createNewPool(
-        Pool calldata pool,
-        address signer,
-        bytes calldata data,
+        uint256 poolAmount,
+        address investSigner,
+        address dispenserSigner,
+        uint256 sourcePoolId
+    ) external returns (uint256 poolId);
+
+    /**
+     * @notice Creates a new investment pool.
+     * @dev This function is used to create a new pool with the specified parameters, copying the settings of an existing source pool.
+     * It will initialize the new pool with the given details and return its poolId.
+     * @param poolAmount The maximum amount of tokens that can be invested in the pool.
+     * @param sourcePoolId The ID of the source pool to copy settings from.
+     * @return poolId The ID of the newly created pool.
+     */
+    function createNewPool(
+        uint256 poolAmount,
         uint256 sourcePoolId
     ) external returns (uint256 poolId);
 
@@ -46,16 +56,8 @@ interface IInvestProvider is IProvider {
      * @dev Struct that represents an IDO pool, which contains the pool's configuration and the remaining investment amount.
      */
     struct IDO {
-        Pool pool; // The pool configuration (maxAmount, whitelistId, investedProvider)
-        uint256 leftAmount; // The amount of tokens left to invest in the pool
-    }
-
-    /**
-     * @dev Struct that defines the pool configuration, including max investment amount, whitelist ID, and invested provider.
-     */
-    struct Pool {
         uint256 maxAmount; // The maximum amount of tokens that can be invested in the pool
-        IInvestedProvider investedProvider; // The provider that manages the invested funds for this pool
+        uint256 leftAmount; // The amount of tokens left to invest in the pool
     }
 
     /**
@@ -78,7 +80,6 @@ interface IInvestProvider is IProvider {
     event NewPoolCreated(uint256 indexed poolId, IDO pool);
 
     error InvalidLockDealNFT();
-    error InvalidInvestedProvider();
     error InvalidProvider();
     error InvalidPoolId();
     error OnlyLockDealNFT();
