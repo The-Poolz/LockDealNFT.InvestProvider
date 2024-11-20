@@ -1,4 +1,4 @@
-import { VaultManagerMock, InvestedProviderMock, InvestProvider } from "../typechain-types"
+import { VaultManagerMock, InvestProvider } from "../typechain-types"
 import { IInvestProvider } from "../typechain-types/contracts/InvestProvider"
 import { expect } from "chai"
 import { ethers } from "hardhat"
@@ -12,16 +12,12 @@ describe("IDO data tests", function () {
     let sourcePoolId: string
     let mockVaultManager: VaultManagerMock
     let investProvider: InvestProvider
-    let investedMock: InvestedProviderMock
-    let signature = ethers.toUtf8Bytes("signature")
     let owner: SignerWithAddress
     let user: SignerWithAddress
     let signer: SignerWithAddress
     let signerAddress: string
     let lockDealNFT: LockDealNFT
-    let amount = ethers.parseUnits("100", 18)
     let maxAmount = ethers.parseUnits("1000", 18)
-    let IDOSettings: IInvestProvider.PoolStruct
     let poolId: bigint
 
     before(async () => {
@@ -32,30 +28,21 @@ describe("IDO data tests", function () {
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
         mockVaultManager = await (await ethers.getContractFactory("VaultManagerMock")).deploy()
         lockDealNFT = (await LockDealNFTFactory.deploy(await mockVaultManager.getAddress(), "")) as LockDealNFT
-        investedMock = await (
-            await ethers.getContractFactory("InvestedProviderMock")
-        ).deploy(await lockDealNFT.getAddress())
-        investedMock = await (
-            await ethers.getContractFactory("InvestedProviderMock")
-        ).deploy(await lockDealNFT.getAddress())
+        const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
+        const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
-        investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress())
+        investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress())
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
-        await lockDealNFT.setApprovedContract(await investedMock.getAddress(), true)
-        // startTime + 24 hours
-        IDOSettings = {
-            maxAmount: maxAmount,
-            investedProvider: await investedMock.getAddress(),
-        }
+        await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
+        // startTime + 24 hour
         // create source pool
-        await investedMock.createNewPool([await user.getAddress(), await USDT.getAddress()], [amount], signature)
         sourcePoolId = "0"
         signerAddress = await signer.getAddress()
     })
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.createNewPool(IDOSettings, signer, ethers.toUtf8Bytes(""), sourcePoolId)
+        await investProvider.createNewPool(maxAmount, signer, signer, sourcePoolId)
     })
 
     it("should return currentParamsTargetLength", async () => {

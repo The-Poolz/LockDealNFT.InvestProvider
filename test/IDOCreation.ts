@@ -22,7 +22,7 @@ describe("IDO creation tests", function () {
     let poolId: bigint
 
     before(async () => {
-        ;[owner, user, signer] = await ethers.getSigners()
+        [owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
@@ -30,8 +30,11 @@ describe("IDO creation tests", function () {
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
         lockDealNFT = (await LockDealNFTFactory.deploy(await mockVaultManager.getAddress(), "")) as LockDealNFT
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
-        investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress())
+        const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
+        const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
+        investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress())
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
         // create source pool
         signerAddress = await signer.getAddress()
         sourcePoolId = "0"
@@ -39,18 +42,18 @@ describe("IDO creation tests", function () {
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.connect(owner).createNewPool(amount, signerAddress, sourcePoolId)
+        await investProvider.connect(owner).createNewPool(amount, signerAddress, signerAddress, sourcePoolId)
     })
 
     it("should create new IDO", async () => {
         const data = await investProvider.poolIdToPool(poolId)
         expect(data.maxAmount).to.equal(amount)
-        //expect(data.leftAmount).to.equal(amount)
+        expect(data.leftAmount).to.equal(amount)
     })
 
     it("should emit NewPoolCreated event", async () => {
         poolId = await lockDealNFT.totalSupply()
-        const tx = await investProvider.createNewPool(amount, signerAddress, sourcePoolId)
+        const tx = await investProvider.createNewPool(amount, signerAddress, signerAddress, sourcePoolId)
         await tx.wait()
         const events = await investProvider.queryFilter(investProvider.filters.NewPoolCreated())
         await expect(events[events.length - 1].args.poolId).to.equal(poolId)
@@ -60,12 +63,12 @@ describe("IDO creation tests", function () {
 
     it("should revert zero max amount", async () => {
         await expect(
-            investProvider.createNewPool(ethers.toBigInt(0), signerAddress, sourcePoolId)
+            investProvider.createNewPool(ethers.toBigInt(0), signerAddress, signerAddress, sourcePoolId)
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAmount")
     })
 
     it("should support IInvestProvider interface", async () => {
-        expect(await investProvider.supportsInterface("0x8658d6bd")).to.equal(true)
+        expect(await investProvider.supportsInterface("0x16615bcc")).to.equal(true)
     })
 
     // @dev withdraw is not implemented in the contract right now

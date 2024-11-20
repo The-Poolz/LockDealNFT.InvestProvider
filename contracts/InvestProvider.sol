@@ -44,13 +44,13 @@ contract InvestProvider is InvestInternal {
         notZeroAmount(poolAmount)
         returns (uint256 poolId)
     {
-        uint256 investPoolId = _createPool(
+        poolId = _createPool(
             investSigner,
             dispenserSigner,
             sourcePoolId
         );
-        poolIdToPool[investPoolId].maxAmount = poolAmount;
-        poolIdToPool[investPoolId].leftAmount = poolAmount;
+        poolIdToPool[poolId].maxAmount = poolAmount;
+        poolIdToPool[poolId].leftAmount = poolAmount;
         emit NewPoolCreated(poolId, poolIdToPool[poolId]);
     }
 
@@ -64,13 +64,13 @@ contract InvestProvider is InvestInternal {
         notZeroAmount(poolAmount)
         returns (uint256 poolId)
     {
-        uint256 investPoolId = _createPool(
+        poolId = _createPool(
             msg.sender,
             msg.sender,
             sourcePoolId
         );
-        poolIdToPool[investPoolId].maxAmount = poolAmount;
-        poolIdToPool[investPoolId].leftAmount = poolAmount;
+        poolIdToPool[poolId].maxAmount = poolAmount;
+        poolIdToPool[poolId].leftAmount = poolAmount;
         emit NewPoolCreated(poolId, poolIdToPool[poolId]);
     }
 
