@@ -68,7 +68,11 @@ abstract contract InvestInternal is InvestModifiers {
         //     vault,
         //     amount
         // );
-        // register dispenser
         pool.leftAmount -= amount;
+        uint256[] memory dispenserParams = dispenserProvider.getParams(
+            poolId + 1
+        );
+        dispenserParams[0] += amount;
+        dispenserProvider.registerPool(poolId + 1, dispenserParams);
     }
 }

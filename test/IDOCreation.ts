@@ -32,7 +32,10 @@ describe("IDO creation tests", function () {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
-        investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress())
+        investProvider = await InvestProvider.deploy(
+            await lockDealNFT.getAddress(),
+            await dispenserProvider.getAddress()
+        )
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
         // create source pool
@@ -59,6 +62,22 @@ describe("IDO creation tests", function () {
         await expect(events[events.length - 1].args.poolId).to.equal(poolId)
         await expect(events[events.length - 1].args.pool.maxAmount).to.equal(amount)
         await expect(events[events.length - 1].args.pool.leftAmount).to.equal(amount)
+    })
+
+    it("should set msg.sender as the owner of the investProvider NFT after creating a new pool", async () => {
+        const ownerAdress = await owner.getAddress()
+        const poolId = await lockDealNFT.totalSupply()
+        // create new pool
+        await investProvider.createNewPool(amount, sourcePoolId)
+        expect(await lockDealNFT.ownerOf(poolId)).to.equal(ownerAdress)
+    })
+
+    it("should set msg.sender as the owner of the dispenserProvider NFT after creating a new pool", async () => {
+        const ownerAdress = await owner.getAddress()
+        const poolId = await lockDealNFT.totalSupply()
+        // create new pool
+        await investProvider.createNewPool(amount, sourcePoolId)
+        expect(await lockDealNFT.ownerOf(poolId + 1n)).to.equal(ownerAdress)
     })
 
     it("should revert zero max amount", async () => {
