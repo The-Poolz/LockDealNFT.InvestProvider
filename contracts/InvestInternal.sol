@@ -19,6 +19,7 @@ abstract contract InvestInternal is InvestModifiers {
      * @dev Emits the `UpdateParams` event after updating the pool data.
      */
     function _registerPool(uint256 poolId, uint256[] calldata params) internal {
+        if (params[0] < params[1]) revert InvalidParams();
         IDO storage data = poolIdToPool[poolId];
         data.maxAmount = params[0];
         data.leftAmount = params[1];

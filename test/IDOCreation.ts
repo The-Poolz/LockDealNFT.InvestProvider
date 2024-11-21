@@ -1,5 +1,4 @@
-import { VaultManagerMock, InvestProvider } from "../typechain-types"
-import { IInvestProvider } from "../typechain-types/contracts/InvestProvider"
+import { VaultManagerMock, InvestProvider, ProviderMock } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -12,7 +11,7 @@ describe("IDO creation tests", function () {
     let sourcePoolId: string
     let mockVaultManager: VaultManagerMock
     let investProvider: InvestProvider
-    let signature = ethers.toUtf8Bytes("signature")
+    let providerMock: ProviderMock
     let owner: SignerWithAddress
     let user: SignerWithAddress
     let signer: SignerWithAddress
@@ -36,8 +35,11 @@ describe("IDO creation tests", function () {
             await lockDealNFT.getAddress(),
             await dispenserProvider.getAddress()
         )
+        const ProviderMock = await ethers.getContractFactory("ProviderMock")
+        providerMock = await ProviderMock.deploy(await lockDealNFT.getAddress())
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await providerMock.getAddress(), true)
         // create source pool
         signerAddress = await signer.getAddress()
         sourcePoolId = "0"
@@ -78,6 +80,15 @@ describe("IDO creation tests", function () {
         // create new pool
         await investProvider.createNewPool(amount, sourcePoolId)
         expect(await lockDealNFT.ownerOf(poolId + 1n)).to.equal(ownerAdress)
+    })
+
+    it("should call register from another provider", async () => {
+        const maxAmount = 10n
+        const leftAmount = 5n
+        await providerMock.callRegister(await investProvider.getAddress(), poolId, [maxAmount, leftAmount])
+        const updatedData = await investProvider.getParams(poolId)
+        expect(updatedData[0]).to.be.equal(maxAmount)
+        expect(updatedData[1]).to.be.equal(leftAmount)
     })
 
     it("should revert zero max amount", async () => {
