@@ -56,7 +56,7 @@ abstract contract InvestInternal is InvestModifiers {
      */
     function _invest(uint256 poolId, uint256 amount) internal {
         _transferERC20Tokens(poolId, amount);
-        _registerDispenser(poolId, amount);
+        _registerDispenser(poolId + 1, amount);
     }
 
     function _registerDispenser(
