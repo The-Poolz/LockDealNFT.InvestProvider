@@ -52,14 +52,25 @@ abstract contract InvestInternal is InvestModifiers {
      * @notice Internal function to process the investment by transferring tokens to the invested provider.
      * @param poolId The ID of the pool being invested in.
      * @param amount The amount being invested.
-     * @param pool The pool data associated with the investment.
      * @dev Reduces the left amount of the pool and calls the `onInvest` method of the invested provider.
      */
-    function _invest(
-        uint256 poolId,
-        uint256 amount,
-        IDO storage pool
+    function _invest(uint256 poolId, uint256 amount) internal {
+        _transferERC20Tokens(poolId, amount);
+        _registerDispenser(poolId, amount);
+    }
+
+    function _registerDispenser(
+        uint256 dispenserPoolId,
+        uint256 amount
     ) internal {
+        uint256[] memory dispenserParams = dispenserProvider.getParams(
+            dispenserPoolId
+        );
+        dispenserParams[0] += amount;
+        dispenserProvider.registerPool(dispenserPoolId, dispenserParams);
+    }
+
+    function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
         IERC20 token = IERC20(lockDealNFT.tokenOf(poolId));
         // address vaultManager = lockDealNFT.vaultManager();
         // uint256 vaultId = vaultManager.getCurrentVaultIdByToken();
@@ -69,11 +80,5 @@ abstract contract InvestInternal is InvestModifiers {
         //     vault,
         //     amount
         // );
-        pool.leftAmount -= amount;
-        uint256[] memory dispenserParams = dispenserProvider.getParams(
-            poolId + 1
-        );
-        dispenserParams[0] += amount;
-        dispenserProvider.registerPool(poolId + 1, dispenserParams);
     }
 }

@@ -97,8 +97,9 @@ contract InvestProvider is InvestInternal {
     {
         IDO storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
+        poolData.leftAmount -= amount;
 
-        _invest(poolId, amount, poolData);
+        _invest(poolId, amount);
         emit Invested(poolId, msg.sender, amount);
     }
 
