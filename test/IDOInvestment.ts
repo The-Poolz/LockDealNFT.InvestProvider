@@ -104,8 +104,20 @@ describe("IDO investment tests", function () {
             [poolId, await owner.getAddress(), validUntil, amount]
         )
         const signature = await signer.signMessage(ethers.getBytes(packedData))
+        await expect(investProvider.invest(poolId, amount, (validUntil += 1), signature)).to.be.revertedWithCustomError(
+            investProvider,
+            "InvalidSignature"
+        )
+    })
+
+    it("should revert if call withdraw", async () => {
+        //await expect(investProvider.withdraw(poolId)).to.be.reverted
         await expect(
-            investProvider.invest(poolId, amount, (validUntil += 1), signature)
-        ).to.be.revertedWithCustomError(investProvider, "InvalidSignature")
+            lockDealNFT
+                .connect(signer)
+                [
+                    "safeTransferFrom(address,address,uint256)"
+                ](await signer.getAddress(), await lockDealNFT.getAddress(), poolId)
+        ).to.be.reverted
     })
 })
