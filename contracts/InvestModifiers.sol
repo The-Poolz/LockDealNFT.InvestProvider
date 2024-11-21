@@ -3,10 +3,15 @@ pragma solidity ^0.8.0;
 
 import "./InvestState.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title InvestModifiers
 /// @notice Provides various modifiers for validating inputs and conditions in investment-related contracts.
 abstract contract InvestModifiers is InvestState {
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
+
     /**
      * @dev Modifier to ensure an address is not the zero address.
      * @param _address The address to check.
@@ -61,12 +66,28 @@ abstract contract InvestModifiers is InvestState {
         _;
     }
 
-    /**
-     * @dev Modifier to check that the provider implements the IInvestedProvider interface.
-     * @param provider The provider address to validate.
-     */
-    modifier validInvestedProvider(IProvider provider) {
-        _validInvestedProvider(provider);
+    /// @notice Validates the signature provided for the dispense action.
+    /// @dev Reverts with an `InvalidSignature` error if the signature is not valid.
+    /// @param poolId The pool ID for the dispensation.
+    /// @param validUntil The timestamp until which the dispensation is valid.
+    /// @param amount The amount to dispense.
+    /// @param signature The cryptographic signature to verify.
+    modifier isValidSignature(
+        uint256 poolId,
+        uint256 validUntil,
+        uint256 amount,
+        bytes calldata signature
+    ) {
+        address signer = lockDealNFT.getData(poolId + 1).owner;
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(poolId, msg.sender, validUntil, amount)
+        );
+        address expectedSigner = messageHash.toEthSignedMessageHash().recover(
+            signature
+        );
+        if (signer != expectedSigner) {
+            revert InvalidSignature(poolId, msg.sender);
+        }
         _;
     }
 
@@ -131,19 +152,5 @@ abstract contract InvestModifiers is InvestState {
      */
     function _notZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert NoZeroAddress();
-    }
-
-    /**
-     * @notice Verifies that the given provider implements the `IInvestedProvider` interface.
-     * @param provider The provider address to validate.
-     * @dev Uses `ERC165Checker` to check for interface support and reverts with `InvalidInvestedProvider` if not supported.
-     */
-    function _validInvestedProvider(IProvider provider) internal view {
-        if (
-            !ERC165Checker.supportsInterface(
-                address(provider),
-                type(IInvestedProvider).interfaceId
-            )
-        ) revert InvalidInvestedProvider();
     }
 }
