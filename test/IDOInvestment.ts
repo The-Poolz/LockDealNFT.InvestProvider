@@ -1,5 +1,4 @@
-import { VaultManagerMock, InvestProvider } from "../typechain-types"
-import { IInvestProvider } from "../typechain-types/contracts/InvestProvider"
+import { VaultManager, InvestProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -9,8 +8,8 @@ import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
 describe("IDO investment tests", function () {
     let token: ERC20Token
     let USDT: ERC20Token
-    let sourcePoolId: string
-    let mockVaultManager: VaultManagerMock
+    let sourcePoolId: bigint
+    let vaultManager: VaultManager
     let investProvider: InvestProvider
     let owner: SignerWithAddress
     let user: SignerWithAddress
@@ -28,8 +27,8 @@ describe("IDO investment tests", function () {
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
-        mockVaultManager = await (await ethers.getContractFactory("VaultManagerMock")).deploy()
-        lockDealNFT = (await LockDealNFTFactory.deploy(await mockVaultManager.getAddress(), "")) as LockDealNFT
+        vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
+        lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
@@ -39,8 +38,27 @@ describe("IDO investment tests", function () {
         )
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
-        // startTime + 24 hours
-        sourcePoolId = "0"
+        // set trustee
+        await vaultManager.setTrustee(await lockDealNFT.getAddress())
+        // create vault with token
+        await vaultManager["createNewVault(address)"](await token.getAddress())
+        // create source pool
+        sourcePoolId = await lockDealNFT.totalSupply()
+        let nounce = await vaultManager.nonces(owner)
+        let tokenAddress = await token.getAddress()
+        const params = [amount]
+        const addresses = [await signer.getAddress(), tokenAddress]
+
+        poolId = await lockDealNFT.totalSupply()
+        await token.approve(await vaultManager.getAddress(), amount)
+        const packedData = ethers.solidityPackedKeccak256(
+            ["address", "uint256", "uint256"],
+            [tokenAddress, amount, nounce]
+        )
+        const tokenSignature = await owner.signMessage(ethers.getBytes(packedData))
+        // create source pool
+        await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
+
         await USDT.approve(await investProvider.getAddress(), maxAmount)
         signerAddress = await signer.getAddress()
     })
