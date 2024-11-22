@@ -74,6 +74,7 @@ describe("IDO investment tests", function () {
             [poolId, await owner.getAddress(), validUntil, amount / 2n]
         )
         const signature = await signer.signMessage(ethers.getBytes(packedData))
+        await token.approve(await investProvider.getAddress(), amount)
         await investProvider.invest(poolId, amount / 2n, validUntil, signature)
         const poolData = await investProvider.getParams(poolId)
         expect(poolData[1]).to.equal(maxAmount - amount / 2n)
@@ -85,6 +86,7 @@ describe("IDO investment tests", function () {
             [poolId, await owner.getAddress(), validUntil, amount]
         )
         const signature = await signer.signMessage(ethers.getBytes(packedData))
+        await token.approve(await investProvider.getAddress(), amount)
         const tx = await investProvider.invest(poolId, amount, validUntil, signature)
         await tx.wait()
         const events = await investProvider.queryFilter(investProvider.filters.Invested())
