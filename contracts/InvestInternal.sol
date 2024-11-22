@@ -73,12 +73,9 @@ abstract contract InvestInternal is InvestModifiers {
 
     function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
         address token = lockDealNFT.tokenOf(poolId);
-        IVaultManager vaultManager = lockDealNFT.vaultManager();
-        uint256 vaultId = IVaultViews(address(vaultManager))
-            .getCurrentVaultIdByToken(token);
-        address vault = IVaultViews(address(vaultManager)).vaultIdToVault(
-            vaultId
-        );
+        IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
+        uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
+        address vault = vaultManager.vaultIdToVault(vaultId);
         IERC20(token).safeTransferFrom(msg.sender, vault, amount);
     }
 }
