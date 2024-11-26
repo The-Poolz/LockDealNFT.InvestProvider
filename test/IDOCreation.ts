@@ -1,4 +1,4 @@
-import { VaultManagerMock, InvestProvider, ProviderMock } from "../typechain-types"
+import { VaultManager, InvestProvider, ProviderMock } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -9,7 +9,7 @@ describe("IDO creation tests", function () {
     let token: ERC20Token
     let USDT: ERC20Token
     let sourcePoolId: string
-    let mockVaultManager: VaultManagerMock
+    let vaultManager: VaultManager
     let investProvider: InvestProvider
     let providerMock: ProviderMock
     let owner: SignerWithAddress
@@ -21,13 +21,13 @@ describe("IDO creation tests", function () {
     let poolId: bigint
 
     before(async () => {
-        [owner, user, signer] = await ethers.getSigners()
+        ;[owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
-        mockVaultManager = await (await ethers.getContractFactory("VaultManagerMock")).deploy()
+        vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
-        lockDealNFT = (await LockDealNFTFactory.deploy(await mockVaultManager.getAddress(), "")) as LockDealNFT
+        lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
@@ -89,6 +89,13 @@ describe("IDO creation tests", function () {
         const updatedData = await investProvider.getParams(poolId)
         expect(updatedData[0]).to.be.equal(maxAmount)
         expect(updatedData[1]).to.be.equal(leftAmount)
+    })
+
+    it("should revert register with non valid params length", async () => {
+        const maxAmount = 10n
+        await expect(
+            providerMock.callRegister(await investProvider.getAddress(), poolId, [maxAmount])
+        ).to.be.revertedWithCustomError(investProvider, "InvalidParamsLength")
     })
 
     it("should revert zero max amount", async () => {

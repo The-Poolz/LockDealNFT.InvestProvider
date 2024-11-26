@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./InvestModifiers.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./interfaces/IVaultViews.sol";
 
 /// @title InvestInternal
 /// @notice Provides internal functions for managing investment pools and parameters.
@@ -71,14 +72,10 @@ abstract contract InvestInternal is InvestModifiers {
     }
 
     function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
-        IERC20 token = IERC20(lockDealNFT.tokenOf(poolId));
-        // address vaultManager = lockDealNFT.vaultManager();
-        // uint256 vaultId = vaultManager.getCurrentVaultIdByToken();
-        // adddress vault = vaultManager.vaultIdToVault(vaultId);
-        // token.safeTransferFrom(
-        //     msg.sender,
-        //     vault,
-        //     amount
-        // );
+        address token = lockDealNFT.tokenOf(poolId);
+        IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
+        uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
+        address vault = vaultManager.vaultIdToVault(vaultId);
+        IERC20(token).safeTransferFrom(msg.sender, vault, amount);
     }
 }
