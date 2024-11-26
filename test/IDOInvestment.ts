@@ -20,6 +20,8 @@ describe("IDO investment tests", function () {
     let maxAmount = ethers.parseUnits("1000", 18)
     let validUntil = Math.floor(Date.now() / 1000) + 60 * 60
     let poolId: bigint
+    let packedData: string
+    let signature: string
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
@@ -41,16 +43,16 @@ describe("IDO investment tests", function () {
         // set trustee
         await vaultManager.setTrustee(await lockDealNFT.getAddress())
         // create vault with token
-        await vaultManager["createNewVault(address)"](await token.getAddress())
+        await vaultManager["createNewVault(address)"](await USDT.getAddress())
         // create source pool
         sourcePoolId = await lockDealNFT.totalSupply()
         let nounce = await vaultManager.nonces(owner)
-        let tokenAddress = await token.getAddress()
+        let tokenAddress = await USDT.getAddress()
         const params = [amount]
         const addresses = [await signer.getAddress(), tokenAddress]
 
         poolId = await lockDealNFT.totalSupply()
-        await token.approve(await vaultManager.getAddress(), amount)
+        await USDT.approve(await vaultManager.getAddress(), amount)
         const packedData = ethers.solidityPackedKeccak256(
             ["address", "uint256", "uint256"],
             [tokenAddress, amount, nounce]
@@ -59,6 +61,7 @@ describe("IDO investment tests", function () {
         // create source pool
         await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
 
+        await token.approve(await investProvider.getAddress(), maxAmount)
         await USDT.approve(await investProvider.getAddress(), maxAmount)
         signerAddress = await signer.getAddress()
     })
@@ -66,27 +69,20 @@ describe("IDO investment tests", function () {
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
         await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId)
-    })
-
-    it("should deacrease left amount after invest", async () => {
-        const packedData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, amount / 2n]
-        )
-        const signature = await signer.signMessage(ethers.getBytes(packedData))
-        await token.approve(await investProvider.getAddress(), amount)
-        await investProvider.invest(poolId, amount / 2n, validUntil, signature)
-        const poolData = await investProvider.getParams(poolId)
-        expect(poolData[1]).to.equal(maxAmount - amount / 2n)
-    })
-
-    it("should emit Invested event", async () => {
-        const packedData = ethers.solidityPackedKeccak256(
+        packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256"],
             [poolId, await owner.getAddress(), validUntil, amount]
         )
-        const signature = await signer.signMessage(ethers.getBytes(packedData))
-        await token.approve(await investProvider.getAddress(), amount)
+        signature = await signer.signMessage(ethers.getBytes(packedData))
+    })
+
+    it("should deacrease left amount after invest", async () => {
+        await investProvider.invest(poolId, amount, validUntil, signature)
+        const poolData = await investProvider.getParams(poolId)
+        expect(poolData[1]).to.equal(maxAmount - amount)
+    })
+
+    it("should emit Invested event", async () => {
         const tx = await investProvider.invest(poolId, amount, validUntil, signature)
         await tx.wait()
         const events = await investProvider.queryFilter(investProvider.filters.Invested())
@@ -95,17 +91,24 @@ describe("IDO investment tests", function () {
         expect(events[events.length - 1].args.amount).to.equal(amount)
     })
 
-    // TODO: add transfer ERC20 implementation
-    // it("should revert if no allowance", async () => {
-    //     const packedData = ethers.solidityPackedKeccak256(
-    //         ["uint256", "address", "uint256", "uint256"],
-    //         [poolId, await user.getAddress(), validUntil, amount]
-    //     )
-    //     const signature = await signer.signMessage(ethers.getBytes(packedData))
-    //     await expect(
-    //         investProvider.connect(user).invest(poolId, amount, validUntil, signature)
-    //     ).to.be.revertedWithCustomError(USDT, "ERC20InsufficientAllowance")
-    // })
+    it("should transfer erc20 tokens to vault", async () => {
+        const vaultId = await vaultManager.getCurrentVaultIdByToken(await USDT.getAddress())
+        const vault = await vaultManager.vaultIdToVault(vaultId)
+        const balanceBefore = await USDT.balanceOf(vault)
+        await investProvider.invest(poolId, amount, validUntil, signature)
+        expect(await USDT.balanceOf(vault)).to.equal(balanceBefore + amount)
+    })
+
+    it("should revert if no allowance", async () => {
+        const packedData = ethers.solidityPackedKeccak256(
+            ["uint256", "address", "uint256", "uint256"],
+            [poolId, await user.getAddress(), validUntil, amount]
+        )
+        const signature = await signer.signMessage(ethers.getBytes(packedData))
+        await expect(
+            investProvider.connect(user).invest(poolId, amount, validUntil, signature)
+        ).to.be.revertedWithCustomError(USDT, "ERC20InsufficientAllowance")
+    })
 
     it("should revert if invested amount is more than left amount", async () => {
         const packedData = ethers.solidityPackedKeccak256(
@@ -119,11 +122,6 @@ describe("IDO investment tests", function () {
     })
 
     it("should revert invalid signature", async () => {
-        const packedData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, amount]
-        )
-        const signature = await signer.signMessage(ethers.getBytes(packedData))
         await expect(investProvider.invest(poolId, amount, (validUntil += 1), signature)).to.be.revertedWithCustomError(
             investProvider,
             "InvalidSignature"
