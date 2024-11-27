@@ -166,8 +166,8 @@ contract InvestProvider is InvestInternal {
         // create a new pool with the new settings
         poolIdToPool[newPoolId].maxAmount = newPoolMaxAmount;
         poolIdToPool[newPoolId].leftAmount = newPoolLeftAmount;
-        // split dispenser
-        _splitDispenser(oldPoolId + 1, ratio);
+        // create dispenser
+        _createDispenser(oldPoolId + 1);
     }
 
     /**

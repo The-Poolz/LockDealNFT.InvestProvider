@@ -44,11 +44,7 @@ abstract contract InvestInternal is InvestModifiers {
         poolId = lockDealNFT.mintForProvider(investSigner, this);
         lockDealNFT.cloneVaultId(poolId, sourcePoolId);
 
-        uint256 dispenserPoolId = lockDealNFT.mintForProvider(
-            dispenserSigner,
-            dispenserProvider
-        );
-        lockDealNFT.cloneVaultId(dispenserPoolId, sourcePoolId);
+        _createDispenser(sourcePoolId, dispenserSigner);
     }
 
     /**
@@ -81,31 +77,15 @@ abstract contract InvestInternal is InvestModifiers {
         IERC20(token).safeTransferFrom(msg.sender, vault, amount);
     }
 
-    function _splitDispenser(uint256 dispenserPoolId, uint256 ratio) internal {
+    function _createDispenser(uint256 dispenserPoolId) internal {
         // Retrieve the signer of the specified dispenser
         address dispenserSigner = lockDealNFT.ownerOf(dispenserPoolId);
         // Create a new dispenser linked to the same signer
-        uint256 poolId = lockDealNFT.mintForProvider(
-            dispenserSigner,
-            dispenserProvider
-        );
-        lockDealNFT.cloneVaultId(poolId, dispenserPoolId);
-        // Get the current dispenser parameters
-        uint256[] memory dispenserParams = dispenserProvider.getParams(
-            dispenserPoolId
-        );
-        uint256 amount = dispenserParams[0];
-        // Register new dispenser params
-        if (amount > 0) {
-            uint256 ratioAmount = amount.calcAmount(ratio);
-            // Update the original dispenser with the remaining amount
-            uint256[] memory oldDispenserParams = new uint256[](1);
-            oldDispenserParams[0] = amount - ratioAmount;
-            dispenserProvider.registerPool(dispenserPoolId, oldDispenserParams);
-            // Assign the split amount to the new dispenser
-            uint256[] memory newDispenserParams = new uint256[](1);
-            newDispenserParams[0] = amount.calcAmount(ratio);
-            dispenserProvider.registerPool(poolId, newDispenserParams);
-        }
+        _createDispenser(dispenserPoolId, dispenserSigner);
+    }
+
+    function _createDispenser(uint256 sourceId, address signer) internal {
+        uint256 dispenserPoolId = lockDealNFT.mintForProvider(signer, dispenserProvider);
+        lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
     }
 }

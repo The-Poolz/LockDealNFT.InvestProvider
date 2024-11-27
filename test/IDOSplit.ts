@@ -180,7 +180,7 @@ describe("IDO split tests", function () {
         ])
     })
 
-    it("should update dispneser amount after split", async () => {
+    it("should not update the old dispenser amount after the split", async () => {
         await USDT.approve(await investProvider.getAddress(), amount)
         await investProvider.invest(poolId, amount, validUntil, signature)
         await lockDealNFT
@@ -188,15 +188,15 @@ describe("IDO split tests", function () {
             [
                 "safeTransferFrom(address,address,uint256,bytes)"
             ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
-        const data = await lockDealNFT.getData(poolId + 3n)
+        const data = await lockDealNFT.getData(poolId + 1n)
         expect(data).to.deep.equal([
             await dispenserProvider.getAddress(),
             "DispenserProvider",
-            poolId + 3n,
+            poolId + 1n,
             vaultId,
             await signer.getAddress(),
             await USDT.getAddress(),
-            [amount / 2n],
+            [amount],
         ])
     })
 })
