@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./InvestModifiers.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
 import "./interfaces/IVaultViews.sol";
 
 /// @title InvestInternal
@@ -10,6 +11,7 @@ import "./interfaces/IVaultViews.sol";
 /// @dev Extends `InvestModifiers` and includes functionality to register and update pool data.
 abstract contract InvestInternal is InvestModifiers {
     using SafeERC20 for IERC20;
+    using CalcUtils for uint256;
 
     /**
      * @notice Registers or updates the parameters for a specific investment pool.
@@ -77,5 +79,33 @@ abstract contract InvestInternal is InvestModifiers {
         uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
         address vault = vaultManager.vaultIdToVault(vaultId);
         IERC20(token).safeTransferFrom(msg.sender, vault, amount);
+    }
+
+    function _splitDispenser(uint256 dispenserPoolId, uint256 ratio) internal {
+        // Retrieve the signer of the specified dispenser
+        address dispenserSigner = lockDealNFT.ownerOf(dispenserPoolId);
+        // Create a new dispenser linked to the same signer
+        uint256 poolId = lockDealNFT.mintForProvider(
+            dispenserSigner,
+            dispenserProvider
+        );
+        lockDealNFT.cloneVaultId(poolId, dispenserPoolId);
+        // Get the current dispenser parameters
+        uint256[] memory dispenserParams = dispenserProvider.getParams(
+            dispenserPoolId
+        );
+        uint256 amount = dispenserParams[0];
+        // Register new dispenser params
+        if (amount > 0) {
+            uint256 ratioAmount = amount.calcAmount(ratio);
+            // Update the original dispenser with the remaining amount
+            uint256[] memory oldDispenserParams = new uint256[](1);
+            oldDispenserParams[0] = amount - ratioAmount;
+            dispenserProvider.registerPool(dispenserPoolId, oldDispenserParams);
+            // Assign the split amount to the new dispenser
+            uint256[] memory newDispenserParams = new uint256[](1);
+            newDispenserParams[0] = amount.calcAmount(ratio);
+            dispenserProvider.registerPool(poolId, newDispenserParams);
+        }
     }
 }
