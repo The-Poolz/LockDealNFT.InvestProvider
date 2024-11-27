@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "./InvestInternal.sol";
-import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
 
 /// @title InvestProvider
 /// @notice This contract provides functionality for creating investment pools, managing investments.
@@ -167,6 +166,8 @@ contract InvestProvider is InvestInternal {
         // create a new pool with the new settings
         poolIdToPool[newPoolId].maxAmount = newPoolMaxAmount;
         poolIdToPool[newPoolId].leftAmount = newPoolLeftAmount;
+        // create dispenser
+        _createDispenser(oldPoolId + 1);
     }
 
     /**

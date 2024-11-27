@@ -1,4 +1,4 @@
-import { VaultManager, InvestProvider } from "../typechain-types"
+import { VaultManager, InvestProvider, DispenserProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -14,6 +14,7 @@ describe("IDO split tests", function () {
     let owner: SignerWithAddress
     let user: SignerWithAddress
     let signer: SignerWithAddress
+    let dispenserProvider: DispenserProvider
     let signerAddress: string
     let lockDealNFT: LockDealNFT
     let amount = ethers.parseUnits("100", 18)
@@ -22,6 +23,9 @@ describe("IDO split tests", function () {
     let ratio: bigint
     let packedData: string
     let vaultId: bigint
+    let investData: string
+    let signature: string
+    let validUntil = Math.floor(Date.now() / 1000) + 60 * 60
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
@@ -32,7 +36,7 @@ describe("IDO split tests", function () {
         vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
         lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
-        const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
+        dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
@@ -86,6 +90,11 @@ describe("IDO split tests", function () {
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
         await investProvider["createNewPool(uint256,address,address,uint256)"](maxAmount, signer, signer, sourcePoolId)
+        investData = ethers.solidityPackedKeccak256(
+            ["uint256", "address", "uint256", "uint256"],
+            [poolId, await owner.getAddress(), validUntil, amount]
+        )
+        signature = await signer.signMessage(ethers.getBytes(investData))
     })
 
     it("should update old pool data after split", async () => {
@@ -142,8 +151,8 @@ describe("IDO split tests", function () {
     })
 
     it("should revert invalid ratio", async () => {
-        ratio = ethers.parseUnits("2", 21)
-        packedData = ethers.AbiCoder.defaultAbiCoder().encode(["uint256", "address"], [ratio, await user.getAddress()])
+        const ratio = ethers.parseUnits("2", 21)
+        const packedData = ethers.AbiCoder.defaultAbiCoder().encode(["uint256", "address"], [ratio, await user.getAddress()])
         await expect(
             lockDealNFT
                 .connect(signer)
@@ -151,5 +160,43 @@ describe("IDO split tests", function () {
                     "safeTransferFrom(address,address,uint256,bytes)"
                 ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
         ).to.be.revertedWith("split amount exceeded")
+    })
+
+    it("should mint dispenser provider after split", async () => {
+        await lockDealNFT
+            .connect(signer)
+            [
+                "safeTransferFrom(address,address,uint256,bytes)"
+            ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
+        const data = await lockDealNFT.getData(poolId + 3n)
+        expect(data).to.deep.equal([
+            await dispenserProvider.getAddress(),
+            "DispenserProvider",
+            poolId + 3n,
+            vaultId,
+            await signer.getAddress(),
+            await USDT.getAddress(),
+            [0],
+        ])
+    })
+
+    it("should not update the old dispenser amount after the split", async () => {
+        await USDT.approve(await investProvider.getAddress(), amount)
+        await investProvider.invest(poolId, amount, validUntil, signature)
+        await lockDealNFT
+            .connect(signer)
+            [
+                "safeTransferFrom(address,address,uint256,bytes)"
+            ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
+        const data = await lockDealNFT.getData(poolId + 1n)
+        expect(data).to.deep.equal([
+            await dispenserProvider.getAddress(),
+            "DispenserProvider",
+            poolId + 1n,
+            vaultId,
+            await signer.getAddress(),
+            await USDT.getAddress(),
+            [amount],
+        ])
     })
 })

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./InvestModifiers.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
 import "./interfaces/IVaultViews.sol";
 
 /// @title InvestInternal
@@ -10,6 +11,7 @@ import "./interfaces/IVaultViews.sol";
 /// @dev Extends `InvestModifiers` and includes functionality to register and update pool data.
 abstract contract InvestInternal is InvestModifiers {
     using SafeERC20 for IERC20;
+    using CalcUtils for uint256;
 
     /**
      * @notice Registers or updates the parameters for a specific investment pool.
@@ -42,11 +44,7 @@ abstract contract InvestInternal is InvestModifiers {
         poolId = lockDealNFT.mintForProvider(investSigner, this);
         lockDealNFT.cloneVaultId(poolId, sourcePoolId);
 
-        uint256 dispenserPoolId = lockDealNFT.mintForProvider(
-            dispenserSigner,
-            dispenserProvider
-        );
-        lockDealNFT.cloneVaultId(dispenserPoolId, sourcePoolId);
+        _createDispenser(sourcePoolId, dispenserSigner);
     }
 
     /**
@@ -77,5 +75,17 @@ abstract contract InvestInternal is InvestModifiers {
         uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
         address vault = vaultManager.vaultIdToVault(vaultId);
         IERC20(token).safeTransferFrom(msg.sender, vault, amount);
+    }
+
+    function _createDispenser(uint256 dispenserPoolId) internal {
+        // Retrieve the signer of the specified dispenser
+        address dispenserSigner = lockDealNFT.ownerOf(dispenserPoolId);
+        // Create a new dispenser linked to the same signer
+        _createDispenser(dispenserPoolId, dispenserSigner);
+    }
+
+    function _createDispenser(uint256 sourceId, address signer) internal {
+        uint256 dispenserPoolId = lockDealNFT.mintForProvider(signer, dispenserProvider);
+        lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
     }
 }
