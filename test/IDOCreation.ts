@@ -1,5 +1,4 @@
-import { VaultManagerMock, InvestedProviderMock, InvestProvider, MockRouter } from "../typechain-types"
-import { IInvestProvider } from "../typechain-types/contracts/InvestProvider"
+import { VaultManager, InvestProvider, ProviderMock } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -10,103 +9,103 @@ describe("IDO creation tests", function () {
     let token: ERC20Token
     let USDT: ERC20Token
     let sourcePoolId: string
-    let mockVaultManager: VaultManagerMock
+    let vaultManager: VaultManager
     let investProvider: InvestProvider
-    let whiteListRouter: MockRouter
-    let investedMock: InvestedProviderMock
-    let signature = ethers.toUtf8Bytes("signature")
+    let providerMock: ProviderMock
     let owner: SignerWithAddress
     let user: SignerWithAddress
+    let signer: SignerWithAddress
+    let signerAddress: string
     let lockDealNFT: LockDealNFT
     let amount = ethers.parseUnits("100", 18)
-    let IDOSettings: IInvestProvider.PoolStruct
-    let poolId: string
+    let poolId: bigint
 
     before(async () => {
-        [owner, user] = await ethers.getSigners()
+        ;[owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
-        mockVaultManager = await (await ethers.getContractFactory("VaultManagerMock")).deploy()
+        vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
-        lockDealNFT = (await LockDealNFTFactory.deploy(await mockVaultManager.getAddress(), "")) as LockDealNFT
-        investedMock = await (
-            await ethers.getContractFactory("InvestedProviderMock")
-        ).deploy(await lockDealNFT.getAddress())
-        const WhiteListRouter = await ethers.getContractFactory("MockRouter")
-        whiteListRouter = await WhiteListRouter.deploy()
+        lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
-        investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress(), await whiteListRouter.getAddress())
+        const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
+        const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
+        investProvider = await InvestProvider.deploy(
+            await lockDealNFT.getAddress(),
+            await dispenserProvider.getAddress()
+        )
+        const ProviderMock = await ethers.getContractFactory("ProviderMock")
+        providerMock = await ProviderMock.deploy(await lockDealNFT.getAddress())
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
-        await lockDealNFT.setApprovedContract(await investedMock.getAddress(), true)
-        // startTime + 24 hours
-        IDOSettings = {
-            maxAmount: amount,
-            whiteListId: 0,
-            investedProvider: await investedMock.getAddress(),
-        }
+        await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await providerMock.getAddress(), true)
         // create source pool
-        await investedMock.createNewPool([await user.getAddress(), await USDT.getAddress()], [amount], signature)
+        signerAddress = await signer.getAddress()
         sourcePoolId = "0"
     })
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.connect(owner).createNewPool(IDOSettings, ethers.toUtf8Bytes(""), sourcePoolId)
+        await investProvider.connect(owner).createNewPool(amount, signerAddress, signerAddress, sourcePoolId)
     })
 
     it("should create new IDO", async () => {
         const data = await investProvider.poolIdToPool(poolId)
-        expect(data.pool.maxAmount).to.equal(amount)
+        expect(data.maxAmount).to.equal(amount)
         expect(data.leftAmount).to.equal(amount)
-        expect(data.pool.whiteListId).to.equal(0)
-        expect(data.pool.investedProvider).to.equal(IDOSettings.investedProvider)
     })
 
     it("should emit NewPoolCreated event", async () => {
         poolId = await lockDealNFT.totalSupply()
-        const tx = await investProvider.createNewPool(IDOSettings, ethers.toUtf8Bytes(""), sourcePoolId)
+        const tx = await investProvider.createNewPool(amount, signerAddress, signerAddress, sourcePoolId)
         await tx.wait()
         const events = await investProvider.queryFilter(investProvider.filters.NewPoolCreated())
         await expect(events[events.length - 1].args.poolId).to.equal(poolId)
-        await expect(events[events.length - 1].args.pool.pool.maxAmount).to.equal(IDOSettings.maxAmount)
-        await expect(events[events.length - 1].args.pool.leftAmount).to.equal(IDOSettings.maxAmount)
-        await expect(events[events.length - 1].args.pool.pool.whiteListId).to.equal(IDOSettings.whiteListId)
-        await expect(events[events.length - 1].args.pool.pool.investedProvider).to.equal(IDOSettings.investedProvider)
+        await expect(events[events.length - 1].args.pool.maxAmount).to.equal(amount)
+        await expect(events[events.length - 1].args.pool.leftAmount).to.equal(amount)
+    })
+
+    it("should set msg.sender as the owner of the investProvider NFT after creating a new pool", async () => {
+        const ownerAdress = await owner.getAddress()
+        const poolId = await lockDealNFT.totalSupply()
+        // create new pool
+        await investProvider.createNewPool(amount, sourcePoolId)
+        expect(await lockDealNFT.ownerOf(poolId)).to.equal(ownerAdress)
+    })
+
+    it("should set msg.sender as the owner of the dispenserProvider NFT after creating a new pool", async () => {
+        const ownerAdress = await owner.getAddress()
+        const poolId = await lockDealNFT.totalSupply()
+        // create new pool
+        await investProvider.createNewPool(amount, sourcePoolId)
+        expect(await lockDealNFT.ownerOf(poolId + 1n)).to.equal(ownerAdress)
+    })
+
+    it("should call register from another provider", async () => {
+        const maxAmount = 10n
+        const leftAmount = 5n
+        await providerMock.callRegister(await investProvider.getAddress(), poolId, [maxAmount, leftAmount])
+        const updatedData = await investProvider.getParams(poolId)
+        expect(updatedData[0]).to.be.equal(maxAmount)
+        expect(updatedData[1]).to.be.equal(leftAmount)
+    })
+
+    it("should revert register with non valid params length", async () => {
+        const maxAmount = 10n
+        await expect(
+            providerMock.callRegister(await investProvider.getAddress(), poolId, [maxAmount])
+        ).to.be.revertedWithCustomError(investProvider, "InvalidParamsLength")
     })
 
     it("should revert zero max amount", async () => {
         await expect(
-            investProvider.createNewPool(
-                { ...IDOSettings, maxAmount: ethers.toBigInt(0) },
-                ethers.toUtf8Bytes(""),
-                sourcePoolId
-            )
+            investProvider.createNewPool(ethers.toBigInt(0), signerAddress, signerAddress, sourcePoolId)
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAmount")
     })
 
-    it("should revert zero invested provider address", async () => {
-        await expect(
-            investProvider.createNewPool(
-                { ...IDOSettings, investedProvider: ethers.ZeroAddress },
-                ethers.toUtf8Bytes(""),
-                sourcePoolId
-            )
-        ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
-    })
-
     it("should support IInvestProvider interface", async () => {
-        expect(await investProvider.supportsInterface("0xa358958c")).to.equal(true)
-    })
-
-    it("should revert invalid investedProvider", async () => {
-        await expect(
-            investProvider.createNewPool(
-                { ...IDOSettings, investedProvider: await whiteListRouter.getAddress() },
-                ethers.toUtf8Bytes(""),
-                sourcePoolId
-            )
-        ).to.be.revertedWithCustomError(investProvider, "InvalidInvestedProvider")
+        expect(await investProvider.supportsInterface("0x16615bcc")).to.equal(true)
     })
 
     // @dev withdraw is not implemented in the contract right now
@@ -134,16 +133,8 @@ describe("IDO creation tests", function () {
         )
     })
 
-    it("should call register from another provider", async () => {
-        await investedMock.callRegister(await investProvider.getAddress(), poolId, [0, 0, 0])
-        const updatedData = await investProvider.getParams(poolId)
-        expect(updatedData[0]).to.be.equal(0)
-        expect(updatedData[1]).to.be.equal(0)
-        expect(updatedData[2]).to.be.equal(0)
-    })
-
     it("should revert call register not from approved provider", async () => {
-        await expect(investProvider.connect(owner).registerPool(poolId, [0, 0, 0])).to.be.revertedWithCustomError(
+        await expect(investProvider.connect(owner).registerPool(poolId, [0, 0])).to.be.revertedWithCustomError(
             investProvider,
             "InvalidProvider"
         )
