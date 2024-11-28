@@ -13,6 +13,7 @@
 -   [UML](#investprovider-diagram)
 -   [Create New IDO pool](#create-ido-pool)
 -   [Join the Pool](#join-pool)
+-   [Investment Pool data](#pool-data)
 -   [License](#license)
 
 ## Installation
@@ -60,7 +61,7 @@ npx hardhat run ./scripts/deploy.ts --network truffleDashboard
 -   **Create Investment Pools:** Configure pools with parameters such as maximum investment limits, pool owners, and investment signers.
 -   **Join Investment Pools:** Users can invest in the pools with specific amounts and terms.
 -   **Advanced Authorization:** Uses signature-based authorization to ensure secure and valid investment operations.
--   **Integration with LockDealNFT:** Supports NFT tokenization of investments, leveraging LockDealNFT for minting and handling tokens.
+-   **Integration with LockDealNFT:** Leverages NFT tokenization for flexible and transparent investment management.
 
 ## InvestProvider Diagram
 
@@ -71,7 +72,8 @@ npx hardhat run ./scripts/deploy.ts --network truffleDashboard
 There are two functions available for creating **Investment Pools (IDO Pools)** in the **InvestProvider** contract. Both functions allow the creation of a new pool with a configurable amount, but they differ in how they handle the investment and dispenser signers.
 
 ### 1. createNewPool (with signers)
-   This function creates a new pool and requires specifying both the investment signer and dispenser signer addresses. These signers are responsible for verifying investments and handling token dispensations.
+
+This function creates a new pool and requires specifying both the investment signer and dispenser signer addresses. These signers are responsible for verifying investments and handling token dispensations.
 
 ```solidity
 /**
@@ -94,7 +96,8 @@ function createNewPool(
 This function is suitable for scenarios where specific signers for investments and dispensing are required.
 
 ### 2. createNewPool (without explicit signers)
-   This variant creates a new pool, but the investment signer and dispenser signer default to the sender's address (i.e., the account calling the function). It also allows cloning settings from an existing pool.
+
+This variant creates a new pool, but the investment signer and dispenser signer default to the sender's address (i.e., the account calling the function). It also allows cloning settings from an existing pool.
 
 ```solidity
 /**
@@ -156,6 +159,23 @@ Emitted when a user successfully invests in a pool.
 -   **poolId:** The pool's ID.
 -   **user:** Address of the investor.
 -   **amount:** Tokens invested
+
+## Pool data
+
+**InvestProvider** contract provides a convenient way to monitor the details of investment pools, including the maximum amount of tokens that can be invested and the remaining tokens available for investment. This is achieved using the `poolIdToPool` view function.
+
+```solidity
+function poolIdToPool(uint256 investPoolId) external view returns (IDO data);
+```
+
+```solidity
+    struct IDO {
+        uint256 maxAmount; // The maximum amount of tokens that can be invested in the pool
+        uint256 leftAmount; // The amount of tokens left to invest in the pool
+    }
+```
+
+This function allows users to retrieve information about a specific pool by its poolId.
 
 ## License
 
