@@ -138,4 +138,23 @@ describe("IDO investment tests", function () {
                 ](await signer.getAddress(), await lockDealNFT.getAddress(), poolId)
         ).to.be.reverted
     })
+
+    it("should revert if signer is not valid", async () => {
+        poolId = await lockDealNFT.totalSupply()
+        await investProvider["createNewPool(uint256,address,address,uint256)"](
+            maxAmount,
+            signerAddress,
+            await owner.getAddress(),
+            sourcePoolId
+        )
+        const packedData = ethers.solidityPackedKeccak256(
+            ["uint256", "address", "uint256", "uint256"],
+            [poolId, await owner.getAddress(), validUntil, maxAmount]
+        )
+        const signature = await owner.signMessage(ethers.getBytes(packedData))
+        await expect(investProvider.invest(poolId, maxAmount, validUntil, signature)).to.be.revertedWithCustomError(
+            investProvider,
+            "InvalidSignature"
+        )
+    })
 })
