@@ -55,7 +55,7 @@ interface IInvestProvider is IProvider {
     /**
      * @dev Struct that represents an IDO pool, which contains the pool's configuration and the remaining investment amount.
      */
-    struct IDO {
+    struct Pool {
         uint256 maxAmount; // The maximum amount of tokens that can be invested in the pool
         uint256 leftAmount; // The amount of tokens left to invest in the pool
     }
@@ -73,11 +73,16 @@ interface IInvestProvider is IProvider {
     );
 
     /**
-     * @notice Emitted when a new pool is successfully created.
+     * @notice Emitted when a new pool is created.
      * @param poolId The ID of the newly created pool.
-     * @param pool The details of the new pool.
+     * @param owner The address of the user who created the pool.
+     * @param poolAmount The maximum amount of tokens that can be invested in the pool.
      */
-    event NewPoolCreated(uint256 indexed poolId, IDO pool);
+    event NewPoolCreated(
+        uint256 indexed poolId,
+        address indexed owner,
+        uint256 poolAmount
+    );
 
     error InvalidLockDealNFT();
     error InvalidProvider();

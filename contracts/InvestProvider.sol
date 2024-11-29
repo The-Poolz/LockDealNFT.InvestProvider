@@ -50,7 +50,7 @@ contract InvestProvider is InvestInternal {
         );
         poolIdToPool[poolId].maxAmount = poolAmount;
         poolIdToPool[poolId].leftAmount = poolAmount;
-        emit NewPoolCreated(poolId, poolIdToPool[poolId]);
+        emit NewPoolCreated(poolId, investSigner, poolAmount);
     }
 
     function createNewPool(
@@ -70,7 +70,7 @@ contract InvestProvider is InvestInternal {
         );
         poolIdToPool[poolId].maxAmount = poolAmount;
         poolIdToPool[poolId].leftAmount = poolAmount;
-        emit NewPoolCreated(poolId, poolIdToPool[poolId]);
+        emit NewPoolCreated(poolId, msg.sender, poolAmount);
     }
 
     /**
@@ -94,7 +94,7 @@ contract InvestProvider is InvestInternal {
         invalidProvider(poolId, this)
         isValidSignature(poolId, validUntil, amount, signature)
     {
-        IDO storage poolData = poolIdToPool[poolId];
+        Pool storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
         poolData.leftAmount -= amount;
 
@@ -129,7 +129,7 @@ contract InvestProvider is InvestInternal {
     function getParams(
         uint256 poolId
     ) external view override returns (uint256[] memory params) {
-        IDO storage poolData = poolIdToPool[poolId];
+        Pool storage poolData = poolIdToPool[poolId];
         params = new uint256[](2);
         params[0] = poolData.maxAmount;
         params[1] = poolData.leftAmount;

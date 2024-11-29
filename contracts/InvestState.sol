@@ -11,8 +11,8 @@ import "./interfaces/IInvestProvider.sol";
 /// @dev Implements IInvestProvider, IERC165, FirewallConsumer, and ProviderState for pool management and security.
 abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, ProviderState {
     /// @notice Maps pool IDs to their respective investment pool data.
-    /// @dev Each pool ID corresponds to an `IDO` struct containing pool details.
-    mapping(uint256 => IDO) public poolIdToPool;
+    /// @dev Each pool ID corresponds to an `Pool` struct containing pool details.
+    mapping(uint256 => Pool) public poolIdToPool;
 
     IProvider public immutable dispenserProvider;
 
