@@ -49,7 +49,7 @@ describe("IDO data tests", function () {
     })
 
     it("should return getSubProvidersPoolIds", async () => {
-        expect(await investProvider.getSubProvidersPoolIds(poolId)).to.deep.equal([poolId])
+        expect(await investProvider.getSubProvidersPoolIds(poolId)).to.deep.equal([poolId + 1n])
     })
 
     it("should return getParams", async () => {

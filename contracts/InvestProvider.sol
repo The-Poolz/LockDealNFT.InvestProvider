@@ -122,20 +122,6 @@ contract InvestProvider is InvestInternal {
     }
 
     /**
-     * @notice Retrieves the current parameters for a pool.
-     * @param poolId The ID of the pool to fetch parameters for.
-     * @return params The parameters for the pool, including `maxAmount`, `leftAmount``.
-     */
-    function getParams(
-        uint256 poolId
-    ) external view override returns (uint256[] memory params) {
-        Pool storage poolData = poolIdToPool[poolId];
-        params = new uint256[](2);
-        params[0] = poolData.maxAmount;
-        params[1] = poolData.leftAmount;
-    }
-
-    /**
      * @notice Withdraws funds from the contract (currently not implemented).
      * @return The withdrawable amount and a flag indicating whether withdrawal was successful.
      * @dev Always reverts as the function is not implemented.
@@ -178,22 +164,5 @@ contract InvestProvider is InvestInternal {
         uint256
     ) public view virtual override returns (uint256) {
         return 0;
-    }
-
-    /**
-     * @notice Retrieves the pool IDs associated with a sub-provider.
-     * @param poolID The ID of the pool to retrieve sub-provider pool IDs for.
-     * @return poolIds An array containing the sub-provider pool IDs.
-     */
-    function getSubProvidersPoolIds(
-        uint256 poolID
-    )
-        public
-        pure
-        override(IProvider, ProviderState)
-        returns (uint256[] memory poolIds)
-    {
-        poolIds = new uint256[](1);
-        poolIds[0] = poolID;
     }
 }

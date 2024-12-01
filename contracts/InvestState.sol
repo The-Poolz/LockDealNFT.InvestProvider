@@ -36,7 +36,42 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
      * @param interfaceId The ID of the interface to check.
      * @return True if the interface is supported, false otherwise.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override returns (bool) {
         return interfaceId == type(IERC165).interfaceId || interfaceId == type(IInvestProvider).interfaceId;
+    }
+
+    /**
+     * @notice Retrieves the pool IDs associated with a sub-provider.
+     * @param poolId The ID of the pool to retrieve sub-provider pool IDs for.
+     * @return poolIds An array containing the sub-provider pool IDs.
+     */
+    function getSubProvidersPoolIds(
+        uint256 poolId
+    )
+        public
+        view
+        override(IProvider, ProviderState)
+        returns (uint256[] memory poolIds)
+    {
+        if (lockDealNFT.poolIdToProvider(poolId) == this) {
+            poolIds = new uint256[](1);
+            poolIds[0] = poolId + 1; // dispenser
+        }
+    }
+
+    /**
+     * @notice Retrieves the current parameters for a pool.
+     * @param poolId The ID of the pool to fetch parameters for.
+     * @return params The parameters for the pool, including `maxAmount`, `leftAmount``.
+     */
+    function getParams(
+        uint256 poolId
+    ) external view override returns (uint256[] memory params) {
+        Pool storage poolData = poolIdToPool[poolId];
+        params = new uint256[](2);
+        params[0] = poolData.maxAmount;
+        params[1] = poolData.leftAmount;
     }
 }
