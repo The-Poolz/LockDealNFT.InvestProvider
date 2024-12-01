@@ -165,11 +165,11 @@ Emitted when a user successfully invests in a pool.
 **InvestProvider** contract provides a convenient way to monitor the details of investment pools, including the maximum amount of tokens that can be invested and the remaining tokens available for investment. This is achieved using the `poolIdToPool` view function.
 
 ```solidity
-function poolIdToPool(uint256 investPoolId) external view returns (IDO data);
+function poolIdToPool(uint256 investPoolId) external view returns (Pool data);
 ```
 
 ```solidity
-    struct IDO {
+    struct Pool {
         uint256 maxAmount; // The maximum amount of tokens that can be invested in the pool
         uint256 leftAmount; // The amount of tokens left to invest in the pool
     }
