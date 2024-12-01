@@ -62,8 +62,8 @@ describe("IDO creation tests", function () {
         await tx.wait()
         const events = await investProvider.queryFilter(investProvider.filters.NewPoolCreated())
         await expect(events[events.length - 1].args.poolId).to.equal(poolId)
-        await expect(events[events.length - 1].args.pool.maxAmount).to.equal(amount)
-        await expect(events[events.length - 1].args.pool.leftAmount).to.equal(amount)
+        await expect(events[events.length - 1].args.owner).to.equal(signerAddress)
+        await expect(events[events.length - 1].args.poolAmount).to.equal(amount)
     })
 
     it("should set msg.sender as the owner of the investProvider NFT after creating a new pool", async () => {

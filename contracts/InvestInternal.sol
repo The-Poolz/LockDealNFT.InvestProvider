@@ -23,7 +23,7 @@ abstract contract InvestInternal is InvestModifiers {
      */
     function _registerPool(uint256 poolId, uint256[] calldata params) internal {
         if (params[0] < params[1]) revert InvalidParams();
-        IDO storage data = poolIdToPool[poolId];
+        Pool storage data = poolIdToPool[poolId];
         data.maxAmount = params[0];
         data.leftAmount = params[1];
         emit UpdateParams(poolId, params);
