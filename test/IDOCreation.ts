@@ -17,11 +17,11 @@ describe("IDO creation tests", function () {
     let signer: SignerWithAddress
     let signerAddress: string
     let lockDealNFT: LockDealNFT
-    let amount = ethers.parseUnits("100", 18)
+    const amount = ethers.parseUnits("100", 18)
     let poolId: bigint
 
     before(async () => {
-        ;[owner, user, signer] = await ethers.getSigners()
+        [owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
@@ -112,8 +112,7 @@ describe("IDO creation tests", function () {
     it("should revert withdraw", async () => {
         await expect(
             lockDealNFT
-                .connect(owner)
-                [
+                .connect(owner)[
                     "safeTransferFrom(address,address,uint256)"
                 ](await owner.getAddress(), await lockDealNFT.getAddress(), poolId)
         ).to.be.rejected

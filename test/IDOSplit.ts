@@ -17,15 +17,15 @@ describe("IDO split tests", function () {
     let dispenserProvider: DispenserProvider
     let signerAddress: string
     let lockDealNFT: LockDealNFT
-    let amount = ethers.parseUnits("100", 18)
-    let maxAmount = ethers.parseUnits("1000", 18)
+    const amount = ethers.parseUnits("100", 18)
+    const maxAmount = ethers.parseUnits("1000", 18)
     let poolId: bigint
     let ratio: bigint
     let packedData: string
     let vaultId: bigint
     let investData: string
     let signature: string
-    let validUntil = Math.floor(Date.now() / 1000) + 60 * 60
+    const validUntil = Math.floor(Date.now() / 1000) + 60 * 60
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
@@ -51,7 +51,7 @@ describe("IDO split tests", function () {
         await vaultManager["createNewVault(address)"](await USDT.getAddress())
         // create source pool
         let nounce = await vaultManager.nonces(await owner.getAddress())
-        let tokenAddress = await token.getAddress()
+        const tokenAddress = await token.getAddress()
 
         poolId = await lockDealNFT.totalSupply()
         await token.approve(await vaultManager.getAddress(), amount)
@@ -99,8 +99,7 @@ describe("IDO split tests", function () {
 
     it("should update old pool data after split", async () => {
         await lockDealNFT
-            .connect(signer)
-            [
+            .connect(signer)[
                 "safeTransferFrom(address,address,uint256,bytes)"
             ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
         const data = await lockDealNFT.getData(poolId)
@@ -117,8 +116,7 @@ describe("IDO split tests", function () {
 
     it("should create new pool after split", async () => {
         await lockDealNFT
-            .connect(signer)
-            [
+            .connect(signer)[
                 "safeTransferFrom(address,address,uint256,bytes)"
             ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
         const data = await lockDealNFT.getData(poolId + 2n)
@@ -135,8 +133,7 @@ describe("IDO split tests", function () {
 
     it("should emit PoolSplit event", async () => {
         const tx = await lockDealNFT
-            .connect(signer)
-            [
+            .connect(signer)[
                 "safeTransferFrom(address,address,uint256,bytes)"
             ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
         await tx.wait()
@@ -155,8 +152,7 @@ describe("IDO split tests", function () {
         const packedData = ethers.AbiCoder.defaultAbiCoder().encode(["uint256", "address"], [ratio, await user.getAddress()])
         await expect(
             lockDealNFT
-                .connect(signer)
-                [
+                .connect(signer)[
                     "safeTransferFrom(address,address,uint256,bytes)"
                 ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
         ).to.be.revertedWith("split amount exceeded")
@@ -164,8 +160,7 @@ describe("IDO split tests", function () {
 
     it("should mint dispenser provider after split", async () => {
         await lockDealNFT
-            .connect(signer)
-            [
+            .connect(signer)[
                 "safeTransferFrom(address,address,uint256,bytes)"
             ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
         const data = await lockDealNFT.getData(poolId + 3n)
@@ -184,8 +179,7 @@ describe("IDO split tests", function () {
         await USDT.approve(await investProvider.getAddress(), amount)
         await investProvider.invest(poolId, amount, validUntil, signature)
         await lockDealNFT
-            .connect(signer)
-            [
+            .connect(signer)[
                 "safeTransferFrom(address,address,uint256,bytes)"
             ](signerAddress, await lockDealNFT.getAddress(), poolId, packedData)
         const data = await lockDealNFT.getData(poolId + 1n)
