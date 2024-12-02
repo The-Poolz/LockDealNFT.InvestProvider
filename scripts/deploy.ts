@@ -2,11 +2,11 @@ import { ethers } from "hardhat"
 
 async function main() {
     // InvestProvider constructor parameters
-    const lockDealNFTAddress = "0x3d2C83bbBbfB54087d46B80585253077509c21AE"
-    const whiteListRouterAddress = "0x06eD6E9A15D1bae5835544E305e43f5cAB5DB525"
+    const lockDealNFTAddress = "0xe42876a77108E8B3B2af53907f5e533Cba2Ce7BE"
+    const dispenserProvider = "0x55eB3e27355c09854f7F85371600C360Bd95d42F"
     // Deploy InvestProvider contract
     const InvestProviderFactory = await ethers.getContractFactory("InvestProvider")
-    const investProvider = await InvestProviderFactory.deploy(lockDealNFTAddress, whiteListRouterAddress)
+    const investProvider = await InvestProviderFactory.deploy(lockDealNFTAddress, dispenserProvider)
 
     console.log("InvestProvider deployed to:", await investProvider.getAddress())
 }
