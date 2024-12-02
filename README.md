@@ -2,6 +2,7 @@
 
 [![Build and Test](https://github.com/The-Poolz/LockDealNFT.InvestProvider/actions/workflows/node.js.yml/badge.svg)](https://github.com/The-Poolz/LockDealNFT.InvestProvider/actions/workflows/node.js.yml)
 [![codecov](https://codecov.io/gh/The-Poolz/LockDealNFT.InvestProvider/graph/badge.svg?token=LTNmiM9c1L)](https://codecov.io/gh/The-Poolz/LockDealNFT.InvestProvider)
+[![CodeFactor](https://www.codefactor.io/repository/github/the-poolz/LockDealNFT.InvestProvider/badge)](https://www.codefactor.io/repository/github/the-poolz/LockDealNFT.InvestProvider)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/The-Poolz/LockDealNFT.InvestProvider/blob/master/LICENSE)
 
 **InvestProvider** is a contract enabling the creation and management of **Investment Pools (IDO Pools)**. It allows users to invest in pools by contributing tokens, such as stablecoins, in exchange for tokens issued by the **IDO project**. The contract manages pool creation, investments, and enforces compliance with defined limits while tracking available tokens.

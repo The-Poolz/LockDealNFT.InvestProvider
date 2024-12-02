@@ -16,8 +16,8 @@ describe("IDO investment tests", function () {
     let signer: SignerWithAddress
     let signerAddress: string
     let lockDealNFT: LockDealNFT
-    let amount = ethers.parseUnits("100", 18)
-    let maxAmount = ethers.parseUnits("1000", 18)
+    const amount = ethers.parseUnits("100", 18)
+    const maxAmount = ethers.parseUnits("1000", 18)
     let validUntil = Math.floor(Date.now() / 1000) + 60 * 60
     let poolId: bigint
     let packedData: string
@@ -46,8 +46,8 @@ describe("IDO investment tests", function () {
         await vaultManager["createNewVault(address)"](await USDT.getAddress())
         // create source pool
         sourcePoolId = await lockDealNFT.totalSupply()
-        let nounce = await vaultManager.nonces(owner)
-        let tokenAddress = await USDT.getAddress()
+        const nounce = await vaultManager.nonces(owner)
+        const tokenAddress = await USDT.getAddress()
         const params = [amount]
         const addresses = [await signer.getAddress(), tokenAddress]
 
@@ -132,11 +132,18 @@ describe("IDO investment tests", function () {
         //await expect(investProvider.withdraw(poolId)).to.be.reverted
         await expect(
             lockDealNFT
-                .connect(signer)
-                [
+                .connect(signer)[
                     "safeTransferFrom(address,address,uint256)"
                 ](await signer.getAddress(), await lockDealNFT.getAddress(), poolId)
         ).to.be.reverted
+    })
+
+    it("should revert if set invalid poolID", async () => {
+        const invalidPoolId = poolId + 1n
+        await expect(investProvider.invest(invalidPoolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
+            investProvider,
+            "InvalidProvider"
+        )
     })
 
     it("should revert if signer is not valid", async () => {
