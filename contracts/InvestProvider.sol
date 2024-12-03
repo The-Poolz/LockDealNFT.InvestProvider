@@ -92,6 +92,7 @@ contract InvestProvider is InvestInternal {
         firewallProtected
         notZeroAmount(amount)
         invalidProvider(poolId, this)
+        isValidTime(validUntil)
         isValidSignature(poolId, validUntil, amount, signature)
     {
         Pool storage poolData = poolIdToPool[poolId];
