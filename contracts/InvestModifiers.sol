@@ -72,7 +72,7 @@ abstract contract InvestModifiers is InvestState {
      *                   The current block timestamp must be less than or equal to this value.
      */
     modifier isValidTime(uint256 validUntil) {
-        _isValidTime(validUntil);
+        if (validUntil < block.timestamp) revert InvalidTime(block.timestamp, validUntil);
         _;
     }
 
@@ -99,11 +99,6 @@ abstract contract InvestModifiers is InvestState {
             revert InvalidSignature(poolId, msg.sender);
         }
         _;
-    }
-
-    /// @param validUntil The timestamp until which the operation is valid.
-    function _isValidTime(uint256 validUntil) internal view {
-        if (validUntil < block.timestamp) revert InvalidTime(block.timestamp, validUntil);
     }
 
     /**
