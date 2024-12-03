@@ -146,6 +146,13 @@ describe("IDO investment tests", function () {
         )
     })
 
+    it("should revert if zero amount", async () => {
+        await expect(investProvider.invest(poolId, 0, validUntil, signature)).to.be.revertedWithCustomError(
+            investProvider,
+            "NoZeroAmount"
+        )
+    })
+
     it("should revert if signer is not valid", async () => {
         poolId = await lockDealNFT.totalSupply()
         await investProvider["createNewPool(uint256,address,address,uint256)"](
