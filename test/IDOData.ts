@@ -16,7 +16,7 @@ describe("IDO data tests", function () {
     let signer: SignerWithAddress
     let signerAddress: string
     let lockDealNFT: LockDealNFT
-    let maxAmount = ethers.parseUnits("1000", 18)
+    const maxAmount = ethers.parseUnits("1000", 18)
     let poolId: bigint
 
     before(async () => {

@@ -146,6 +146,13 @@ describe("IDO investment tests", function () {
         )
     })
 
+    it("should revert if zero amount", async () => {
+        await expect(investProvider.invest(poolId, 0, validUntil, signature)).to.be.revertedWithCustomError(
+            investProvider,
+            "NoZeroAmount"
+        )
+    })
+
     it("should revert past time", async () => {
         const pastTime = Math.floor(Date.now() / 1000) - 1
         await expect(investProvider.invest(poolId, amount, pastTime, signature)).to.be.revertedWithCustomError(
