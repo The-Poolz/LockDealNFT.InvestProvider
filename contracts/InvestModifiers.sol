@@ -66,6 +66,16 @@ abstract contract InvestModifiers is InvestState {
         _;
     }
 
+    /**
+     * @dev Modifier to ensure that the current time is within the valid period specified by `validUntil`.
+     * @param validUntil The timestamp until which the operation is valid.
+     *                   The current block timestamp must be less than or equal to this value.
+     */
+    modifier isValidTime(uint256 validUntil) {
+        if (validUntil < block.timestamp) revert InvalidTime(block.timestamp, validUntil);
+        _;
+    }
+
     /// @notice Validates the signature provided for the dispense action.
     /// @dev Reverts with an `InvalidSignature` error if the signature is not valid.
     /// @param poolId The pool ID for the dispensation.

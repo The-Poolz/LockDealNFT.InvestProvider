@@ -18,7 +18,7 @@ describe("IDO investment tests", function () {
     let lockDealNFT: LockDealNFT
     const amount = ethers.parseUnits("100", 18)
     const maxAmount = ethers.parseUnits("1000", 18)
-    let validUntil = Math.floor(Date.now() / 1000) + 60 * 60
+    const validUntil = Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour
     let poolId: bigint
     let packedData: string
     let signature: string
@@ -122,7 +122,7 @@ describe("IDO investment tests", function () {
     })
 
     it("should revert invalid signature", async () => {
-        await expect(investProvider.invest(poolId, amount, (validUntil += 1), signature)).to.be.revertedWithCustomError(
+        await expect(investProvider.invest(poolId, amount, validUntil + 1, signature)).to.be.revertedWithCustomError(
             investProvider,
             "InvalidSignature"
         )
@@ -143,6 +143,14 @@ describe("IDO investment tests", function () {
         await expect(investProvider.invest(invalidPoolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
             investProvider,
             "InvalidProvider"
+        )
+    })
+
+    it("should revert past time", async () => {
+        const pastTime = Math.floor(Date.now() / 1000) - 1
+        await expect(investProvider.invest(poolId, amount, pastTime, signature)).to.be.revertedWithCustomError(
+            investProvider,
+            "InvalidTime"
         )
     })
 
