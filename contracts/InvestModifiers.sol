@@ -124,7 +124,8 @@ abstract contract InvestModifiers is InvestState {
     }
 
     function _isValidSourcePoolId(uint256 sourcePoolId) internal view {
-        if (lockDealNFT.tokenOf(sourcePoolId) == address(0)) revert InvalidSourcePoolId(sourcePoolId);
+        if (lockDealNFT.poolIdToProvider(sourcePoolId) == IProvider(address(0)))
+            revert InvalidSourcePoolId(sourcePoolId);
     }
 
     /**

@@ -190,4 +190,15 @@ describe("IDO creation tests", function () {
             investProvider.createNewPool(amount, signerAddress, ethers.ZeroAddress, sourcePoolId)
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
+
+    it("should revert invalid sourcePoolId with two signers", async () => {
+        await expect(investProvider.createNewPool(amount, signerAddress, signerAddress, "99999")).to.be.revertedWithCustomError(
+            investProvider,
+            "InvalidSourcePoolId"
+        )
+    })
+
+    it("should revert invalid sourcePoolId", async () => {
+        await expect(investProvider.createNewPool(amount, "99999")).to.be.revertedWithCustomError(investProvider, "InvalidSourcePoolId")
+    })
 })
