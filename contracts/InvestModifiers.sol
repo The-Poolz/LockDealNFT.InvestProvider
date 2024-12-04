@@ -33,10 +33,9 @@ abstract contract InvestModifiers is InvestState {
     /**
      * @dev Modifier to validate that the provided address is a valid provider for the given pool ID.
      * @param poolId The pool ID to check.
-     * @param provider The provider address to validate.
      */
-    modifier invalidProvider(uint256 poolId, IProvider provider) {
-        _invalidProvider(poolId, provider);
+    modifier isValidInvestProvider(uint256 poolId) {
+        _isValidInvestProvider(poolId);
         _;
     }
 
@@ -63,6 +62,15 @@ abstract contract InvestModifiers is InvestState {
      */
     modifier onlyNFT() {
         _onlyNFT();
+        _;
+    }
+
+    /**
+     * @dev Modifier to ensure that the source pool ID is valid.
+     * @param sourcePoolId The source pool ID to check.
+     */
+    modifier isValidSourcePoolId(uint256 sourcePoolId) {
+        _isValidSourcePoolId(sourcePoolId);
         _;
     }
 
@@ -115,17 +123,17 @@ abstract contract InvestModifiers is InvestState {
             revert InvalidParamsLength(paramsLength, minLength);
     }
 
+    function _isValidSourcePoolId(uint256 sourcePoolId) internal view {
+        if (lockDealNFT.tokenOf(sourcePoolId) == address(0)) revert InvalidSourcePoolId(sourcePoolId);
+    }
+
     /**
      * @notice Validates that the given provider is the correct provider for the specified pool ID.
      * @param poolId The ID of the pool.
-     * @param provider The address of the provider to verify.
      * @dev Reverts with `InvalidProvider` if the provider does not match the expected one for the pool.
      */
-    function _invalidProvider(
-        uint256 poolId,
-        IProvider provider
-    ) internal view {
-        if (lockDealNFT.poolIdToProvider(poolId) != provider)
+    function _isValidInvestProvider(uint256 poolId) internal view {
+        if (lockDealNFT.poolIdToProvider(poolId) != this)
             revert InvalidProvider();
     }
 

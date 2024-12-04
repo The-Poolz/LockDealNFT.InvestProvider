@@ -53,7 +53,6 @@ describe("IDO split tests", function () {
         let nounce = await vaultManager.nonces(await owner.getAddress())
         const tokenAddress = await token.getAddress()
 
-        poolId = await lockDealNFT.totalSupply()
         await token.approve(await vaultManager.getAddress(), amount)
         const tokenPackedData = ethers.solidityPackedKeccak256(
             ["address", "uint256", "uint256"],

@@ -41,6 +41,7 @@ contract InvestProvider is InvestInternal {
         notZeroAddress(investSigner)
         notZeroAddress(dispenserSigner)
         notZeroAmount(poolAmount)
+        isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
         poolId = _createPool(
@@ -61,6 +62,7 @@ contract InvestProvider is InvestInternal {
         override
         firewallProtected
         notZeroAmount(poolAmount)
+        isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
         poolId = _createPool(
@@ -91,7 +93,7 @@ contract InvestProvider is InvestInternal {
         override
         firewallProtected
         notZeroAmount(amount)
-        invalidProvider(poolId, this)
+        isValidInvestProvider(poolId)
         isValidTime(validUntil)
         isValidSignature(poolId, validUntil, amount, signature)
     {
