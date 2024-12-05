@@ -17,6 +17,7 @@ describe("IDO data tests", function () {
     let signerAddress: string
     let lockDealNFT: LockDealNFT
     const maxAmount = ethers.parseUnits("1000", 18)
+    const amount = ethers.parseUnits("100", 18)
     let poolId: bigint
 
     before(async () => {
@@ -33,9 +34,24 @@ describe("IDO data tests", function () {
         investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress())
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
-        // startTime + 24 hour
+        await vaultManager.setTrustee(await lockDealNFT.getAddress())
+        // create vault with token
+        await vaultManager["createNewVault(address)"](await USDT.getAddress())
         // create source pool
-        sourcePoolId = "0"
+        sourcePoolId = await lockDealNFT.totalSupply()
+        const nounce = await vaultManager.nonces(owner)
+        const tokenAddress = await USDT.getAddress()
+        const params = [amount]
+        const addresses = [await signer.getAddress(), tokenAddress]
+
+        await USDT.approve(await vaultManager.getAddress(), amount)
+        const packedData = ethers.solidityPackedKeccak256(
+            ["address", "uint256", "uint256"],
+            [tokenAddress, amount, nounce]
+        )
+        const tokenSignature = await owner.signMessage(ethers.getBytes(packedData))
+        // create source pool
+        await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
         signerAddress = await signer.getAddress()
     })
 

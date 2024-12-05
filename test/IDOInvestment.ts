@@ -51,7 +51,6 @@ describe("IDO investment tests", function () {
         const params = [amount]
         const addresses = [await signer.getAddress(), tokenAddress]
 
-        poolId = await lockDealNFT.totalSupply()
         await USDT.approve(await vaultManager.getAddress(), amount)
         const packedData = ethers.solidityPackedKeccak256(
             ["address", "uint256", "uint256"],

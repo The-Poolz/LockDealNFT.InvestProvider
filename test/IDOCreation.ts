@@ -8,7 +8,7 @@ import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
 describe("IDO creation tests", function () {
     let token: ERC20Token
     let USDT: ERC20Token
-    let sourcePoolId: string
+    let sourcePoolId: bigint
     let vaultManager: VaultManager
     let investProvider: InvestProvider
     let providerMock: ProviderMock
@@ -42,8 +42,26 @@ describe("IDO creation tests", function () {
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await providerMock.getAddress(), true)
         // create source pool
+        // set trustee
+        await vaultManager.setTrustee(await lockDealNFT.getAddress())
+        // create vault with token
+        await vaultManager["createNewVault(address)"](await USDT.getAddress())
+        // create source pool
+        sourcePoolId = await lockDealNFT.totalSupply()
+        const nounce = await vaultManager.nonces(owner)
+        const tokenAddress = await USDT.getAddress()
+        const params = [amount]
+        const addresses = [await signer.getAddress(), tokenAddress]
+
+        await USDT.approve(await vaultManager.getAddress(), amount)
+        const packedData = ethers.solidityPackedKeccak256(
+            ["address", "uint256", "uint256"],
+            [tokenAddress, amount, nounce]
+        )
+        const tokenSignature = await owner.signMessage(ethers.getBytes(packedData))
+        // create source pool
+        await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
         signerAddress = await signer.getAddress()
-        sourcePoolId = "0"
     })
 
     beforeEach(async () => {
@@ -100,9 +118,10 @@ describe("IDO creation tests", function () {
     })
 
     it("should revert zero max amount", async () => {
-        await expect(
-            investProvider.createNewPool(0n, sourcePoolId)
-        ).to.be.revertedWithCustomError(investProvider, "NoZeroAmount")
+        await expect(investProvider.createNewPool(0n, sourcePoolId)).to.be.revertedWithCustomError(
+            investProvider,
+            "NoZeroAmount"
+        )
     })
 
     it("should revert zero max amount with two signers", async () => {
@@ -149,34 +168,37 @@ describe("IDO creation tests", function () {
     it("should revert zero lockDealNFT address", async () => {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         await expect(
-            InvestProvider.deploy(
-                ethers.ZeroAddress,
-                await dispenserProvider.getAddress()
-            )
+            InvestProvider.deploy(ethers.ZeroAddress, await dispenserProvider.getAddress())
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
 
     it("should revert zero dispenserProvider address", async () => {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         await expect(
-            InvestProvider.deploy(
-                await lockDealNFT.getAddress(),
-                ethers.ZeroAddress
-            )
+            InvestProvider.deploy(await lockDealNFT.getAddress(), ethers.ZeroAddress)
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
 
     it("should revert zero invest signer address", async () => {
-        await expect(investProvider.createNewPool(amount, ethers.ZeroAddress, signerAddress, sourcePoolId)).to.be.revertedWithCustomError(
-            investProvider,
-            "NoZeroAddress"
-        )
+        await expect(
+            investProvider.createNewPool(amount, ethers.ZeroAddress, signerAddress, sourcePoolId)
+        ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
 
     it("should revert zero dispenser signer address", async () => {
-        await expect(investProvider.createNewPool(amount, signerAddress, ethers.ZeroAddress, sourcePoolId)).to.be.revertedWithCustomError(
+        await expect(
+            investProvider.createNewPool(amount, signerAddress, ethers.ZeroAddress, sourcePoolId)
+        ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
+    })
+
+    it("should revert invalid sourcePoolId with two signers", async () => {
+        await expect(investProvider.createNewPool(amount, signerAddress, signerAddress, "99999")).to.be.revertedWithCustomError(
             investProvider,
-            "NoZeroAddress"
+            "InvalidSourcePoolId"
         )
+    })
+
+    it("should revert invalid sourcePoolId", async () => {
+        await expect(investProvider.createNewPool(amount, "99999")).to.be.revertedWithCustomError(investProvider, "InvalidSourcePoolId")
     })
 })
