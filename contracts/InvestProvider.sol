@@ -100,9 +100,12 @@ contract InvestProvider is InvestInternal {
         Pool storage poolData = poolIdToPool[poolId];
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
         poolData.leftAmount -= amount;
-
+        poolIdToInvests[poolId][msg.sender].push(UserInvest(block.timestamp, amount));
+        
         _invest(poolId, amount);
-        emit Invested(poolId, msg.sender, amount);
+        
+        uint256 nonce = poolIdToInvests[poolId][msg.sender].length;
+        emit Invested(poolId, msg.sender, amount, nonce - 1, nonce);
     }
 
     /**

@@ -14,6 +14,10 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
     /// @dev Each pool ID corresponds to an `Pool` struct containing pool details.
     mapping(uint256 => Pool) public poolIdToPool;
 
+    /// @notice Maps pool IDs to the investments made in the pool.
+    /// @dev Each pool ID corresponds to an array of `UserInvest` structs containing investment details.
+    mapping(uint256 => mapping(address => UserInvest[])) public poolIdToInvests;
+
     IProvider public immutable dispenserProvider;
 
     /**
