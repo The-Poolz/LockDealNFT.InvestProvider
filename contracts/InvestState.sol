@@ -85,8 +85,35 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
      * @param poolId The ID of the pool to fetch investments for.
      * @return nonce The number of investments made by the user in the pool.
      */
+    function getNonce(uint256 poolId, address user) external view returns (uint256 nonce) {
+        nonce = _getNonce(poolId, user);
+    }
+
+
+    /**
+     * @notice Retrieves nonce of the user in the pool.
+     * @param poolId The ID of the pool to fetch investments for.
+     * @return nonce The number of investments made by the msg.sender in the pool.
+     */
     function getNonce(uint256 poolId) external view returns (uint256 nonce) {
-        return poolIdToInvests[poolId][msg.sender].length;
+        nonce = _getNonce(poolId);
+    }
+
+    /**
+     *  internal function to get nonce of the user in the pool.
+     * @param poolId The ID of the pool to fetch investments for.
+     */
+    function _getNonce(uint256 poolId, address user) internal view returns (uint256 nonce) {
+        nonce = poolIdToInvests[poolId][user].length;
+    }
+
+    /**
+     * @notice Retrieves nonce of the user in the pool.
+     * @param poolId The ID of the pool to fetch investments for.
+     * @return nonce The number of investments made by the user in the pool.
+     */
+    function _getNonce(uint256 poolId) internal view returns (uint256 nonce) {
+        nonce = poolIdToInvests[poolId][msg.sender].length;
     }
 
     /**
@@ -94,7 +121,7 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
      * @param poolId The ID of the pool to fetch investments for.
      * @return invests An array of `UserInvest` structs containing investment details.
      */
-    function getUserInvests(uint256 poolId) external view returns (UserInvest[] memory) {
-        return poolIdToInvests[poolId][msg.sender];
+    function getUserInvests(uint256 poolId, address user) external view returns (UserInvest[] memory) {
+        return poolIdToInvests[poolId][user];
     }
 }

@@ -97,7 +97,7 @@ abstract contract InvestModifiers is InvestState {
         bytes calldata signature
     ) {
         address signer = lockDealNFT.getData(poolId).owner;
-        uint256 nonce = poolIdToInvests[poolId][msg.sender].length;
+        uint256 nonce = _getNonce(poolId);
         bytes32 messageHash = keccak256(
             abi.encodePacked(poolId, msg.sender, validUntil, amount, nonce)
         );

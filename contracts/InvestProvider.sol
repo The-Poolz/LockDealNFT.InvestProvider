@@ -104,7 +104,7 @@ contract InvestProvider is InvestInternal {
         
         _invest(poolId, amount);
         
-        uint256 nonce = poolIdToInvests[poolId][msg.sender].length;
+        uint256 nonce = _getNonce(poolId);
         emit Invested(poolId, msg.sender, amount, nonce);
     }
 

@@ -18,7 +18,9 @@ describe("IDO data tests", function () {
     let lockDealNFT: LockDealNFT
     const maxAmount = ethers.parseUnits("1000", 18)
     const amount = ethers.parseUnits("100", 18)
+    const validUntil = Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour
     let poolId: bigint
+    let signature: string
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
@@ -45,6 +47,8 @@ describe("IDO data tests", function () {
         const addresses = [await signer.getAddress(), tokenAddress]
 
         await USDT.approve(await vaultManager.getAddress(), amount)
+        await USDT.approve(await investProvider.getAddress(), maxAmount)
+
         const packedData = ethers.solidityPackedKeccak256(
             ["address", "uint256", "uint256"],
             [tokenAddress, amount, nounce]
@@ -58,6 +62,12 @@ describe("IDO data tests", function () {
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
         await investProvider.createNewPool(maxAmount, signer, signer, sourcePoolId)
+        const nonce = await investProvider["getNonce(uint256)"](poolId)
+        const packedData = ethers.solidityPackedKeccak256(
+            ["uint256", "address", "uint256", "uint256", "uint256"],
+            [poolId, await owner.getAddress(), validUntil, amount, nonce]
+        )
+        signature = await signer.signMessage(ethers.getBytes(packedData))
     })
 
     it("should return currentParamsTargetLength", async () => {
@@ -76,5 +86,59 @@ describe("IDO data tests", function () {
 
     it("should return getWithdrawableAmount", async () => {
         expect(await investProvider.getWithdrawableAmount(poolId)).to.equal(0)
+    })
+
+    // Helper function to fetch the latest block timestamp
+    const getLatestTimestamp = async (): Promise<number> => {
+        const block = await ethers.provider.getBlock('latest')
+        if (block === null) {
+            throw new Error('Failed to fetch the latest block.')
+        }
+        return block.timestamp
+    }
+
+    // Helper function to generate a signature for investment
+    const generateSignature = async (
+        poolId: bigint,
+        amount: bigint,
+        validUntil: number,
+        signer: SignerWithAddress
+    ): Promise<string> => {
+        const nonce = await investProvider["getNonce(uint256)"](poolId)
+        const packedData = ethers.solidityPackedKeccak256(
+            ["uint256", "address", "uint256", "uint256", "uint256"],
+            [poolId, await owner.getAddress(), validUntil, amount, nonce]
+        )
+        return signer.signMessage(ethers.getBytes(packedData))
+    }
+
+    // Helper function to perform an investment and record the timestamp
+    const performInvestment = async (
+        poolId: bigint,
+        amount: bigint,
+        validUntil: number,
+        signer: SignerWithAddress,
+        timestamps: number[]
+    ): Promise<void> => {
+        const signature = await generateSignature(poolId, amount, validUntil, signer)
+        await investProvider.invest(poolId, amount, validUntil, signature)
+        timestamps.push(await getLatestTimestamp())
+    }
+
+    it("should return an array of user investments", async () => {
+        const timestamps: number[] = [];
+
+        // Perform 3 investments
+        await performInvestment(poolId, amount, validUntil, signer, timestamps)
+        await performInvestment(poolId, amount, validUntil, signer, timestamps)
+        await performInvestment(poolId, amount, validUntil, signer, timestamps)
+
+        // Prepare expected investments array
+        const expectedInvestments = timestamps.flatMap((timestamp) => [timestamp.toString(), amount.toString()])
+
+        // Fetch actual investments and compare
+        const actualInvestments = (await investProvider.getUserInvests(poolId, await owner.getAddress())).map(String)
+
+        expect(actualInvestments.toString()).to.equal(expectedInvestments.toString())
     })
 })

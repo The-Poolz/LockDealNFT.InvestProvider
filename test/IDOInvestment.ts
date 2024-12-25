@@ -68,7 +68,7 @@ describe("IDO investment tests", function () {
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
         await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId)
-        const nonce = await investProvider.getNonce(poolId)
+        const nonce = await investProvider["getNonce(uint256)"](poolId)
         packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
             [poolId, await owner.getAddress(), validUntil, amount, nonce]
@@ -100,7 +100,7 @@ describe("IDO investment tests", function () {
     })
 
     it("should revert if no allowance", async () => {
-        const nonce = await investProvider.getNonce(poolId)
+        const nonce = await investProvider["getNonce(uint256)"](poolId)
         const packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
             [poolId, await user.getAddress(), validUntil, amount, nonce]
@@ -112,7 +112,7 @@ describe("IDO investment tests", function () {
     })
 
     it("should revert if invested amount is more than left amount", async () => {
-        const nonce = await investProvider.getNonce(poolId)
+        const nonce = await investProvider["getNonce(uint256,address)"](poolId, await owner.getAddress())
         const packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
             [poolId, await owner.getAddress(), validUntil, maxAmount + 1n, nonce]
@@ -177,6 +177,14 @@ describe("IDO investment tests", function () {
         )
         const signature = await owner.signMessage(ethers.getBytes(packedData))
         await expect(investProvider.invest(poolId, maxAmount, validUntil, signature)).to.be.revertedWithCustomError(
+            investProvider,
+            "InvalidSignature"
+        )
+    })
+
+    it("should revert double invest", async () => {
+        await investProvider.invest(poolId, amount, validUntil, signature)
+        await expect(investProvider.invest(poolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
             investProvider,
             "InvalidSignature"
         )
