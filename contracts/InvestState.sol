@@ -78,4 +78,23 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
         params[0] = poolData.maxAmount;
         params[1] = poolData.leftAmount;
     }
+
+
+    /**
+     * @notice Retrieves nonce of the user in the pool.
+     * @param poolId The ID of the pool to fetch investments for.
+     * @return nonce The number of investments made by the user in the pool.
+     */
+    function getNonce(uint256 poolId) external view returns (uint256 nonce) {
+        return poolIdToInvests[poolId][msg.sender].length;
+    }
+
+    /**
+     * @notice Retrieves the investments made in a pool by a user.
+     * @param poolId The ID of the pool to fetch investments for.
+     * @return invests An array of `UserInvest` structs containing investment details.
+     */
+    function getUserInvests(uint256 poolId) external view returns (UserInvest[] memory) {
+        return poolIdToInvests[poolId][msg.sender];
+    }
 }

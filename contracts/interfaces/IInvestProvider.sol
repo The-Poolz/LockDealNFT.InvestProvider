@@ -78,7 +78,6 @@ interface IInvestProvider is IProvider {
         uint256 indexed poolId,
         address indexed user,
         uint256 amount,
-        uint256 oldNonce,
         uint256 newNonce
     );
 
