@@ -76,6 +76,15 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
     }
 
     /**
+     * @dev Modifier to ensure that the pool is active.
+     * @param poolId The pool ID to check.
+     */
+    modifier isPoolActive(uint256 poolId) {
+        _isPoolActive(poolId);
+        _;
+    }
+
+    /**
      * @dev Modifier to ensure that the current time is within the valid period specified by `validUntil`.
      * @param validUntil The timestamp until which the operation is valid.
      *                   The current block timestamp must be less than or equal to this value.
@@ -109,6 +118,18 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
             revert InvalidSignature(poolId, msg.sender);
         }
         _;
+    }
+
+    /**
+     * @notice Checks if the pool is active.
+     * @param poolId The ID of the pool to check.
+     * @dev Reverts with `InactivePool` if the pool is not active.
+     */
+    function _isPoolActive(uint256 poolId) internal view {
+        if (
+            lockDealNFT.ownerOf(poolId) == address(lockDealNFT) ||
+            lockDealNFT.ownerOf(poolId + 1) == address(lockDealNFT) // dispense pool
+        ) revert InactivePool(poolId);
     }
 
     /**

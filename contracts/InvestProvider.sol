@@ -92,8 +92,9 @@ contract InvestProvider is InvestInternal {
         external
         override
         firewallProtected
-        notZeroAmount(amount)
         isValidInvestProvider(poolId)
+        isPoolActive(poolId)
+        notZeroAmount(amount)
         isValidTime(validUntil)
         isValidSignature(poolId, validUntil, amount, signature)
     {
@@ -127,14 +128,13 @@ contract InvestProvider is InvestInternal {
     }
 
     /**
-     * @notice Withdraws funds from the contract (currently not implemented).
-     * @return The withdrawable amount and a flag indicating whether withdrawal was successful.
-     * @dev Always reverts as the function is not implemented.
+     * @notice When called, the pool is marked as inactive.
+     * @return The a flag indicating whether the pool is inactive.
      */
     function withdraw(
         uint256
     ) external firewallProtected onlyNFT returns (uint256, bool) {
-        revert();
+        return (0, true);
     }
 
     /**
