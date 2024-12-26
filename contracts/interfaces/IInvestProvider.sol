@@ -69,7 +69,8 @@ interface IInvestProvider is IProvider {
     event Invested(
         uint256 indexed poolId,
         address indexed user,
-        uint256 amount
+        uint256 amount,
+        uint256 newNonce
     );
 
     /**

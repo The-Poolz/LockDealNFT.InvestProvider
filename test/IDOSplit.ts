@@ -88,10 +88,11 @@ describe("IDO split tests", function () {
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
+        const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         await investProvider["createNewPool(uint256,address,address,uint256)"](maxAmount, signer, signer, sourcePoolId)
         investData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, amount]
+            ["uint256", "address", "uint256", "uint256", "uint256"],
+            [poolId, await owner.getAddress(), validUntil, amount, nonce]
         )
         signature = await signer.signMessage(ethers.getBytes(investData))
     })
