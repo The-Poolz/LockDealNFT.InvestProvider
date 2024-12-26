@@ -45,20 +45,7 @@ abstract contract InvestNonce is InvestState {
     ) internal view returns (uint256 nonce) {
         nonce = poolIdToInvests[poolId][msg.sender].length;
     }
-
-    /// @dev Returns the track at a specific index for the specified ID and address.
-    /// @param id The ID associated with the address.
-    /// @param user The address for which the track is being retrieved.
-    /// @param index The index of the track to retrieve.
-    /// @return The track item (blockTimestamp and amount).
-    function getInvestTrack(
-        uint256 id,
-        address user,
-        uint256 index
-    ) external view returns (UserInvest memory) {
-        return poolIdToInvests[id][user][index];
-    }
-
+    
     /**
      * @notice Retrieves the investments made in a pool by a user.
      * @param poolId The ID of the pool to fetch investments for.
