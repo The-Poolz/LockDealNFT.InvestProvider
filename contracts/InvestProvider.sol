@@ -129,12 +129,14 @@ contract InvestProvider is InvestInternal {
 
     /**
      * @notice When called, the pool is marked as inactive.
-     * @return The a flag indicating whether the pool is inactive.
+     * @return withdrawnAmount Returns the withdrawable amount (always 0 in this contract).
+     * @return isFinal Returns `true` to indicate that the pool is inactive.
      */
     function withdraw(
         uint256
-    ) external firewallProtected onlyNFT returns (uint256, bool) {
-        return (0, true);
+    ) external firewallProtected onlyNFT returns (uint256 withdrawnAmount, bool isFinal) {
+        withdrawnAmount = 0;
+        isFinal = true;
     }
 
     /**
