@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./InvestState.sol";
+import "./InvestNonce.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title InvestModifiers
 /// @notice Provides various modifiers for validating inputs and conditions in investment-related contracts.
-abstract contract InvestModifiers is InvestState {
+abstract contract InvestModifiers is InvestNonce {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
