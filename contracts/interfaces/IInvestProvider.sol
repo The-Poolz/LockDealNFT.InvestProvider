@@ -61,14 +61,6 @@ interface IInvestProvider is IProvider {
     }
 
     /**
-     * @dev Struct that represents an investment in an IDO pool, containing the timestamp and amount of the investment.
-     */
-    struct UserInvest {
-        uint256 blockTimestamp;
-        uint256 amount;
-    }
-
-    /**
      * @notice Emitted when a user successfully invests in a pool.
      * @param poolId The ID of the pool where the investment was made.
      * @param user The address of the user who made the investment.

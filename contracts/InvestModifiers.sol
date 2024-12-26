@@ -2,13 +2,14 @@
 pragma solidity ^0.8.0;
 
 import "./InvestNonce.sol";
+import "./InvestState.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title InvestModifiers
 /// @notice Provides various modifiers for validating inputs and conditions in investment-related contracts.
-abstract contract InvestModifiers is InvestNonce {
+abstract contract InvestModifiers is InvestNonce, InvestState {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 

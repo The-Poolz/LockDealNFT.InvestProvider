@@ -3,7 +3,19 @@ pragma solidity ^0.8.0;
 
 import "./InvestState.sol";
 
-abstract contract InvestNonce is InvestState {
+abstract contract InvestNonce {
+    /// @notice Maps pool IDs to the investments made in the pool.
+    /// @dev Each pool ID corresponds to an array of `UserInvest` structs containing investment details.
+    mapping(uint256 => mapping(address => UserInvest[])) public poolIdToInvests;
+
+    /**
+     * @dev Struct that represents an investment in an IDO pool, containing the timestamp and amount of the investment.
+     */
+    struct UserInvest {
+        uint256 blockTimestamp;
+        uint256 amount;
+    }
+
     /// @dev Adds a new track item for the specified ID and address.
     /// @param poolId The ID associated with the address.
     /// @param amount The amount to associate with this track.
