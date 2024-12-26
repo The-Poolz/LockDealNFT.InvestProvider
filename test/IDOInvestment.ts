@@ -130,14 +130,15 @@ describe("IDO investment tests", function () {
         )
     })
 
-    it("should revert if call withdraw", async () => {
-        //await expect(investProvider.withdraw(poolId)).to.be.reverted
-        await expect(
-            lockDealNFT
-                .connect(signer)[
-                    "safeTransferFrom(address,address,uint256)"
-                ](await signer.getAddress(), await lockDealNFT.getAddress(), poolId)
-        ).to.be.reverted
+    it("should revert investment if the pool is closed", async () => {
+        await lockDealNFT
+            .connect(signer)[
+                "safeTransferFrom(address,address,uint256)"
+            ](await signer.getAddress(), await lockDealNFT.getAddress(), poolId)
+            await expect(investProvider.invest(poolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
+                investProvider,
+                "InactivePool"
+            )
     })
 
     it("should revert if set invalid poolID", async () => {

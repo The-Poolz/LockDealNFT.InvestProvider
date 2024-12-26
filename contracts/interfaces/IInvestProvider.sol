@@ -85,6 +85,7 @@ interface IInvestProvider is IProvider {
         uint256 poolAmount
     );
 
+    error InactivePool(uint256 poolId);
     error InvalidLockDealNFT();
     error InvalidProvider();
     error InvalidPoolId();
