@@ -131,11 +131,6 @@ describe("IDO investment tests", function () {
     })
 
     it("should revert investment if the pool is closed", async () => {
-
-
-
-
-
         await lockDealNFT
             .connect(signer)[
                 "safeTransferFrom(address,address,uint256)"

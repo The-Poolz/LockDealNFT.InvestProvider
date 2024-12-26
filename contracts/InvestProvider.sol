@@ -92,9 +92,9 @@ contract InvestProvider is InvestInternal {
         external
         override
         firewallProtected
+        notZeroAmount(amount)
         isValidInvestProvider(poolId)
         isPoolActive(poolId)
-        notZeroAmount(amount)
         isValidTime(validUntil)
         isValidSignature(poolId, validUntil, amount, signature)
     {
