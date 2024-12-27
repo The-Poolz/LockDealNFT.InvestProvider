@@ -5,6 +5,7 @@ import "@poolzfinance/lockdeal-nft/contracts/SimpleProviders/Provider/ProviderSt
 import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "./interfaces/IInvestProvider.sol";
+import "./interfaces/IWBNB.sol";
 
 /// @title InvestState
 /// @notice Manages the state of investment pools and provides common functions for interacting with them.
@@ -15,6 +16,10 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
     mapping(uint256 => Pool) public poolIdToPool;
 
     IProvider public immutable dispenserProvider;
+
+    bytes4 public IInvestProviderInterfaceId = type(IInvestProvider).interfaceId;
+
+    IWBNB public immutable wBNB;
 
     /**
      * @notice Returns the expected length of parameters required for pool functions.

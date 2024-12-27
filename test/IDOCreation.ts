@@ -32,9 +32,12 @@ describe("IDO creation tests", function () {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
+        const tokenAddress = await USDT.getAddress()
+
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
-            await dispenserProvider.getAddress()
+            await dispenserProvider.getAddress(),
+            tokenAddress
         )
         const ProviderMock = await ethers.getContractFactory("ProviderMock")
         providerMock = await ProviderMock.deploy(await lockDealNFT.getAddress())
@@ -49,7 +52,6 @@ describe("IDO creation tests", function () {
         // create source pool
         sourcePoolId = await lockDealNFT.totalSupply()
         const nounce = await vaultManager.nonces(owner)
-        const tokenAddress = await USDT.getAddress()
         const params = [amount]
         const addresses = [await signer.getAddress(), tokenAddress]
 
@@ -131,7 +133,7 @@ describe("IDO creation tests", function () {
     })
 
     it("should support IInvestProvider interface", async () => {
-        expect(await investProvider.supportsInterface("0x16615bcc")).to.equal(true)
+        expect(await investProvider.supportsInterface("0x7551319a")).to.equal(true)
     })
 
     // @dev withdraw is not implemented in the contract right now
@@ -168,14 +170,14 @@ describe("IDO creation tests", function () {
     it("should revert zero lockDealNFT address", async () => {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         await expect(
-            InvestProvider.deploy(ethers.ZeroAddress, await dispenserProvider.getAddress())
+            InvestProvider.deploy(ethers.ZeroAddress, await dispenserProvider.getAddress(), await dispenserProvider.getAddress())
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
 
     it("should revert zero dispenserProvider address", async () => {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         await expect(
-            InvestProvider.deploy(await lockDealNFT.getAddress(), ethers.ZeroAddress)
+            InvestProvider.deploy(await lockDealNFT.getAddress(), ethers.ZeroAddress, await dispenserProvider.getAddress())
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
 

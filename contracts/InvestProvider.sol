@@ -12,11 +12,14 @@ contract InvestProvider is InvestInternal {
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
-    constructor(ILockDealNFT _lockDealNFT, IProvider _dispenserProvider) {
+    /// @param _wBNB The address of the `IWBNB` contract.
+    constructor(ILockDealNFT _lockDealNFT, IProvider _dispenserProvider, IWBNB _wBNB) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
+        if (address(_wBNB) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
         dispenserProvider = _dispenserProvider;
+        wBNB = _wBNB;
         name = "InvestProvider";
     }
 
@@ -76,6 +79,32 @@ contract InvestProvider is InvestInternal {
     }
 
     /**
+     * @notice Allows an address to invest an amount of BNB into a pool.
+     * @param poolId The ID of the pool to invest in.
+     * @param validUntil The expiration time for the signature.
+     * @param signature The signature to validate the investment.
+     * @dev Emits the `Invested` event after a successful investment.
+     */
+    function investETH(
+        uint256 poolId,
+        uint256 validUntil,
+        bytes calldata signature
+    )
+        external
+        payable
+        override
+        firewallProtected
+        isValidInvestProvider(poolId)
+        isPoolActive(poolId)
+        isValidTime(validUntil)
+        isValidSignature(poolId, validUntil, msg.value, signature)
+    {
+        uint256 amount = msg.value;
+        wBNB.deposit{ value: amount }();
+        _handleInvest(poolId, address(this), amount);
+    }
+
+    /**
      * @notice Allows an address to invest a specified amount into a pool.
      * @param poolId The ID of the pool to invest in.
      * @param amount The amount to invest.
@@ -98,14 +127,7 @@ contract InvestProvider is InvestInternal {
         isValidTime(validUntil)
         isValidSignature(poolId, validUntil, amount, signature)
     {
-        Pool storage poolData = poolIdToPool[poolId];
-        if (poolData.leftAmount < amount) revert ExceededLeftAmount();
-        poolData.leftAmount -= amount;
-        uint256 nonce = _addInvestTrack(poolId, msg.sender, amount);
-        
-        _invest(poolId, amount);
-        
-        emit Invested(poolId, msg.sender, amount, nonce);
+        _handleInvest(poolId, msg.sender, amount);
     }
 
     /**

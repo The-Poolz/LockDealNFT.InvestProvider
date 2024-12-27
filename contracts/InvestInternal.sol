@@ -53,8 +53,8 @@ abstract contract InvestInternal is InvestModifiers {
      * @param amount The amount being invested.
      * @dev Reduces the left amount of the pool and calls the `onInvest` method of the invested provider.
      */
-    function _invest(uint256 poolId, uint256 amount) internal {
-        _transferERC20Tokens(poolId, amount);
+    function _invest(uint256 poolId, address from, uint256 amount) internal {
+        _transferERC20Tokens(poolId, from, amount);
         _registerDispenser(poolId + 1, amount);
     }
 
@@ -69,12 +69,12 @@ abstract contract InvestInternal is InvestModifiers {
         dispenserProvider.registerPool(dispenserPoolId, dispenserParams);
     }
 
-    function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
+    function _transferERC20Tokens(uint256 poolId, address from, uint256 amount) internal {
         address token = lockDealNFT.tokenOf(poolId);
         IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
         uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
         address vault = vaultManager.vaultIdToVault(vaultId);
-        IERC20(token).safeTransferFrom(msg.sender, vault, amount);
+        IERC20(token).safeTransferFrom(from, vault, amount);
     }
 
     function _createDispenser(uint256 dispenserPoolId) internal {
@@ -87,5 +87,19 @@ abstract contract InvestInternal is InvestModifiers {
     function _createDispenser(uint256 sourceId, address signer) internal {
         uint256 dispenserPoolId = lockDealNFT.mintForProvider(signer, dispenserProvider);
         lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
+    }
+    
+    /// @notice Internal function to handle the investment process.
+    /// @param poolId The ID of the pool to invest in.
+    /// @param amount The amount to invest in the pool.
+    function _handleInvest(uint256 poolId, address from, uint256 amount) internal {
+        Pool storage poolData = poolIdToPool[poolId];
+        if (poolData.leftAmount < amount) revert ExceededLeftAmount();
+        poolData.leftAmount -= amount;
+        uint256 nonce = _addInvestTrack(poolId, msg.sender, amount);
+        
+        _invest(poolId, from, amount);
+        
+        emit Invested(poolId, msg.sender, amount, nonce);
     }
 }

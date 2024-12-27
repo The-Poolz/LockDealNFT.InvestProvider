@@ -22,6 +22,18 @@ interface IInvestProvider is IProvider {
         bytes calldata signature
     ) external;
 
+
+    /**
+     * @notice Allows an address to invest in a specific IDO (Initial DEX Offering) pool using ETH.
+     * @dev The function is used to transfer a specified amount of ETH into the pool.
+     * @param poolId The ID of the pool where the investment will occur.
+     */
+    function investETH(
+        uint256 poolId,
+        uint256 validUntil,
+        bytes calldata signature
+    ) external payable;
+
     /**
      * @notice Creates a new investment pool.
      * @dev This function is used to create a new pool with the specified parameters, copying the settings of an existing source pool.
