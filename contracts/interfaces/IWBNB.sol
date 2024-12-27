@@ -7,4 +7,7 @@ interface IWBNB {
 
     /// @dev Withdraw wrapped ether to get ether
     function withdraw(uint wad) external;
+
+    /// @dev Get the balance of an account
+    function balanceOf(address account) external view returns (uint);
 }

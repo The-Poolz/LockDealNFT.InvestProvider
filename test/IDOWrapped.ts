@@ -1,4 +1,4 @@
-import { VaultManager, InvestProvider } from "../typechain-types"
+import { VaultManager, InvestProvider, IWBNB } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -22,14 +22,14 @@ describe("IDO with wrapped tokens", function () {
     let poolId: bigint
     let packedData: string
     let signature: string
-    let wBNB: any
+    let wBNB: IWBNB
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         const WBNB = await ethers.getContractFactory(WBNBArtifact.abi, WBNBArtifact.bytecode)
-        wBNB = await WBNB.deploy()
+        wBNB = await WBNB.deploy() as IWBNB
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
         vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
         lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
