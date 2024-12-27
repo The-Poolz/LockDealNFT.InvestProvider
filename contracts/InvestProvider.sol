@@ -94,6 +94,7 @@ contract InvestProvider is InvestInternal {
         payable
         override
         firewallProtected
+        notZeroValue()
         isValidInvestProvider(poolId)
         isPoolActive(poolId)
         isValidTime(validUntil)

@@ -17,8 +17,7 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
 
     IProvider public immutable dispenserProvider;
 
-    bytes4 public IInvestProviderInterfaceId = type(IInvestProvider).interfaceId;
-
+    /// @notice The address of the wrapped BNB token contract.
     IWBNB public immutable wBNB;
 
     /**
