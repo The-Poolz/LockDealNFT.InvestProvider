@@ -10,6 +10,9 @@ contract InvestWrapped is InvestProvider {
     /// @dev Mapping of pool ID to wrapped status.
     mapping(uint256 => bool) public poolIdToWrapped;
 
+    /// @dev Error messages for `InvestWrapped` contract.
+    error UnequalAmount();
+
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
@@ -101,5 +104,21 @@ contract InvestWrapped is InvestProvider {
         } else {
             super.invest(poolId, amount, validUntil, signature);
         }
+    }
+
+    /**
+     * @notice Splits an old pool into a new pool with a specified ratio.
+     * @param oldPoolId The ID of the old pool to split.
+     * @param newPoolId The ID of the new pool to create.
+     * @param ratio The ratio to split the amounts between the old and new pools.
+     * @dev Reduces the amounts of the old pool and creates the new pool with the calculated amounts.
+     */
+    function split(
+        uint256 oldPoolId,
+        uint256 newPoolId,
+        uint256 ratio
+    ) public virtual override firewallProtected onlyNFT {
+        poolIdToWrapped[newPoolId] = poolIdToWrapped[oldPoolId];
+        super.split(oldPoolId, newPoolId, ratio);
     }
 }
