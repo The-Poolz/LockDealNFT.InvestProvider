@@ -85,14 +85,6 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
     }
 
     /**
-     * @dev Modifier to ensure that the mgs.value is not zero.
-     */
-    modifier notZeroValue() {
-        _notZeroValue();
-        _;
-    }
-
-    /**
      * @dev Modifier to ensure that the current time is within the valid period specified by `validUntil`.
      * @param validUntil The timestamp until which the operation is valid.
      *                   The current block timestamp must be less than or equal to this value.
@@ -176,14 +168,6 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
      */
     function _notZeroAmount(uint256 amount) internal pure {
         if (amount == 0) revert NoZeroAmount();
-    }
-
-    /**
-     * @notice Checks if the value is non-zero.
-     * @dev Reverts with `NoZeroAmount` if the value is zero.
-     */
-    function _notZeroValue() internal {
-        if (msg.value == 0) revert NoZeroAmount();
     }
 
     /**
