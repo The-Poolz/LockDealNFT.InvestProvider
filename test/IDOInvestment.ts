@@ -36,8 +36,7 @@ describe("IDO investment tests", function () {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
-            await dispenserProvider.getAddress(),
-            await token.getAddress()
+            await dispenserProvider.getAddress()
         )
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
@@ -68,7 +67,7 @@ describe("IDO investment tests", function () {
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId)
+        await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId, false)
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
@@ -167,11 +166,12 @@ describe("IDO investment tests", function () {
 
     it("should revert if signer is not valid", async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider["createNewPool(uint256,address,address,uint256)"](
+        await investProvider["createNewPool(uint256,address,address,uint256,bool)"](
             maxAmount,
             signerAddress,
             await owner.getAddress(),
-            sourcePoolId
+            sourcePoolId,
+            false
         )
         const packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256"],

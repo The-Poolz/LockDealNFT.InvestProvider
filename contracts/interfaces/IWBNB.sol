@@ -10,4 +10,7 @@ interface IWBNB {
 
     /// @dev Get the balance of an account
     function balanceOf(address account) external view returns (uint);
+
+    /// @dev Approve an amount to be spent
+    function approve(address spender, uint value) external returns (bool);
 }
