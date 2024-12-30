@@ -116,7 +116,6 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
     ) {
         address signer = lockDealNFT.getData(poolId).owner;
         uint256 nonce = _getNonce(poolId, msg.sender);
-        console.log(nonce);
         bytes32 messageHash = keccak256(
             abi.encodePacked(poolId, msg.sender, validUntil, amount, nonce)
         );
@@ -124,8 +123,6 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
             signature
         );
         if (signer != expectedSigner) {
-            console.log(signer);
-            console.log(expectedSigner);
             revert InvalidSignature(poolId, msg.sender);
         }
         _;
