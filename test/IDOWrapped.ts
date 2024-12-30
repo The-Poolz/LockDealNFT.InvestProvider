@@ -1,4 +1,4 @@
-import { VaultManager, InvestProvider, IWBNB } from "../typechain-types"
+import { VaultManager, InvestWrapped, IWBNB } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -10,9 +10,8 @@ describe("IDO with wrapped tokens", function () {
     let token: ERC20Token
     let sourcePoolId: bigint
     let vaultManager: VaultManager
-    let investProvider: InvestProvider
+    let investWrapped: InvestWrapped
     let owner: SignerWithAddress
-    let user: SignerWithAddress
     let signer: SignerWithAddress
     let signerAddress: string
     let lockDealNFT: LockDealNFT
@@ -25,7 +24,7 @@ describe("IDO with wrapped tokens", function () {
     let wBNB: IWBNB
 
     before(async () => {
-        [owner, user, signer] = await ethers.getSigners()
+        [owner, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         const WBNB = await ethers.getContractFactory(WBNBArtifact.abi, WBNBArtifact.bytecode)
@@ -35,12 +34,12 @@ describe("IDO with wrapped tokens", function () {
         lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
-        const InvestProvider = await ethers.getContractFactory("InvestProvider")
-        investProvider = await InvestProvider.deploy(
+        const InvestWrapped = await ethers.getContractFactory("InvestWrapped")
+        investWrapped = await InvestWrapped.deploy(
             await lockDealNFT.getAddress(),
             await dispenserProvider.getAddress()
         )
-        await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await investWrapped.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
         // set trustee
         await vaultManager.setTrustee(await lockDealNFT.getAddress())
@@ -63,15 +62,15 @@ describe("IDO with wrapped tokens", function () {
         await wBNB.deposit({ value: amount })
         await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
 
-        await token.approve(await investProvider.getAddress(), maxAmount)
-        await wBNB.approve(await investProvider.getAddress(), maxAmount)
+        await token.approve(await investWrapped.getAddress(), maxAmount)
+        await wBNB.approve(await investWrapped.getAddress(), maxAmount)
         signerAddress = await signer.getAddress()
     })
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId, false)
-        const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
+        await investWrapped.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId)
+        const nonce = await investWrapped.getNonce(poolId, await owner.getAddress())
         packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
             [poolId, await owner.getAddress(), validUntil, amount, nonce]
@@ -84,15 +83,15 @@ describe("IDO with wrapped tokens", function () {
     })
 
     it("should deacrease left amount after wrapped token invest", async () => {
-        await investProvider.invest(poolId, validUntil, amount, signature, { value: amount })
-        const poolData = await investProvider.getParams(poolId)
+        await investWrapped.invest(poolId, amount, validUntil, signature, { value: amount })
+        const poolData = await investWrapped.getParams(poolId)
         expect(poolData[1]).to.equal(maxAmount - amount)
     })
 
     it("should emit Invested event after wrapped token invest", async () => {
-        const tx = await investProvider.invest(poolId, validUntil, amount, signature, { value: amount })
+        const tx = await investWrapped.invest(poolId, amount, validUntil, signature, { value: amount })
         await tx.wait()
-        const events = await investProvider.queryFilter(investProvider.filters.Invested())
+        const events = await investWrapped.queryFilter(investWrapped.filters.Invested())
         expect(events[events.length - 1].args.poolId).to.equal(poolId)
         expect(events[events.length - 1].args.user).to.equal(await owner.getAddress())
         expect(events[events.length - 1].args.amount).to.equal(amount)
@@ -102,7 +101,7 @@ describe("IDO with wrapped tokens", function () {
         const vaultId = await vaultManager.getCurrentVaultIdByToken(await wBNB.getAddress())
         const vault = await vaultManager.vaultIdToVault(vaultId)
         const balanceBefore = await wBNB.balanceOf(vault)
-        await investProvider.invest(poolId, validUntil, amount, signature, { value: amount })
+        await investWrapped.invest(poolId, amount, validUntil, signature, { value: amount })
         expect(await wBNB.balanceOf(vault)).to.equal(balanceBefore + amount)
     })
 })

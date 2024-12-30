@@ -30,15 +30,13 @@ interface IInvestProvider is IProvider {
      * @param investSigner The address of the signer for investments.
      * @param dispenserSigner The address of the signer for dispenses.
      * @param sourcePoolId The ID of the source pool to copy settings from.
-     * @param isWrapped Whether the token is wrapped.
      * @return poolId The ID of the newly created pool.
      */
     function createNewPool(
         uint256 poolAmount,
         address investSigner,
         address dispenserSigner,
-        uint256 sourcePoolId,
-        bool isWrapped
+        uint256 sourcePoolId
     ) external returns (uint256 poolId);
 
     /**
@@ -47,13 +45,11 @@ interface IInvestProvider is IProvider {
      * It will initialize the new pool with the given details and return its poolId.
      * @param poolAmount The maximum amount of tokens that can be invested in the pool.
      * @param sourcePoolId The ID of the source pool to copy settings from.
-     * @param isWrapped Whether the token is wrapped.
      * @return poolId The ID of the newly created pool.
      */
     function createNewPool(
         uint256 poolAmount,
-        uint256 sourcePoolId,
-        bool isWrapped
+        uint256 sourcePoolId
     ) external returns (uint256 poolId);
 
     /**
@@ -62,7 +58,6 @@ interface IInvestProvider is IProvider {
     struct Pool {
         uint256 maxAmount; // The maximum amount of tokens that can be invested in the pool
         uint256 leftAmount; // The amount of tokens left to invest in the pool
-        bool isWrapped; // Whether the token is wrapped
     }
 
     /**

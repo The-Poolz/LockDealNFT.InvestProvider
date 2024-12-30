@@ -67,7 +67,7 @@ describe("IDO investment tests", function () {
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId, false)
+        await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId)
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
@@ -166,12 +166,11 @@ describe("IDO investment tests", function () {
 
     it("should revert if signer is not valid", async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider["createNewPool(uint256,address,address,uint256,bool)"](
+        await investProvider["createNewPool(uint256,address,address,uint256)"](
             maxAmount,
             signerAddress,
             await owner.getAddress(),
-            sourcePoolId,
-            false
+            sourcePoolId
         )
         const packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256"],

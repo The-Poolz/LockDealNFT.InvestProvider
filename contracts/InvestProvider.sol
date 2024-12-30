@@ -26,7 +26,6 @@ contract InvestProvider is InvestInternal {
      * @param investSigner The address of the signer for investments.
      * @param dispenserSigner The address of the signer for dispenses.
      * @param sourcePoolId The ID of the source pool to token clone.
-     * @param isWrapped Whether the pool is wrapped.
      * @return poolId The ID of the newly created pool.
      * @dev Emits the `NewPoolCreated` event upon successful creation.
      */
@@ -34,10 +33,10 @@ contract InvestProvider is InvestInternal {
         uint256 poolAmount,
         address investSigner,
         address dispenserSigner,
-        uint256 sourcePoolId,
-        bool isWrapped
+        uint256 sourcePoolId
     )
-        external
+        public
+        virtual
         override
         firewallProtected
         notZeroAddress(investSigner)
@@ -46,29 +45,35 @@ contract InvestProvider is InvestInternal {
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _createPool(investSigner, dispenserSigner, sourcePoolId);
+        poolId = _createPool(
+            investSigner,
+            dispenserSigner,
+            sourcePoolId
+        );
         poolIdToPool[poolId].maxAmount = poolAmount;
         poolIdToPool[poolId].leftAmount = poolAmount;
-        poolIdToPool[poolId].isWrapped = isWrapped;
         emit NewPoolCreated(poolId, investSigner, poolAmount);
     }
 
     function createNewPool(
         uint256 poolAmount,
-        uint256 sourcePoolId,
-        bool isWrapped
+        uint256 sourcePoolId
     )
-        external
+        public
+        virtual
         override
         firewallProtected
         notZeroAmount(poolAmount)
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _createPool(msg.sender, msg.sender, sourcePoolId);
+        poolId = _createPool(
+            msg.sender,
+            msg.sender,
+            sourcePoolId
+        );
         poolIdToPool[poolId].maxAmount = poolAmount;
         poolIdToPool[poolId].leftAmount = poolAmount;
-        poolIdToPool[poolId].isWrapped = isWrapped;
         emit NewPoolCreated(poolId, msg.sender, poolAmount);
     }
 
@@ -86,8 +91,9 @@ contract InvestProvider is InvestInternal {
         uint256 validUntil,
         bytes calldata signature
     )
-        external
+        public
         payable
+        virtual
         override
         firewallProtected
         notZeroAmount(amount)
@@ -96,14 +102,7 @@ contract InvestProvider is InvestInternal {
         isValidTime(validUntil)
         isValidSignature(poolId, validUntil, amount, signature)
     {
-        if (poolIdToPool[poolId].isWrapped) {
-            if (msg.value != amount) revert UnequalAmount();
-            IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
-            wToken.deposit{ value: msg.value }();
-            _handleInvest(poolId, address(this), amount);
-        } else {
-            _handleInvest(poolId, msg.sender, amount);
-        }
+        _handleInvest(poolId, msg.sender, amount);
     }
 
     /**
@@ -157,7 +156,6 @@ contract InvestProvider is InvestInternal {
         // create a new pool with the new settings
         poolIdToPool[newPoolId].maxAmount = newPoolMaxAmount;
         poolIdToPool[newPoolId].leftAmount = newPoolLeftAmount;
-        poolIdToPool[newPoolId].isWrapped = poolIdToPool[oldPoolId].isWrapped;
         // create dispenser
         _createDispenser(oldPoolId + 1);
     }
