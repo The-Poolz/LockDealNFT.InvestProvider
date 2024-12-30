@@ -6,6 +6,7 @@ import "./InvestState.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import "hardhat/console.sol";
 
 /// @title InvestModifiers
 /// @notice Provides various modifiers for validating inputs and conditions in investment-related contracts.
@@ -72,6 +73,7 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
      */
     modifier isValidSourcePoolId(uint256 sourcePoolId) {
         _isValidSourcePoolId(sourcePoolId);
+        console.log("isValidSourcePoolId");
         _;
     }
 

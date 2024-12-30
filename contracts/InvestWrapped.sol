@@ -32,21 +32,12 @@ contract InvestWrapped is InvestProvider {
      * @return poolId The ID of the newly created pool.
      * @dev Emits the `NewPoolCreated` event upon successful creation.
      */
-    function createNewPool(
+    function createNewETHPool(
         uint256 poolAmount,
         address investSigner,
         address dispenserSigner,
         uint256 sourcePoolId
-    )
-        public
-        override
-        firewallProtected
-        notZeroAddress(investSigner)
-        notZeroAddress(dispenserSigner)
-        notZeroAmount(poolAmount)
-        isValidSourcePoolId(sourcePoolId)
-        returns (uint256 poolId)
-    {
+    ) external virtual firewallProtected returns (uint256 poolId) {
         poolId = super.createNewPool(
             poolAmount,
             investSigner,
@@ -56,23 +47,14 @@ contract InvestWrapped is InvestProvider {
         poolIdToWrapped[poolId] = true;
     }
 
-    function createNewPool(
+    function createNewETHPool(
         uint256 poolAmount,
         uint256 sourcePoolId
-    )
-        public
-        virtual
-        override
-        firewallProtected
-        notZeroAmount(poolAmount)
-        isValidSourcePoolId(sourcePoolId)
-        returns (uint256 poolId)
-    {
+    ) external virtual firewallProtected returns (uint256 poolId) {
         poolId = super.createNewPool(poolAmount, sourcePoolId);
         poolIdToWrapped[poolId] = true;
     }
 
-    
     /** @notice Invests in a pool with a wrapped token.
      *  @param poolId The ID of the pool to invest in.
      *  @param amount The amount to invest.
@@ -102,7 +84,7 @@ contract InvestWrapped is InvestProvider {
             wToken.deposit{value: msg.value}();
             _handleInvest(poolId, address(this), amount);
         } else {
-            super.invest(poolId, amount, validUntil, signature);
+            _handleInvest(poolId, msg.sender, amount);
         }
     }
 

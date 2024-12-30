@@ -69,7 +69,7 @@ describe("IDO with wrapped tokens", function () {
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investWrapped.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId)
+        await investWrapped.createNewETHPool(maxAmount, signerAddress, signerAddress, sourcePoolId)
         const nonce = await investWrapped.getNonce(poolId, await owner.getAddress())
         packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
