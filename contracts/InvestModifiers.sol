@@ -106,6 +106,16 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
         uint256 amount,
         bytes calldata signature
     ) {
+        _isValidSignature(poolId, validUntil, amount, signature);
+        _;
+    }
+
+    function _isValidSignature(
+        uint256 poolId,
+        uint256 validUntil,
+        uint256 amount,
+        bytes calldata signature
+    ) internal view {
         address signer = lockDealNFT.getData(poolId).owner;
         uint256 nonce = _getNonce(poolId, msg.sender);
         bytes32 messageHash = keccak256(
@@ -117,7 +127,6 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
         if (signer != expectedSigner) {
             revert InvalidSignature(poolId, msg.sender);
         }
-        _;
     }
 
     /**

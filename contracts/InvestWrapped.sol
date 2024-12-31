@@ -10,9 +10,6 @@ contract InvestWrapped is InvestProvider {
     /// @dev Mapping of pool ID to wrapped status.
     mapping(uint256 => bool) public poolIdToWrapped;
 
-    /// @dev Error messages for `InvestWrapped` contract.
-    error UnequalAmount();
-
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
@@ -37,7 +34,7 @@ contract InvestWrapped is InvestProvider {
         address investSigner,
         address dispenserSigner,
         uint256 sourcePoolId
-    ) external virtual firewallProtected returns (uint256 poolId) {
+    ) external virtual returns (uint256 poolId) {
         poolId = super.createNewPool(
             poolAmount,
             investSigner,
@@ -50,7 +47,7 @@ contract InvestWrapped is InvestProvider {
     function createNewETHPool(
         uint256 poolAmount,
         uint256 sourcePoolId
-    ) external virtual firewallProtected returns (uint256 poolId) {
+    ) external virtual returns (uint256 poolId) {
         poolId = super.createNewPool(poolAmount, sourcePoolId);
         poolIdToWrapped[poolId] = true;
     }
@@ -76,14 +73,14 @@ contract InvestWrapped is InvestProvider {
         isValidInvestProvider(poolId)
         isPoolActive(poolId)
         isValidTime(validUntil)
-        isValidSignature(poolId, validUntil, amount, signature)
     {
         if (poolIdToWrapped[poolId]) {
-            if (msg.value != amount) revert UnequalAmount();
+            _isValidSignature(poolId, validUntil, msg.value, signature);
             IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
-            wToken.deposit{value: msg.value}();
-            _handleInvest(poolId, address(this), amount);
+            wToken.deposit{ value: msg.value }();
+            _handleInvest(poolId, address(this), msg.value);
         } else {
+            _isValidSignature(poolId, validUntil, amount, signature);
             _handleInvest(poolId, msg.sender, amount);
         }
     }
@@ -99,8 +96,8 @@ contract InvestWrapped is InvestProvider {
         uint256 oldPoolId,
         uint256 newPoolId,
         uint256 ratio
-    ) public virtual override firewallProtected onlyNFT {
-        poolIdToWrapped[newPoolId] = poolIdToWrapped[oldPoolId];
+    ) public virtual override {
         super.split(oldPoolId, newPoolId, ratio);
+        poolIdToWrapped[newPoolId] = poolIdToWrapped[oldPoolId];
     }
 }
