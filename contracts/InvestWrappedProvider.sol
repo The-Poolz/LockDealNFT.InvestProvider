@@ -69,18 +69,21 @@ contract InvestWrappedProvider is InvestProvider {
         payable
         override
         firewallProtected
-        notZeroAmount(amount)
         isValidInvestProvider(poolId)
         isPoolActive(poolId)
         isValidTime(validUntil)
     {
-        if (poolIdToWrapped[poolId]) {
-            _isValidSignature(poolId, validUntil, msg.value, signature);
+        bool isWrapped = poolIdToWrapped[poolId];
+        uint256 investAmount = isWrapped ? msg.value : amount;
+
+        _notZeroAmount(investAmount);
+        _isValidSignature(poolId, validUntil, investAmount, signature);
+
+        if (isWrapped) {
             IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
-            wToken.deposit{ value: msg.value }();
+            wToken.deposit{value: msg.value}();
             _handleInvest(poolId, address(this), msg.value);
         } else {
-            _isValidSignature(poolId, validUntil, amount, signature);
             _handleInvest(poolId, msg.sender, amount);
         }
     }
