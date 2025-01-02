@@ -4,7 +4,7 @@ import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { LockDealNFT } from "../typechain-types/@poolzfinance/lockdeal-nft/contracts/LockDealNFT/LockDealNFT"
 import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
-import WBNBArtifact from "./WBNB/WBNB.json"
+import { loadWBNBArtifact } from "./loadWBNB"
 
 describe("IDO with wrapped tokens", function () {
     let token: ERC20Token
@@ -24,7 +24,7 @@ describe("IDO with wrapped tokens", function () {
     let signature: string
 
     before(async () => {
-        [owner, signer] = await ethers.getSigners()
+        ;[owner, signer] = await ethers.getSigners()
         await deployContracts()
         await setupInitialConditions()
         signerAddress = await signer.getAddress()
@@ -85,8 +85,8 @@ describe("IDO with wrapped tokens", function () {
     async function deployContracts() {
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
-
-        const WBNB = await ethers.getContractFactory(WBNBArtifact.abi, WBNBArtifact.bytecode)
+        const data = await loadWBNBArtifact()
+        const WBNB = await ethers.getContractFactory(data.abi, data.bytecode)
         wBNB = (await WBNB.deploy()) as IWBNB
 
         vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
