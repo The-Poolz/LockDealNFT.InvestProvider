@@ -93,13 +93,18 @@ abstract contract InvestInternal is InvestModifiers {
     /// @param poolId The ID of the pool to invest in.
     /// @param amount The amount to invest in the pool.
     function _handleInvest(uint256 poolId, address from, uint256 amount) internal {
-        Pool storage poolData = poolIdToPool[poolId];
-        if (poolData.leftAmount < amount) revert ExceededLeftAmount();
-        poolData.leftAmount -= amount;
+        _decreaseAmount(poolId, amount);
         uint256 nonce = _addInvestTrack(poolId, msg.sender, amount);
         
         _invest(poolId, from, amount);
         
         emit Invested(poolId, msg.sender, amount, nonce);
+    }
+
+    /// @notice Internal function to decrease the left amount of a pool.
+    function _decreaseAmount(uint256 poolId, uint256 amount) internal {
+        Pool storage poolData = poolIdToPool[poolId];
+        if (poolData.leftAmount < amount) revert ExceededLeftAmount();
+        poolData.leftAmount -= amount;
     }
 }
