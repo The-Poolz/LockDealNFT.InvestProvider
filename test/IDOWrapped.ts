@@ -1,4 +1,4 @@
-import { VaultManager, InvestWrappedProvider, IWBNB, DispenserProvider } from "../typechain-types"
+import { VaultManager, InvestWrapped, IWBNB, DispenserProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -9,7 +9,7 @@ import WBNBArtifact from "./WBNB/WBNB.json"
 describe("IDO with wrapped tokens", function () {
     let token: ERC20Token
     let vaultManager: VaultManager
-    let investWrapped: InvestWrappedProvider
+    let investWrapped: InvestWrapped
     let lockDealNFT: LockDealNFT
     let dispenserProvider: DispenserProvider
     let wBNB: IWBNB
@@ -22,7 +22,6 @@ describe("IDO with wrapped tokens", function () {
     const validUntil = Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour
     let signerAddress: string
     let signature: string
-    let packedData: string
 
     before(async () => {
         [owner, signer] = await ethers.getSigners()
@@ -33,10 +32,6 @@ describe("IDO with wrapped tokens", function () {
 
     beforeEach(async () => {
         signature = await createInvestPool()
-    })
-
-    it("should return name of the contract", async () => {
-        expect(await investWrapped.name()).to.equal("InvestWrappedProvider")
     })
 
     it("should create wrapped token invest pool", async () => {
@@ -102,7 +97,7 @@ describe("IDO with wrapped tokens", function () {
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
 
-        const InvestWrapped = await ethers.getContractFactory("InvestWrappedProvider")
+        const InvestWrapped = await ethers.getContractFactory("InvestWrapped")
         investWrapped = await InvestWrapped.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress())
     }
 
