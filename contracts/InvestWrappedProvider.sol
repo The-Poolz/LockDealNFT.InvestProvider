@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "./InvestProvider.sol";
 import "./interfaces/IWBNB.sol";
 
-/// @title InvestWrapped
+/// @title InvestWrappedProvider
 /// @notice Contract for adding wrapped tokens to the investment pool
-contract InvestWrapped is InvestProvider {
+contract InvestWrappedProvider is InvestProvider {
     /// @dev Mapping of pool ID to wrapped status.
     mapping(uint256 => bool) public poolIdToWrapped;
 
@@ -17,7 +17,7 @@ contract InvestWrapped is InvestProvider {
         ILockDealNFT _lockDealNFT,
         IProvider _dispenserProvider
     ) InvestProvider(_lockDealNFT, _dispenserProvider) {
-        name = "InvestWrapped";
+        name = "InvestWrappedProvider";
     }
 
     /**
@@ -35,7 +35,7 @@ contract InvestWrapped is InvestProvider {
         address dispenserSigner,
         uint256 sourcePoolId
     ) external virtual returns (uint256 poolId) {
-        poolId = super.createNewPool(
+        poolId = createNewPool(
             poolAmount,
             investSigner,
             dispenserSigner,
@@ -48,7 +48,7 @@ contract InvestWrapped is InvestProvider {
         uint256 poolAmount,
         uint256 sourcePoolId
     ) external virtual returns (uint256 poolId) {
-        poolId = super.createNewPool(poolAmount, sourcePoolId);
+        poolId = createNewPool(poolAmount, sourcePoolId);
         poolIdToWrapped[poolId] = true;
     }
 
