@@ -1,7 +1,7 @@
 import axios from "axios"
 
 interface WETH10Artifact {
-    abi: any[]
+    abi: string
     bytecode: string
     address: string
 }
