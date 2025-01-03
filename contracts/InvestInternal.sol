@@ -70,11 +70,12 @@ abstract contract InvestInternal is InvestModifiers {
     }
 
     function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
+        address from = poolIdToPool[poolId].isWrapped ? address(this) : msg.sender;
         address token = lockDealNFT.tokenOf(poolId);
         IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
         uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
         address vault = vaultManager.vaultIdToVault(vaultId);
-        IERC20(token).safeTransferFrom(msg.sender, vault, amount);
+        IERC20(token).safeTransferFrom(from, vault, amount);
     }
 
     function _createDispenser(uint256 dispenserPoolId) internal {
@@ -87,5 +88,46 @@ abstract contract InvestInternal is InvestModifiers {
     function _createDispenser(uint256 sourceId, address signer) internal {
         uint256 dispenserPoolId = lockDealNFT.mintForProvider(signer, dispenserProvider);
         lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
+    }
+
+    /// @notice Internal function to handle the investment process.
+    /// @param poolId The ID of the pool to invest in.
+    /// @param amount The amount to invest in the pool.
+    function _handleInvest(
+        uint256 poolId,
+        uint256 amount
+    ) internal returns (uint256 nonce) {
+        nonce = _addInvestTrack(poolId, amount);
+        _reduceAmount(poolId, amount);
+        _invest(poolId, amount);
+    }
+
+    /// @notice Internal function to reduce the left amount of a pool.
+    function _reduceAmount(uint256 poolId, uint256 amount) internal {
+        Pool storage poolData = poolIdToPool[poolId];
+        if (poolData.leftAmount < amount) revert ExceededLeftAmount();
+        poolData.leftAmount -= amount;
+    }
+
+    /**
+     * @dev Internal function to initialize a pool.
+     * @param investSigner The address of the signer for investments.
+     * @param dispenserSigner The address of the signer for dispenses.
+     * @param sourcePoolId The ID of the source pool to token clone.
+     * @param poolAmount The amount to allocate to the pool.
+     * @param isWrapped Whether the pool uses wrapped tokens.
+     * @return poolId The ID of the newly created pool.
+     */
+    function _initializePool(
+        address investSigner,
+        address dispenserSigner,
+        uint256 sourcePoolId,
+        uint256 poolAmount,
+        bool isWrapped
+    ) internal returns (uint256 poolId) {
+        poolId = _createPool(investSigner, dispenserSigner, sourcePoolId);
+        poolIdToPool[poolId].maxAmount = poolAmount;
+        poolIdToPool[poolId].leftAmount = poolAmount;
+        poolIdToPool[poolId].isWrapped = isWrapped;
     }
 }

@@ -6,7 +6,7 @@ import "./InvestInternal.sol";
 /// @title InvestProvider
 /// @notice This contract provides functionality for creating investment pools, managing investments.
 /// @dev Inherits from `InvestInternal` and includes logic to create, invest, and split pools, as well as withdraw funds. It uses `SafeERC20` for token transfers and `CalcUtils` for mathematical operations.
-contract InvestProvider is InvestInternal {
+abstract contract InvestProvider is InvestInternal {
     using CalcUtils for uint256;
 
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
@@ -33,10 +33,10 @@ contract InvestProvider is InvestInternal {
         uint256 poolAmount,
         address investSigner,
         address dispenserSigner,
-        uint256 sourcePoolId
+        uint256 sourcePoolId,
+        bool isWrapped
     )
         external
-        override
         firewallProtected
         notZeroAddress(investSigner)
         notZeroAddress(dispenserSigner)
@@ -44,34 +44,34 @@ contract InvestProvider is InvestInternal {
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _createPool(
+        poolId = _initializePool(
             investSigner,
             dispenserSigner,
-            sourcePoolId
+            sourcePoolId,
+            poolAmount,
+            isWrapped
         );
-        poolIdToPool[poolId].maxAmount = poolAmount;
-        poolIdToPool[poolId].leftAmount = poolAmount;
         emit NewPoolCreated(poolId, investSigner, poolAmount);
     }
 
     function createNewPool(
         uint256 poolAmount,
-        uint256 sourcePoolId
+        uint256 sourcePoolId,
+        bool isWrapped
     )
         external
-        override
         firewallProtected
         notZeroAmount(poolAmount)
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _createPool(
+        poolId = _initializePool(
             msg.sender,
             msg.sender,
-            sourcePoolId
+            sourcePoolId,
+            poolAmount,
+            isWrapped
         );
-        poolIdToPool[poolId].maxAmount = poolAmount;
-        poolIdToPool[poolId].leftAmount = poolAmount;
         emit NewPoolCreated(poolId, msg.sender, poolAmount);
     }
 
@@ -90,21 +90,15 @@ contract InvestProvider is InvestInternal {
         bytes calldata signature
     )
         external
-        override
         firewallProtected
         notZeroAmount(amount)
         isValidInvestProvider(poolId)
         isPoolActive(poolId)
         isValidTime(validUntil)
+        isERC20Token(poolId)
         isValidSignature(poolId, validUntil, amount, signature)
     {
-        Pool storage poolData = poolIdToPool[poolId];
-        if (poolData.leftAmount < amount) revert ExceededLeftAmount();
-        poolData.leftAmount -= amount;
-        uint256 nonce = _addInvestTrack(poolId, msg.sender, amount);
-        
-        _invest(poolId, amount);
-        
+        uint256 nonce = _handleInvest(poolId, amount);
         emit Invested(poolId, msg.sender, amount, nonce);
     }
 
@@ -159,6 +153,7 @@ contract InvestProvider is InvestInternal {
         // create a new pool with the new settings
         poolIdToPool[newPoolId].maxAmount = newPoolMaxAmount;
         poolIdToPool[newPoolId].leftAmount = newPoolLeftAmount;
+        poolIdToPool[newPoolId].isWrapped = poolIdToPool[oldPoolId].isWrapped;
         // create dispenser
         _createDispenser(oldPoolId + 1);
     }
@@ -167,9 +162,7 @@ contract InvestProvider is InvestInternal {
      * @notice Returns the withdrawable amount (always 0 in this contract).
      * @return The withdrawable amount (0).
      */
-    function getWithdrawableAmount(
-        uint256
-    ) public view virtual override returns (uint256) {
+    function getWithdrawableAmount(uint256) external pure returns (uint256) {
         return 0;
     }
 }
