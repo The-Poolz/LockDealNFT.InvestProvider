@@ -44,10 +44,13 @@ abstract contract InvestProvider is InvestInternal {
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _createPool(investSigner, dispenserSigner, sourcePoolId);
-        poolIdToPool[poolId].maxAmount = poolAmount;
-        poolIdToPool[poolId].leftAmount = poolAmount;
-        poolIdToPool[poolId].isWrapped = isWrapped;
+        poolId = _initializePool(
+            investSigner,
+            dispenserSigner,
+            sourcePoolId,
+            poolAmount,
+            isWrapped
+        );
         emit NewPoolCreated(poolId, investSigner, poolAmount);
     }
 
@@ -62,10 +65,13 @@ abstract contract InvestProvider is InvestInternal {
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _createPool(msg.sender, msg.sender, sourcePoolId);
-        poolIdToPool[poolId].maxAmount = poolAmount;
-        poolIdToPool[poolId].leftAmount = poolAmount;
-        poolIdToPool[poolId].isWrapped = isWrapped;
+        poolId = _initializePool(
+            msg.sender,
+            msg.sender,
+            sourcePoolId,
+            poolAmount,
+            isWrapped
+        );
         emit NewPoolCreated(poolId, msg.sender, poolAmount);
     }
 
@@ -92,7 +98,8 @@ abstract contract InvestProvider is InvestInternal {
         isERC20Token(poolId)
         isValidSignature(poolId, validUntil, amount, signature)
     {
-        _handleInvest(poolId, amount);
+        uint256 nonce = _handleInvest(poolId, amount);
+        emit Invested(poolId, msg.sender, amount, nonce);
     }
 
     /**

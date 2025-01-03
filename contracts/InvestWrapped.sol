@@ -38,6 +38,7 @@ contract InvestWrapped is InvestProvider {
     {
         IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
         wToken.deposit{value: msg.value}();
-        _handleInvest(poolId, msg.value);
+        uint256 nonce = _handleInvest(poolId, msg.value);
+        emit Invested(poolId, msg.sender, msg.value, nonce);
     }
 }
