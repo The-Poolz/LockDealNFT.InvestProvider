@@ -37,7 +37,6 @@ abstract contract InvestProvider is InvestInternal {
         bool isWrapped
     )
         external
-        virtual
         firewallProtected
         notZeroAddress(investSigner)
         notZeroAddress(dispenserSigner)
@@ -138,7 +137,7 @@ abstract contract InvestProvider is InvestInternal {
         uint256 oldPoolId,
         uint256 newPoolId,
         uint256 ratio
-    ) public virtual firewallProtected onlyNFT {
+    ) external firewallProtected onlyNFT {
         uint256 newPoolMaxAmount = poolIdToPool[oldPoolId].maxAmount.calcAmount(ratio);
         uint256 newPoolLeftAmount = poolIdToPool[oldPoolId].leftAmount.calcAmount(ratio);
         // reduce the max amount and leftAmount of the old pool
@@ -158,7 +157,7 @@ abstract contract InvestProvider is InvestInternal {
      */
     function getWithdrawableAmount(
         uint256
-    ) public view virtual override returns (uint256) {
+    ) external view virtual override returns (uint256) {
         return 0;
     }
 }
