@@ -162,9 +162,7 @@ abstract contract InvestProvider is InvestInternal {
      * @notice Returns the withdrawable amount (always 0 in this contract).
      * @return The withdrawable amount (0).
      */
-    function getWithdrawableAmount(
-        uint256
-    ) external view virtual override returns (uint256) {
+    function getWithdrawableAmount(uint256) external pure returns (uint256) {
         return 0;
     }
 }
