@@ -53,8 +53,8 @@ abstract contract InvestInternal is InvestModifiers {
      * @param amount The amount being invested.
      * @dev Reduces the left amount of the pool and calls the `onInvest` method of the invested provider.
      */
-    function _invest(uint256 poolId, address from, uint256 amount) internal {
-        _transferERC20Tokens(poolId, from, amount);
+    function _invest(uint256 poolId, uint256 amount) internal {
+        _transferERC20Tokens(poolId, amount);
         _registerDispenser(poolId + 1, amount);
     }
 
@@ -69,7 +69,8 @@ abstract contract InvestInternal is InvestModifiers {
         dispenserProvider.registerPool(dispenserPoolId, dispenserParams);
     }
 
-    function _transferERC20Tokens(uint256 poolId, address from, uint256 amount) internal {
+    function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
+        address from = poolIdToPool[poolId].isWrapped ? address(this) : msg.sender;
         address token = lockDealNFT.tokenOf(poolId);
         IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
         uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
@@ -92,10 +93,10 @@ abstract contract InvestInternal is InvestModifiers {
     /// @notice Internal function to handle the investment process.
     /// @param poolId The ID of the pool to invest in.
     /// @param amount The amount to invest in the pool.
-    function _handleInvest(uint256 poolId, address from, uint256 amount) internal {
+    function _handleInvest(uint256 poolId, uint256 amount) internal {
         _decreaseAmount(poolId, amount);
         uint256 nonce = _addInvestTrack(poolId, msg.sender, amount);
-        _invest(poolId, from, amount);
+        _invest(poolId, amount);
         emit Invested(poolId, msg.sender, amount, nonce);
     }
 

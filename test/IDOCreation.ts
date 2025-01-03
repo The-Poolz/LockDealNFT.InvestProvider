@@ -138,8 +138,7 @@ describe("IDO creation tests", function () {
     it("should revert withdraw", async () => {
         await expect(
             lockDealNFT
-                .connect(owner)
-                [
+                .connect(owner)[
                     "safeTransferFrom(address,address,uint256)"
                 ](await owner.getAddress(), await lockDealNFT.getAddress(), poolId)
         ).to.be.rejected

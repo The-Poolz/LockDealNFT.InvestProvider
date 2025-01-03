@@ -92,7 +92,7 @@ abstract contract InvestProvider is InvestInternal {
         isERC20Token(poolId)
         isValidSignature(poolId, validUntil, amount, signature)
     {
-        _handleInvest(poolId, msg.sender, amount);
+        _handleInvest(poolId, amount);
     }
 
     /**
