@@ -97,9 +97,9 @@ abstract contract InvestInternal is InvestModifiers {
         uint256 poolId,
         uint256 amount
     ) internal returns (uint256 nonce) {
-        nonce = _addInvestTrack(poolId, msg.sender, amount);
-        _reduceAmount(poolId, amount);
         _invest(poolId, amount);
+        _reduceAmount(poolId, amount);
+        nonce = _addInvestTrack(poolId, amount);
     }
 
     /// @notice Internal function to reduce the left amount of a pool.

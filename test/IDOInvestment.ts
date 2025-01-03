@@ -60,8 +60,8 @@ describe("IDO investment tests", function () {
         // create source pool
         await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
 
-        await token.approve(await investProvider.getAddress(), maxAmount)
-        await USDT.approve(await investProvider.getAddress(), maxAmount)
+        await token.approve(await investProvider.getAddress(), maxAmount * 10n)
+        await USDT.approve(await investProvider.getAddress(), maxAmount * 10n)
         signerAddress = await signer.getAddress()
     })
 
