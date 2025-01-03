@@ -24,7 +24,7 @@ describe("IDO with wrapped tokens", function () {
     let signature: string
 
     before(async () => {
-        ;[owner, signer] = await ethers.getSigners()
+        [owner, signer] = await ethers.getSigners()
         await deployContracts()
         await setupInitialConditions()
         signerAddress = await signer.getAddress()
@@ -39,13 +39,13 @@ describe("IDO with wrapped tokens", function () {
     })
 
     it("should decrease left amount after wrapped token invest", async () => {
-        await investWrapped.invest(poolId, amount, validUntil, signature, { value: amount })
+        await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
         const poolData = await investWrapped.getParams(poolId)
         expect(poolData[1]).to.equal(maxAmount - amount)
     })
 
     it("should emit Invested event after wrapped token invest", async () => {
-        const tx = await investWrapped.invest(poolId, amount, validUntil, signature, { value: amount })
+        const tx = await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
         await tx.wait()
         const events = await investWrapped.queryFilter(investWrapped.filters.Invested())
         expect(events[events.length - 1].args.poolId).to.equal(poolId)
@@ -57,14 +57,14 @@ describe("IDO with wrapped tokens", function () {
         const vaultId = await vaultManager.getCurrentVaultIdByToken(await wBNB.getAddress())
         const vault = await vaultManager.vaultIdToVault(vaultId)
         const balanceBefore = await wBNB.balanceOf(vault)
-        await investWrapped.invest(poolId, amount, validUntil, signature, { value: amount })
+        await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
         expect(await wBNB.balanceOf(vault)).to.equal(balanceBefore + amount)
     })
 
     it("should handle regular tokens if not wrapped", async () => {
         sourcePoolId = await createSourcePool()
-        signature = await createInvestPool("createNewPool")
-        const { balanceBefore, balanceAfter } = await investInPool({ poolId, amount, validUntil, signature })
+        signature = await createInvestPool(false)
+        const { balanceBefore, balanceAfter } = await investInPool({ poolId, amount, validUntil, signature, isWrapped: false })
         await expect(balanceAfter).to.equal(balanceBefore + amount)
     })
 
@@ -77,8 +77,8 @@ describe("IDO with wrapped tokens", function () {
 
     it("should revert zero amount invest", async () => {
         await expect(
-            investWrapped.invest(poolId, amount, validUntil, signature, { value: 0 })
-        ).to.be.revertedWithCustomError(investWrapped, "NoZeroAmount")
+            investWrapped.investETH(poolId, validUntil, signature, { value: 0 })
+        ).to.be.revertedWithCustomError(investWrapped, "NoZeroValue")
     })
 
     // Helper Functions
@@ -130,10 +130,15 @@ describe("IDO with wrapped tokens", function () {
         await wBNB.approve(await investWrapped.getAddress(), maxAmount)
     }
 
-    async function createInvestPool(functionName = "createNewETHPool"): Promise<string> {
+    async function createInvestPool(isWrapped = true): Promise<string> {
         poolId = await lockDealNFT.totalSupply()
-        const method = functionName + "(uint256,address,address,uint256)"
-        await investWrapped[method](maxAmount, signerAddress, signerAddress, sourcePoolId)
+        await investWrapped["createNewPool(uint256,address,address,uint256,bool)"](
+            maxAmount,
+            signerAddress,
+            signerAddress,
+            sourcePoolId,
+            isWrapped
+        )
         const nonce = await investWrapped.getNonce(poolId, await owner.getAddress())
         const packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
@@ -164,18 +169,25 @@ describe("IDO with wrapped tokens", function () {
         amount,
         validUntil,
         signature,
+        isWrapped = true,
     }: {
         poolId: bigint
         amount: bigint
         validUntil: number
-        signature: string
+        signature: string,
+        isWrapped: boolean
     }): Promise<{ balanceBefore: bigint; balanceAfter: bigint }> {
         await token.approve(await investWrapped.getAddress(), amount)
 
         const vaultId = await vaultManager.getCurrentVaultIdByToken(await token.getAddress())
         const balanceBefore = await token.balanceOf(await vaultManager.vaultIdToVault(vaultId))
 
-        await investWrapped.invest(poolId, amount, validUntil, signature)
+        if (isWrapped) {
+            await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
+        }
+        else {
+            await investWrapped.invest(poolId, amount, validUntil, signature)
+        }
 
         const vault = await vaultManager.vaultIdToVault(vaultId)
         const balanceAfter = await token.balanceOf(vault)

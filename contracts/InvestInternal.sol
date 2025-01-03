@@ -95,9 +95,7 @@ abstract contract InvestInternal is InvestModifiers {
     function _handleInvest(uint256 poolId, address from, uint256 amount) internal {
         _decreaseAmount(poolId, amount);
         uint256 nonce = _addInvestTrack(poolId, msg.sender, amount);
-        
         _invest(poolId, from, amount);
-        
         emit Invested(poolId, msg.sender, amount, nonce);
     }
 

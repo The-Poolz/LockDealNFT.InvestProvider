@@ -1,4 +1,4 @@
-import { VaultManager, InvestProvider } from "../typechain-types"
+import { VaultManager, InvestWrapped } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -10,7 +10,7 @@ describe("IDO investment tests", function () {
     let USDT: ERC20Token
     let sourcePoolId: bigint
     let vaultManager: VaultManager
-    let investProvider: InvestProvider
+    let investProvider: InvestWrapped
     let owner: SignerWithAddress
     let user: SignerWithAddress
     let signer: SignerWithAddress
@@ -33,7 +33,7 @@ describe("IDO investment tests", function () {
         lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
-        const InvestProvider = await ethers.getContractFactory("InvestProvider")
+        const InvestProvider = await ethers.getContractFactory("InvestWrapped")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
             await dispenserProvider.getAddress()
@@ -67,7 +67,7 @@ describe("IDO investment tests", function () {
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId)
+        await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId, false)
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
@@ -166,11 +166,12 @@ describe("IDO investment tests", function () {
 
     it("should revert if signer is not valid", async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider["createNewPool(uint256,address,address,uint256)"](
+        await investProvider["createNewPool(uint256,address,address,uint256,bool)"](
             maxAmount,
             signerAddress,
             await owner.getAddress(),
-            sourcePoolId
+            sourcePoolId,
+            false
         )
         const packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256"],

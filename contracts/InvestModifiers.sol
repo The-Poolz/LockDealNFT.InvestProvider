@@ -84,6 +84,21 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
         _;
     }
 
+    modifier isWrappedToken(uint256 poolId) {
+        _isWrappedToken(poolId);
+        _;
+    }
+
+    modifier isERC20Token(uint256 poolId) {
+        _isERC20Token(poolId);
+        _;
+    }
+
+    modifier notZeroValue() {
+        _notZeroValue();
+        _;
+    }
+
     /**
      * @dev Modifier to ensure that the current time is within the valid period specified by `validUntil`.
      * @param validUntil The timestamp until which the operation is valid.
@@ -203,5 +218,17 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
      */
     function _notZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert NoZeroAddress();
+    }
+
+    function _isWrappedToken(uint256 poolId) internal view {
+        if (!poolIdToPool[poolId].isWrapped) revert InvalidWrappedToken();
+    }
+
+    function _isERC20Token(uint256 poolId) internal view {
+        if (poolIdToPool[poolId].isWrapped) revert InvalidERC20Token();
+    }
+
+    function _notZeroValue() internal view {
+        if (msg.value == 0) revert NoZeroValue();
     }
 }
