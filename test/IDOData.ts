@@ -1,4 +1,4 @@
-import { VaultManager, InvestProvider } from "../typechain-types"
+import { VaultManager, InvestWrapped } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -10,7 +10,7 @@ describe("IDO data tests", function () {
     let USDT: ERC20Token
     let sourcePoolId: bigint
     let vaultManager: VaultManager
-    let investProvider: InvestProvider
+    let investProvider: InvestWrapped
     let owner: SignerWithAddress
     let user: SignerWithAddress
     let signer: SignerWithAddress
@@ -32,7 +32,7 @@ describe("IDO data tests", function () {
         lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
-        const InvestProvider = await ethers.getContractFactory("InvestProvider")
+        const InvestProvider = await ethers.getContractFactory("InvestWrapped")
         investProvider = await InvestProvider.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress())
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
@@ -61,7 +61,7 @@ describe("IDO data tests", function () {
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.createNewPool(maxAmount, signer, signer, sourcePoolId)
+        await investProvider.createNewPool(maxAmount, signer, signer, sourcePoolId, false)
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         const packedData = ethers.solidityPackedKeccak256(
             ["uint256", "address", "uint256", "uint256", "uint256"],
