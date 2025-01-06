@@ -1,4 +1,4 @@
-import { VaultManager, InvestProvider } from "../typechain-types"
+import { VaultManager, InvestProvider, InvestedProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -22,6 +22,7 @@ describe("IDO investment tests", function () {
     let poolId: bigint
     let packedData: string
     let signature: string
+    let investedProvider: InvestedProvider
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
@@ -31,15 +32,19 @@ describe("IDO investment tests", function () {
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
         vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
         lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
+        const InvestedProvider = await ethers.getContractFactory("InvestedProvider")
+        investedProvider = await InvestedProvider.deploy(await lockDealNFT.getAddress())
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
-            await dispenserProvider.getAddress()
+            await dispenserProvider.getAddress(),
+            await investedProvider.getAddress()
         )
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await investedProvider.getAddress(), true)
         // set trustee
         await vaultManager.setTrustee(await lockDealNFT.getAddress())
         // create vault with token

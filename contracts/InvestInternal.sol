@@ -56,6 +56,7 @@ abstract contract InvestInternal is InvestModifiers {
     function _invest(uint256 poolId, uint256 amount) internal {
         _transferERC20Tokens(poolId, amount);
         _registerDispenser(poolId + 1, amount);
+        _mintNFTMark(amount);
     }
 
     function _registerDispenser(
@@ -87,5 +88,13 @@ abstract contract InvestInternal is InvestModifiers {
     function _createDispenser(uint256 sourceId, address signer) internal {
         uint256 dispenserPoolId = lockDealNFT.mintForProvider(signer, dispenserProvider);
         lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
+    }
+
+    function _mintNFTMark(uint256 amount) internal {
+        uint256 poolId = lockDealNFT.mintForProvider(msg.sender, investedProvider);
+        // register the amount in the invested provider
+        uint256[] memory params = new uint256[](1);
+        params[0] = amount;
+        investedProvider.registerPool(poolId, params);
     }
 }

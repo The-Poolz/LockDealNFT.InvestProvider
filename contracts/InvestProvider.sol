@@ -12,11 +12,12 @@ contract InvestProvider is InvestInternal {
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
-    constructor(ILockDealNFT _lockDealNFT, IProvider _dispenserProvider) {
+    constructor(ILockDealNFT _lockDealNFT, IProvider _dispenserProvider, IProvider _investedProvider) {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
         dispenserProvider = _dispenserProvider;
+        investedProvider = _investedProvider;
         name = "InvestProvider";
     }
 
