@@ -191,4 +191,11 @@ describe("IDO investment tests", function () {
             "InvalidSignature"
         )
     })
+
+    it("should revert ERC20 tokens if call investETH", async () => {
+        await expect(investProvider.investETH(poolId, validUntil, signature, { value: amount })).to.be.revertedWithCustomError(
+            investProvider,
+            "InvalidWrappedToken"
+        )
+    })
 })

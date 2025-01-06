@@ -81,6 +81,14 @@ describe("IDO with wrapped tokens", function () {
         ).to.be.revertedWithCustomError(investWrapped, "NoZeroValue")
     })
 
+
+    it("should revert wrapped tokens if call invest", async () => {
+        await expect(investWrapped.invest(poolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
+            investWrapped,
+            "InvalidERC20Token"
+        )
+    })
+
     // Helper Functions
     async function deployContracts() {
         const Token = await ethers.getContractFactory("ERC20Token")
