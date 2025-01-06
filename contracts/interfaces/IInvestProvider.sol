@@ -102,7 +102,6 @@ interface IInvestProvider is IProvider {
     );
 
     error InactivePool(uint256 poolId);
-    error InvalidLockDealNFT();
     error InvalidWrappedToken();
     error InvalidERC20Token();
     error InvalidProvider();

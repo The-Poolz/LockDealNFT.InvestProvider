@@ -13,7 +13,6 @@ describe("IDO creation tests", function () {
     let investProvider: InvestWrapped
     let providerMock: ProviderMock
     let owner: SignerWithAddress
-    let user: SignerWithAddress
     let signer: SignerWithAddress
     let signerAddress: string
     let lockDealNFT: LockDealNFT
@@ -22,7 +21,7 @@ describe("IDO creation tests", function () {
     let dispenserProvider: DispenserProvider
 
     before(async () => {
-        ;[owner, user, signer] = await ethers.getSigners()
+        [owner, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
         token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
