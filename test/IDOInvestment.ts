@@ -104,6 +104,13 @@ describe("IDO investment tests", function () {
         expect(await USDT.balanceOf(vault)).to.equal(balanceBefore + amount)
     })
 
+    it("should add InvestedProvider NFT after invest", async () => {
+        await investProvider.invest(poolId, amount, validUntil, signature)
+        const balanceAfter = await lockDealNFT["balanceOf(address)"](await owner.getAddress())
+        const tokenByIndex = await lockDealNFT["tokenOfOwnerByIndex(address,uint256)"](await owner.getAddress(), balanceAfter - 1n)
+        expect(await lockDealNFT.poolIdToProvider(tokenByIndex)).to.equal(await investedProvider.getAddress())
+    })
+
     it("should revert if no allowance", async () => {
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         const packedData = ethers.solidityPackedKeccak256(
