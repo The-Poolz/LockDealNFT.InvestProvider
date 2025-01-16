@@ -16,6 +16,11 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
 
     IProvider public immutable dispenserProvider;
 
+    bytes32 public constant INVEST_TYPEHASH =
+        keccak256(
+            "InvestMessage(uint256 poolId,address user,uint256 amount,uint256 validUntil,uint256 nonce)"
+        );
+
     /**
      * @notice Returns the expected length of parameters required for pool functions.
      * @dev This function overrides `currentParamsTargetLength` from both `IProvider` and `ProviderState`.

@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./InvestInternal.sol";
+import "./InvestModifiers.sol";
 
 /// @title InvestProvider
 /// @notice This contract provides functionality for creating investment pools, managing investments.
-/// @dev Inherits from `InvestInternal` and includes logic to create, invest, and split pools, as well as withdraw funds. It uses `SafeERC20` for token transfers and `CalcUtils` for mathematical operations.
-contract InvestProvider is InvestInternal {
+/// @dev Inherits from `InvestModifiers` and includes logic to create, invest, and split pools, as well as withdraw funds. It uses `SafeERC20` for token transfers and `CalcUtils` for mathematical operations.
+contract InvestProvider is InvestModifiers {
     using CalcUtils for uint256;
 
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
-    constructor(ILockDealNFT _lockDealNFT, IProvider _dispenserProvider) {
+    constructor(ILockDealNFT _lockDealNFT, IProvider _dispenserProvider) EIP712("InvestProvider", "1") {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;

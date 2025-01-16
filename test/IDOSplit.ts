@@ -4,6 +4,7 @@ import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { LockDealNFT } from "../typechain-types/@poolzfinance/lockdeal-nft/contracts/LockDealNFT/LockDealNFT"
 import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
+import { createEIP712Signature } from "./helper"
 
 describe("IDO split tests", function () {
     let token: ERC20Token
@@ -23,7 +24,6 @@ describe("IDO split tests", function () {
     let ratio: bigint
     let packedData: string
     let vaultId: bigint
-    let investData: string
     let signature: string
     const validUntil = Math.floor(Date.now() / 1000) + 60 * 60
 
@@ -90,11 +90,15 @@ describe("IDO split tests", function () {
         poolId = await lockDealNFT.totalSupply()
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         await investProvider["createNewPool(uint256,address,address,uint256)"](maxAmount, signer, signer, sourcePoolId)
-        investData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, amount, nonce]
+        signature = await createEIP712Signature(
+            poolId,
+            await owner.getAddress(),
+            validUntil,
+            amount,
+            nonce,
+            signer,
+            await investProvider.getAddress()
         )
-        signature = await signer.signMessage(ethers.getBytes(investData))
     })
 
     it("should update old pool data after split", async () => {
