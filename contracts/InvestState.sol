@@ -16,10 +16,11 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
 
     IProvider public immutable dispenserProvider;
 
-    bytes32 public constant INVEST_TYPEHASH =
-        keccak256(
-            "InvestMessage(uint256 poolId,address user,uint256 amount,uint256 validUntil,uint256 nonce)"
-        );
+    /// @notice The EIP-712 domain separator for investment types. Represented as:
+    ///     keccak256(
+    ///         "InvestMessage(uint256 poolId,address user,uint256 amount,uint256 validUntil,uint256 nonce)"
+    ///     );
+    bytes32 public constant INVEST_TYPEHASH = 0xf8aa084d6e1010879da870ee8bf4da7d3cd029f3a5dca41618aaead07eff40dd;
 
     /**
      * @notice Returns the expected length of parameters required for pool functions.

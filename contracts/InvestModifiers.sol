@@ -87,8 +87,7 @@ abstract contract InvestModifiers is InvestNonce, InvestInternal {
      *                   The current block timestamp must be less than or equal to this value.
      */
     modifier isValidTime(uint256 validUntil) {
-        if (validUntil < block.timestamp)
-            revert InvalidTime(block.timestamp, validUntil);
+        if (validUntil < block.timestamp) revert InvalidTime(block.timestamp, validUntil);
         _;
     }
 
