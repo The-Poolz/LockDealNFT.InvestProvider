@@ -61,6 +61,17 @@ interface IInvestProvider is IProvider {
     }
 
     /**
+     * @dev Struct that represents a message to be signed by the user for investing in a pool.
+     */
+    struct InvestMessage {
+        uint256 poolId;
+        address user;
+        uint256 amount;
+        uint256 validUntil;
+        uint256 nonce;
+    }
+
+    /**
      * @notice Emitted when a user successfully invests in a pool.
      * @param poolId The ID of the pool where the investment was made.
      * @param user The address of the user who made the investment.

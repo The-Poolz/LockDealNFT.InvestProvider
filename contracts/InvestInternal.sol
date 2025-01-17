@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./InvestModifiers.sol";
+import "./InvestState.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
 import "./interfaces/IVaultViews.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /// @title InvestInternal
 /// @notice Provides internal functions for managing investment pools and parameters.
-/// @dev Extends `InvestModifiers` and includes functionality to register and update pool data.
-abstract contract InvestInternal is InvestModifiers {
+/// @dev Extends `InvestState` and includes functionality to register and update pool data.
+abstract contract InvestInternal is InvestState, EIP712 {
     using SafeERC20 for IERC20;
     using CalcUtils for uint256;
+    using ECDSA for bytes32;
 
     /**
      * @notice Registers or updates the parameters for a specific investment pool.
@@ -87,5 +90,20 @@ abstract contract InvestInternal is InvestModifiers {
     function _createDispenser(uint256 sourceId, address signer) internal {
         uint256 dispenserPoolId = lockDealNFT.mintForProvider(signer, dispenserProvider);
         lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
+    }
+
+    /// @notice Verifies the cryptographic signature for a given pool and data.
+    /// @param poolId The unique identifier for the pool.
+    /// @param data The data associated with the transaction.
+    /// @param signature The cryptographic signature verifying the transaction.
+    /// @return bool True if the signature is valid for the given data, otherwise false.
+    function _verify(
+        uint256 poolId,
+        bytes memory data,
+        bytes calldata signature
+    ) internal view returns (bool) {
+        bytes32 hash = _hashTypedDataV4(keccak256(data));
+        address signer = ECDSA.recover(hash, signature);
+        return signer == lockDealNFT.getData(poolId).owner;
     }
 }
