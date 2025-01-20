@@ -57,10 +57,11 @@ abstract contract InvestInternal is InvestState, EIP712 {
      * @dev Reduces the left amount of the pool and calls the `onInvest` method of the invested provider.
      */
     function _invest(uint256 poolId, uint256 amount) internal {
-        _invested(amount, poolId);
+        _invested(poolId, amount);
         _registerDispenser(poolId + 1, amount);
     }
 
+    /// @notice Internal function to register the dispenser pool with the updated amount.
     function _registerDispenser(
         uint256 dispenserPoolId,
         uint256 amount
@@ -84,7 +85,10 @@ abstract contract InvestInternal is InvestState, EIP712 {
         lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
     }
 
-    function _invested(uint256 amount, uint256 investPoolId) internal {
+    /// @notice Internal function to process the investment by transferring tokens to the vault manager.
+    /// @param investPoolId The ID of the pool being invested in.
+    /// @param amount The amount being invested.
+    function _invested(uint256 investPoolId, uint256 amount) internal {
         address token = lockDealNFT.tokenOf(investPoolId);
         IERC20(token).safeTransferFrom(msg.sender, address(lockDealNFT), amount);
         uint256 poolId = lockDealNFT.mintAndTransfer(msg.sender, token, amount, investedProvider);
