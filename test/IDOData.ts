@@ -4,6 +4,7 @@ import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { LockDealNFT } from "../typechain-types/@poolzfinance/lockdeal-nft/contracts/LockDealNFT/LockDealNFT"
 import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
+import { createEIP712Signature } from "./helper"
 
 describe("IDO data tests", function () {
     let token: ERC20Token
@@ -67,11 +68,15 @@ describe("IDO data tests", function () {
         poolId = await lockDealNFT.totalSupply()
         await investProvider.createNewPool(maxAmount, signer, signer, sourcePoolId)
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
-        const packedData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, amount, nonce]
+        signature = await createEIP712Signature(
+            poolId,
+            await owner.getAddress(),
+            validUntil,
+            amount,
+            nonce,
+            signer,
+            await investProvider.getAddress()
         )
-        signature = await signer.signMessage(ethers.getBytes(packedData))
     })
 
     it("should return currentParamsTargetLength", async () => {
@@ -101,21 +106,6 @@ describe("IDO data tests", function () {
         return block.timestamp
     }
 
-    // Helper function to generate a signature for investment
-    const generateSignature = async (
-        poolId: bigint,
-        amount: bigint,
-        validUntil: number,
-        signer: SignerWithAddress
-    ): Promise<string> => {
-        const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
-        const packedData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, amount, nonce]
-        )
-        return signer.signMessage(ethers.getBytes(packedData))
-    }
-
     // Helper function to perform an investment and record the timestamp
     const performInvestment = async (
         poolId: bigint,
@@ -124,7 +114,8 @@ describe("IDO data tests", function () {
         signer: SignerWithAddress,
         timestamps: number[]
     ): Promise<void> => {
-        const signature = await generateSignature(poolId, amount, validUntil, signer)
+        const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
+        const signature = await createEIP712Signature(poolId, await owner.getAddress(), validUntil, amount, nonce, signer, await investProvider.getAddress())
         await investProvider.invest(poolId, amount, validUntil, signature)
         timestamps.push(await getLatestTimestamp())
     }

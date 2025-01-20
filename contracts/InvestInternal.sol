@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./InvestModifiers.sol";
+import "./InvestState.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
 import "./interfaces/IVaultViews.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /// @title InvestInternal
 /// @notice Provides internal functions for managing investment pools and parameters.
-/// @dev Extends `InvestModifiers` and includes functionality to register and update pool data.
-abstract contract InvestInternal is InvestModifiers {
+/// @dev Extends `InvestState` and includes functionality to register and update pool data.
+abstract contract InvestInternal is InvestState, EIP712 {
     using SafeERC20 for IERC20;
     using CalcUtils for uint256;
+    using ECDSA for bytes32;
 
     /**
      * @notice Registers or updates the parameters for a specific investment pool.
@@ -56,7 +59,7 @@ abstract contract InvestInternal is InvestModifiers {
     function _invest(uint256 poolId, uint256 amount) internal {
         _transferERC20Tokens(poolId, amount);
         _registerDispenser(poolId + 1, amount);
-        _mintNFTMark(amount, poolId);
+        _invested(amount, poolId);
     }
 
     function _registerDispenser(
@@ -90,13 +93,29 @@ abstract contract InvestInternal is InvestModifiers {
         lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
     }
 
-    function _mintNFTMark(uint256 amount, uint256 sourceId) internal {
+    function _invested(uint256 amount, uint256 sourceId) internal {
         uint256 poolId = lockDealNFT.mintForProvider(msg.sender, investedProvider);
         // save token info
         lockDealNFT.cloneVaultId(poolId, sourceId);
         // register the amount in the invested provider
-        uint256[] memory params = new uint256[](1);
+        uint256[] memory params = new uint256[](2);
         params[0] = amount;
+        params[1] = sourceId;
         investedProvider.registerPool(poolId, params);
+    }
+    
+    /// @notice Verifies the cryptographic signature for a given pool and data.
+    /// @param poolId The unique identifier for the pool.
+    /// @param data The data associated with the transaction.
+    /// @param signature The cryptographic signature verifying the transaction.
+    /// @return bool True if the signature is valid for the given data, otherwise false.
+    function _verify(
+        uint256 poolId,
+        bytes memory data,
+        bytes calldata signature
+    ) internal view returns (bool) {
+        bytes32 hash = _hashTypedDataV4(keccak256(data));
+        address signer = ECDSA.recover(hash, signature);
+        return signer == lockDealNFT.getData(poolId).owner;
     }
 }
