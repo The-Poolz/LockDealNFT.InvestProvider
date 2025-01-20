@@ -100,9 +100,7 @@ contract InvestProvider is InvestModifiers {
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
         poolData.leftAmount -= amount;
         uint256 nonce = _addInvestTrack(poolId, msg.sender, amount);
-
         _invest(poolId, amount);
-
         emit Invested(poolId, msg.sender, amount, nonce);
     }
 
@@ -132,12 +130,7 @@ contract InvestProvider is InvestModifiers {
      */
     function withdraw(
         uint256
-    )
-        external
-        firewallProtected
-        onlyNFT
-        returns (uint256 withdrawnAmount, bool isFinal)
-    {
+    ) external firewallProtected onlyNFT returns (uint256 withdrawnAmount, bool isFinal) {
         withdrawnAmount = 0;
         isFinal = true;
     }
@@ -154,12 +147,8 @@ contract InvestProvider is InvestModifiers {
         uint256 newPoolId,
         uint256 ratio
     ) external firewallProtected onlyNFT {
-        uint256 newPoolMaxAmount = poolIdToPool[oldPoolId].maxAmount.calcAmount(
-            ratio
-        );
-        uint256 newPoolLeftAmount = poolIdToPool[oldPoolId]
-            .leftAmount
-            .calcAmount(ratio);
+        uint256 newPoolMaxAmount = poolIdToPool[oldPoolId].maxAmount.calcAmount(ratio);
+        uint256 newPoolLeftAmount = poolIdToPool[oldPoolId].leftAmount.calcAmount(ratio);
         // reduce the max amount and leftAmount of the old pool
         poolIdToPool[oldPoolId].maxAmount -= newPoolMaxAmount;
         poolIdToPool[oldPoolId].leftAmount -= newPoolLeftAmount;
