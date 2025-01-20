@@ -86,7 +86,7 @@ abstract contract InvestInternal is InvestState, EIP712 {
 
     function _invested(uint256 amount, uint256 sourceId) internal {
         address token = lockDealNFT.tokenOf(sourceId);
-        IERC20(token).transferFrom(msg.sender, address(lockDealNFT), amount);
+        IERC20(token).safeTransferFrom(msg.sender, address(lockDealNFT), amount);
         uint256 poolId = lockDealNFT.mintAndTransfer(msg.sender, token, amount, investedProvider);
         // register the amount in the invested provider
         uint256[] memory params = new uint256[](2);

@@ -7,7 +7,6 @@ import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
 import { createEIP712Signature } from "../test/helper"
 
 describe("IDO investment tests", function () {
-    let token: ERC20Token
     let USDT: ERC20Token
     let sourcePoolId: bigint
     let vaultManager: VaultManager
@@ -27,7 +26,6 @@ describe("IDO investment tests", function () {
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
-        token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
         vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
@@ -65,7 +63,6 @@ describe("IDO investment tests", function () {
         // create source pool
         await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
 
-        await token.approve(await vaultManager.getAddress(), maxAmount)
         await USDT.approve(await investProvider.getAddress(), maxAmount)
         signerAddress = await signer.getAddress()
     })
