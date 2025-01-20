@@ -85,7 +85,7 @@ abstract contract InvestInternal is InvestState, EIP712 {
         lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
     }
 
-    /// @notice Internal function to process the investment by transferring tokens to the vault manager.
+    /// @notice Internal function to process the investment by transferring tokens.
     /// @param investPoolId The ID of the pool being invested in.
     /// @param amount The amount being invested.
     function _invested(uint256 investPoolId, uint256 amount) internal {
