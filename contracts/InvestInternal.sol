@@ -57,9 +57,8 @@ abstract contract InvestInternal is InvestState, EIP712 {
      * @dev Reduces the left amount of the pool and calls the `onInvest` method of the invested provider.
      */
     function _invest(uint256 poolId, uint256 amount) internal {
-        _transferERC20Tokens(poolId, amount);
-        _registerDispenser(poolId + 1, amount);
         _invested(amount, poolId);
+        _registerDispenser(poolId + 1, amount);
     }
 
     function _registerDispenser(
@@ -71,14 +70,6 @@ abstract contract InvestInternal is InvestState, EIP712 {
         );
         dispenserParams[0] += amount;
         dispenserProvider.registerPool(dispenserPoolId, dispenserParams);
-    }
-
-    function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
-        address token = lockDealNFT.tokenOf(poolId);
-        IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
-        uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
-        address vault = vaultManager.vaultIdToVault(vaultId);
-        IERC20(token).safeTransferFrom(msg.sender, vault, amount);
     }
 
     function _createDispenser(uint256 dispenserPoolId) internal {
@@ -94,9 +85,9 @@ abstract contract InvestInternal is InvestState, EIP712 {
     }
 
     function _invested(uint256 amount, uint256 sourceId) internal {
-        uint256 poolId = lockDealNFT.mintForProvider(msg.sender, investedProvider);
-        // save token info
-        lockDealNFT.cloneVaultId(poolId, sourceId);
+        address token = lockDealNFT.tokenOf(sourceId);
+        IERC20(token).transferFrom(msg.sender, address(lockDealNFT), amount);
+        uint256 poolId = lockDealNFT.mintAndTransfer(msg.sender, token, amount, investedProvider);
         // register the amount in the invested provider
         uint256[] memory params = new uint256[](2);
         params[0] = amount;
