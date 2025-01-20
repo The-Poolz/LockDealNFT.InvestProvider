@@ -184,6 +184,13 @@ describe("IDO creation tests", function () {
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
 
+    it("should revert zero investedProvider address", async () => {
+        const InvestProvider = await ethers.getContractFactory("InvestProvider")
+        await expect(
+            InvestProvider.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress(), ethers.ZeroAddress)
+        ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
+    })
+
     it("should revert zero invest signer address", async () => {
         await expect(
             investProvider.createNewPool(amount, ethers.ZeroAddress, signerAddress, sourcePoolId)

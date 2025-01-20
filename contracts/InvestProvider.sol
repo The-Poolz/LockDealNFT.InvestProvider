@@ -20,6 +20,7 @@ contract InvestProvider is InvestModifiers {
     ) EIP712("InvestProvider", "1") {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
+        if (address(_investedProvider) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
         dispenserProvider = _dispenserProvider;
         investedProvider = _investedProvider;
