@@ -1,4 +1,4 @@
-import { VaultManager, InvestProvider } from "../typechain-types"
+import { VaultManager, InvestProvider, InvestedProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -7,7 +7,6 @@ import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
 import { createEIP712Signature } from "../test/helper"
 
 describe("IDO investment tests", function () {
-    let token: ERC20Token
     let USDT: ERC20Token
     let sourcePoolId: bigint
     let vaultManager: VaultManager
@@ -22,24 +21,28 @@ describe("IDO investment tests", function () {
     const validUntil = Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour
     let poolId: bigint
     let signature: string
+    let investedProvider: InvestedProvider
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
-        token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
         vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
         lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
+        const InvestedProvider = await ethers.getContractFactory("InvestedProvider")
+        investedProvider = await InvestedProvider.deploy(await lockDealNFT.getAddress())
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
-            await dispenserProvider.getAddress()
+            await dispenserProvider.getAddress(),
+            await investedProvider.getAddress()
         )
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await investedProvider.getAddress(), true)
         // set trustee
         await vaultManager.setTrustee(await lockDealNFT.getAddress())
         // create vault with token
@@ -60,7 +63,6 @@ describe("IDO investment tests", function () {
         // create source pool
         await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
 
-        await token.approve(await investProvider.getAddress(), maxAmount)
         await USDT.approve(await investProvider.getAddress(), maxAmount)
         signerAddress = await signer.getAddress()
     })
@@ -101,6 +103,13 @@ describe("IDO investment tests", function () {
         const balanceBefore = await USDT.balanceOf(vault)
         await investProvider.invest(poolId, amount, validUntil, signature)
         expect(await USDT.balanceOf(vault)).to.equal(balanceBefore + amount)
+    })
+
+    it("should add InvestedProvider NFT after invest", async () => {
+        await investProvider.invest(poolId, amount, validUntil, signature)
+        const balanceAfter = await lockDealNFT["balanceOf(address)"](await owner.getAddress())
+        const tokenByIndex = await lockDealNFT["tokenOfOwnerByIndex(address,uint256)"](await owner.getAddress(), balanceAfter - 1n)
+        expect(await lockDealNFT.poolIdToProvider(tokenByIndex)).to.equal(await investedProvider.getAddress())
     })
 
     it("should revert if no allowance", async () => {

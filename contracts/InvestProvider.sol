@@ -12,11 +12,18 @@ contract InvestProvider is InvestModifiers {
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
-    constructor(ILockDealNFT _lockDealNFT, IProvider _dispenserProvider) EIP712("InvestProvider", "1") {
+    /// @param _investedProvider The address of the `IProvider` contract for invested providers.
+    constructor(
+        ILockDealNFT _lockDealNFT,
+        IProvider _dispenserProvider,
+        IProvider _investedProvider
+    ) EIP712("InvestProvider", "1") {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
+        if (address(_investedProvider) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
         dispenserProvider = _dispenserProvider;
+        investedProvider = _investedProvider;
         name = "InvestProvider";
     }
 
@@ -44,11 +51,7 @@ contract InvestProvider is InvestModifiers {
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _createPool(
-            investSigner,
-            dispenserSigner,
-            sourcePoolId
-        );
+        poolId = _createPool(investSigner, dispenserSigner, sourcePoolId);
         poolIdToPool[poolId].maxAmount = poolAmount;
         poolIdToPool[poolId].leftAmount = poolAmount;
         emit NewPoolCreated(poolId, investSigner, poolAmount);
@@ -65,11 +68,7 @@ contract InvestProvider is InvestModifiers {
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _createPool(
-            msg.sender,
-            msg.sender,
-            sourcePoolId
-        );
+        poolId = _createPool(msg.sender, msg.sender, sourcePoolId);
         poolIdToPool[poolId].maxAmount = poolAmount;
         poolIdToPool[poolId].leftAmount = poolAmount;
         emit NewPoolCreated(poolId, msg.sender, poolAmount);
@@ -102,9 +101,7 @@ contract InvestProvider is InvestModifiers {
         if (poolData.leftAmount < amount) revert ExceededLeftAmount();
         poolData.leftAmount -= amount;
         uint256 nonce = _addInvestTrack(poolId, msg.sender, amount);
-        
         _invest(poolId, amount);
-        
         emit Invested(poolId, msg.sender, amount, nonce);
     }
 

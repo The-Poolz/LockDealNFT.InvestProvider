@@ -14,7 +14,11 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
     /// @dev Each pool ID corresponds to an `Pool` struct containing pool details.
     mapping(uint256 => Pool) public poolIdToPool;
 
+    /// @notice The address of the DispenserProvider contract.
     IProvider public immutable dispenserProvider;
+
+    /// @notice The address of the invested provider.
+    IProvider public immutable investedProvider;
 
     /// @notice The EIP-712 domain separator for investment types. Represented as:
     ///     keccak256(

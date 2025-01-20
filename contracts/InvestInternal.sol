@@ -57,10 +57,11 @@ abstract contract InvestInternal is InvestState, EIP712 {
      * @dev Reduces the left amount of the pool and calls the `onInvest` method of the invested provider.
      */
     function _invest(uint256 poolId, uint256 amount) internal {
-        _transferERC20Tokens(poolId, amount);
+        _invested(poolId, amount);
         _registerDispenser(poolId + 1, amount);
     }
 
+    /// @notice Internal function to register the dispenser pool with the updated amount.
     function _registerDispenser(
         uint256 dispenserPoolId,
         uint256 amount
@@ -70,14 +71,6 @@ abstract contract InvestInternal is InvestState, EIP712 {
         );
         dispenserParams[0] += amount;
         dispenserProvider.registerPool(dispenserPoolId, dispenserParams);
-    }
-
-    function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
-        address token = lockDealNFT.tokenOf(poolId);
-        IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
-        uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
-        address vault = vaultManager.vaultIdToVault(vaultId);
-        IERC20(token).safeTransferFrom(msg.sender, vault, amount);
     }
 
     function _createDispenser(uint256 dispenserPoolId) internal {
@@ -92,6 +85,24 @@ abstract contract InvestInternal is InvestState, EIP712 {
         lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
     }
 
+    /// @notice Internal function to process the investment by transferring tokens.
+    /// @param investPoolId The ID of the pool being invested in.
+    /// @param amount The amount being invested.
+    function _invested(uint256 investPoolId, uint256 amount) internal {
+        address token = lockDealNFT.tokenOf(investPoolId);
+        IERC20(token).safeTransferFrom(msg.sender, address(lockDealNFT), amount);
+        uint256 poolId = lockDealNFT.mintAndTransfer(msg.sender, token, amount, investedProvider);
+        // register the amount in the invested provider
+        _registerInvested(poolId, investPoolId, amount);
+    }
+
+    function _registerInvested(uint256 poolId, uint256 investPoolId, uint256 amount) internal {
+        uint256[] memory params = new uint256[](2);
+        params[0] = amount;
+        params[1] = investPoolId;
+        investedProvider.registerPool(poolId, params);
+    }
+    
     /// @notice Verifies the cryptographic signature for a given pool and data.
     /// @param poolId The unique identifier for the pool.
     /// @param data The data associated with the transaction.
