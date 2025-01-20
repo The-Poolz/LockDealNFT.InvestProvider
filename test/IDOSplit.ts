@@ -1,9 +1,10 @@
-import { VaultManager, InvestWrapped, DispenserProvider } from "../typechain-types"
+import { VaultManager, InvestWrapped, DispenserProvider, InvestedProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { LockDealNFT } from "../typechain-types/@poolzfinance/lockdeal-nft/contracts/LockDealNFT/LockDealNFT"
 import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
+import { createEIP712Signature } from "./helper"
 
 describe("IDO split tests", function () {
     let token: ERC20Token
@@ -23,9 +24,9 @@ describe("IDO split tests", function () {
     let ratio: bigint
     let packedData: string
     let vaultId: bigint
-    let investData: string
     let signature: string
     const validUntil = Math.floor(Date.now() / 1000) + 60 * 60
+    let investedProvider: InvestedProvider
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
@@ -35,15 +36,19 @@ describe("IDO split tests", function () {
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
         vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
         lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
+        const InvestedProvider = await ethers.getContractFactory("InvestedProvider")
+        investedProvider = await InvestedProvider.deploy(await lockDealNFT.getAddress())
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
         const InvestProvider = await ethers.getContractFactory("InvestWrapped")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
-            await dispenserProvider.getAddress()
+            await dispenserProvider.getAddress(),
+            await investedProvider.getAddress()
         )
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await investedProvider.getAddress(), true)
         // set trustee
         await vaultManager.setTrustee(await lockDealNFT.getAddress())
         // create vaults with token and USDT
@@ -90,11 +95,15 @@ describe("IDO split tests", function () {
         poolId = await lockDealNFT.totalSupply()
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         await investProvider["createNewPool(uint256,address,address,uint256,bool)"](maxAmount, signer, signer, sourcePoolId, false)
-        investData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, amount, nonce]
+        signature = await createEIP712Signature(
+            poolId,
+            await owner.getAddress(),
+            validUntil,
+            amount,
+            nonce,
+            signer,
+            await investProvider.getAddress()
         )
-        signature = await signer.signMessage(ethers.getBytes(investData))
     })
 
     it("should update old pool data after split", async () => {

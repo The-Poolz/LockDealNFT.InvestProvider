@@ -1,15 +1,17 @@
-import { VaultManager, InvestWrapped, IWBNB, DispenserProvider } from "../typechain-types"
+import { VaultManager, InvestWrapped, IWBNB, DispenserProvider, InvestedProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { LockDealNFT } from "../typechain-types/@poolzfinance/lockdeal-nft/contracts/LockDealNFT/LockDealNFT"
 import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
 import { loadWBNBArtifact } from "./loadWBNB"
+import {createEIP712Signature} from "./helper"
 
 describe("IDO with wrapped tokens", function () {
     let token: ERC20Token
     let vaultManager: VaultManager
     let investWrapped: InvestWrapped
+    let investedProvider: InvestedProvider
     let lockDealNFT: LockDealNFT
     let dispenserProvider: DispenserProvider
     let wBNB: IWBNB
@@ -105,13 +107,17 @@ describe("IDO with wrapped tokens", function () {
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
 
+        const InvestedProvider = await ethers.getContractFactory("InvestedProvider")
+        investedProvider = await InvestedProvider.deploy(await lockDealNFT.getAddress())
+
         const InvestWrapped = await ethers.getContractFactory("InvestWrapped")
-        investWrapped = await InvestWrapped.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress())
+        investWrapped = await InvestWrapped.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress(), await investedProvider.getAddress())
     }
 
     async function setupInitialConditions() {
         await lockDealNFT.setApprovedContract(await investWrapped.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await investedProvider.getAddress(), true)
         await vaultManager.setTrustee(await lockDealNFT.getAddress())
 
         // Initialize vaults
@@ -148,11 +154,15 @@ describe("IDO with wrapped tokens", function () {
             isWrapped
         )
         const nonce = await investWrapped.getNonce(poolId, await owner.getAddress())
-        const packedData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, amount, nonce]
+        return await createEIP712Signature(
+            poolId,
+            await owner.getAddress(),
+            validUntil,
+            amount,
+            nonce,
+            signer,
+            await investWrapped.getAddress()
         )
-        return signer.signMessage(ethers.getBytes(packedData))
     }
 
     async function createSourcePool() {

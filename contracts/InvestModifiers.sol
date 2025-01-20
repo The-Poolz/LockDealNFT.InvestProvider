@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./InvestNonce.sol";
-import "./InvestState.sol";
+import "./InvestInternal.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title InvestModifiers
 /// @notice Provides various modifiers for validating inputs and conditions in investment-related contracts.
-abstract contract InvestModifiers is InvestNonce, InvestState {
+abstract contract InvestModifiers is InvestInternal {
     using ECDSA for bytes32;
-    using MessageHashUtils for bytes32;
 
     /**
      * @dev Modifier to ensure an address is not the zero address.
@@ -131,15 +127,13 @@ abstract contract InvestModifiers is InvestNonce, InvestState {
         uint256 amount,
         bytes calldata signature
     ) internal view {
-        address signer = lockDealNFT.getData(poolId).owner;
         uint256 nonce = _getNonce(poolId, msg.sender);
-        bytes32 messageHash = keccak256(
-            abi.encodePacked(poolId, msg.sender, validUntil, amount, nonce)
+        InvestMessage memory message = InvestMessage(poolId, msg.sender, amount, validUntil, nonce);
+        bytes memory data = abi.encodePacked(
+            INVEST_TYPEHASH,
+            abi.encode(message)
         );
-        address expectedSigner = messageHash.toEthSignedMessageHash().recover(
-            signature
-        );
-        if (signer != expectedSigner) {
+        if (!_verify(poolId, data, signature)) {
             revert InvalidSignature(poolId, msg.sender);
         }
     }

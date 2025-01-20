@@ -1,12 +1,12 @@
-import { VaultManager, InvestWrapped } from "../typechain-types"
+import { VaultManager, InvestWrapped, InvestedProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { LockDealNFT } from "../typechain-types/@poolzfinance/lockdeal-nft/contracts/LockDealNFT/LockDealNFT"
 import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
+import { createEIP712Signature } from "../test/helper"
 
 describe("IDO investment tests", function () {
-    let token: ERC20Token
     let USDT: ERC20Token
     let sourcePoolId: bigint
     let vaultManager: VaultManager
@@ -20,26 +20,29 @@ describe("IDO investment tests", function () {
     const maxAmount = ethers.parseUnits("1000", 18)
     const validUntil = Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour
     let poolId: bigint
-    let packedData: string
     let signature: string
+    let investedProvider: InvestedProvider
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
         const Token = await ethers.getContractFactory("ERC20Token")
-        token = await Token.deploy("TEST", "test")
         USDT = await Token.deploy("USDT", "USDT")
         const LockDealNFTFactory = await ethers.getContractFactory("LockDealNFT")
         vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
         lockDealNFT = (await LockDealNFTFactory.deploy(await vaultManager.getAddress(), "")) as LockDealNFT
+        const InvestedProvider = await ethers.getContractFactory("InvestedProvider")
+        investedProvider = await InvestedProvider.deploy(await lockDealNFT.getAddress())
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
         const InvestProvider = await ethers.getContractFactory("InvestWrapped")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
-            await dispenserProvider.getAddress()
+            await dispenserProvider.getAddress(),
+            await investedProvider.getAddress()
         )
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await investedProvider.getAddress(), true)
         // set trustee
         await vaultManager.setTrustee(await lockDealNFT.getAddress())
         // create vault with token
@@ -60,7 +63,6 @@ describe("IDO investment tests", function () {
         // create source pool
         await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
 
-        await token.approve(await investProvider.getAddress(), maxAmount * 10n)
         await USDT.approve(await investProvider.getAddress(), maxAmount * 10n)
         signerAddress = await signer.getAddress()
     })
@@ -69,11 +71,15 @@ describe("IDO investment tests", function () {
         poolId = await lockDealNFT.totalSupply()
         await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId, false)
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
-        packedData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, amount, nonce]
+        signature = await createEIP712Signature(
+            poolId,
+            await owner.getAddress(),
+            validUntil,
+            amount,
+            nonce,
+            signer,
+            await investProvider.getAddress()
         )
-        signature = await signer.signMessage(ethers.getBytes(packedData))
     })
 
     it("should deacrease left amount after invest", async () => {
@@ -99,13 +105,24 @@ describe("IDO investment tests", function () {
         expect(await USDT.balanceOf(vault)).to.equal(balanceBefore + amount)
     })
 
+    it("should add InvestedProvider NFT after invest", async () => {
+        await investProvider.invest(poolId, amount, validUntil, signature)
+        const balanceAfter = await lockDealNFT["balanceOf(address)"](await owner.getAddress())
+        const tokenByIndex = await lockDealNFT["tokenOfOwnerByIndex(address,uint256)"](await owner.getAddress(), balanceAfter - 1n)
+        expect(await lockDealNFT.poolIdToProvider(tokenByIndex)).to.equal(await investedProvider.getAddress())
+    })
+
     it("should revert if no allowance", async () => {
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
-        const packedData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256", "uint256"],
-            [poolId, await user.getAddress(), validUntil, amount, nonce]
+        const signature = await createEIP712Signature(
+            poolId,
+            await user.getAddress(),
+            validUntil,
+            amount,
+            nonce,
+            signer,
+            await investProvider.getAddress()
         )
-        const signature = await signer.signMessage(ethers.getBytes(packedData))
         await expect(
             investProvider.connect(user).invest(poolId, amount, validUntil, signature)
         ).to.be.revertedWithCustomError(USDT, "ERC20InsufficientAllowance")
@@ -113,11 +130,15 @@ describe("IDO investment tests", function () {
 
     it("should revert if invested amount is more than left amount", async () => {
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
-        const packedData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, maxAmount + 1n, nonce]
+        const signature = await createEIP712Signature(
+            poolId,
+            await owner.getAddress(),
+            validUntil,
+            maxAmount + 1n,
+            nonce,
+            signer,
+            await investProvider.getAddress()
         )
-        const signature = await signer.signMessage(ethers.getBytes(packedData))
         await expect(
             investProvider.invest(poolId, maxAmount + 1n, validUntil, signature)
         ).to.be.revertedWithCustomError(investProvider, "ExceededLeftAmount")
@@ -135,10 +156,10 @@ describe("IDO investment tests", function () {
             .connect(signer)[
                 "safeTransferFrom(address,address,uint256)"
             ](await signer.getAddress(), await lockDealNFT.getAddress(), poolId)
-            await expect(investProvider.invest(poolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
-                investProvider,
-                "InactivePool"
-            )
+        await expect(investProvider.invest(poolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
+            investProvider,
+            "InactivePool"
+        )
     })
 
     it("should revert if set invalid poolID", async () => {
@@ -173,11 +194,16 @@ describe("IDO investment tests", function () {
             sourcePoolId,
             false
         )
-        const packedData = ethers.solidityPackedKeccak256(
-            ["uint256", "address", "uint256", "uint256"],
-            [poolId, await owner.getAddress(), validUntil, maxAmount]
+        const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
+        const signature = await createEIP712Signature(
+            poolId,
+            await owner.getAddress(),
+            validUntil,
+            maxAmount,
+            nonce,
+            owner,
+            await investProvider.getAddress()
         )
-        const signature = await owner.signMessage(ethers.getBytes(packedData))
         await expect(investProvider.invest(poolId, maxAmount, validUntil, signature)).to.be.revertedWithCustomError(
             investProvider,
             "InvalidSignature"

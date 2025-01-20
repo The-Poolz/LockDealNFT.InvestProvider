@@ -12,8 +12,9 @@ contract InvestWrapped is InvestProvider {
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
     constructor(
         ILockDealNFT _lockDealNFT,
-        IProvider _dispenserProvider
-    ) InvestProvider(_lockDealNFT, _dispenserProvider) {}
+        IProvider _dispenserProvider,
+        IProvider _investProvider
+    ) InvestProvider(_lockDealNFT, _dispenserProvider, _investProvider) {}
 
     /** @notice Invests in a pool with a wrapped token.
      *  @param poolId The ID of the pool to invest in.
