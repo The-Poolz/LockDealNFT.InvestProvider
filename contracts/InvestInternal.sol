@@ -8,7 +8,6 @@ import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
 import "./interfaces/IVaultViews.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import "hardhat/console.sol";
 
 /// @title InvestInternal
 /// @notice Provides internal functions for managing investment pools and parameters.
