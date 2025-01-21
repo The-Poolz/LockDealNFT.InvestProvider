@@ -1,4 +1,4 @@
-import { VaultManager, InvestProvider, InvestedProvider } from "../typechain-types"
+import { VaultManager, InvestWrapped, InvestedProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -10,7 +10,7 @@ describe("IDO investment tests", function () {
     let USDT: ERC20Token
     let sourcePoolId: bigint
     let vaultManager: VaultManager
-    let investProvider: InvestProvider
+    let investProvider: InvestWrapped
     let owner: SignerWithAddress
     let user: SignerWithAddress
     let signer: SignerWithAddress
@@ -34,7 +34,7 @@ describe("IDO investment tests", function () {
         investedProvider = await InvestedProvider.deploy(await lockDealNFT.getAddress())
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         const dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
-        const InvestProvider = await ethers.getContractFactory("InvestProvider")
+        const InvestProvider = await ethers.getContractFactory("InvestWrapped")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
             await dispenserProvider.getAddress(),
@@ -63,13 +63,13 @@ describe("IDO investment tests", function () {
         // create source pool
         await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
 
-        await USDT.approve(await investProvider.getAddress(), maxAmount)
+        await USDT.approve(await investProvider.getAddress(), maxAmount * 10n)
         signerAddress = await signer.getAddress()
     })
 
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId)
+        await investProvider.createNewPool(maxAmount, signerAddress, signerAddress, sourcePoolId, false)
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         signature = await createEIP712Signature(
             poolId,
@@ -187,11 +187,12 @@ describe("IDO investment tests", function () {
 
     it("should revert if signer is not valid", async () => {
         poolId = await lockDealNFT.totalSupply()
-        await investProvider["createNewPool(uint256,address,address,uint256)"](
+        await investProvider["createNewPool(uint256,address,address,uint256,bool)"](
             maxAmount,
             signerAddress,
             await owner.getAddress(),
-            sourcePoolId
+            sourcePoolId,
+            false
         )
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         const signature = await createEIP712Signature(
@@ -214,6 +215,13 @@ describe("IDO investment tests", function () {
         await expect(investProvider.invest(poolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
             investProvider,
             "InvalidSignature"
+        )
+    })
+
+    it("should revert ERC20 tokens if call investETH", async () => {
+        await expect(investProvider.investETH(poolId, validUntil, signature, { value: amount })).to.be.revertedWithCustomError(
+            investProvider,
+            "InvalidWrappedToken"
         )
     })
 })

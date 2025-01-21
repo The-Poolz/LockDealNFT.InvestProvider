@@ -1,4 +1,4 @@
-import { VaultManager, InvestProvider, DispenserProvider, InvestedProvider } from "../typechain-types"
+import { VaultManager, InvestWrapped, DispenserProvider, InvestedProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -11,7 +11,7 @@ describe("IDO split tests", function () {
     let USDT: ERC20Token
     let sourcePoolId: bigint
     let vaultManager: VaultManager
-    let investProvider: InvestProvider
+    let investProvider: InvestWrapped
     let owner: SignerWithAddress
     let user: SignerWithAddress
     let signer: SignerWithAddress
@@ -40,7 +40,7 @@ describe("IDO split tests", function () {
         investedProvider = await InvestedProvider.deploy(await lockDealNFT.getAddress())
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
-        const InvestProvider = await ethers.getContractFactory("InvestProvider")
+        const InvestProvider = await ethers.getContractFactory("InvestWrapped")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
             await dispenserProvider.getAddress(),
@@ -94,7 +94,7 @@ describe("IDO split tests", function () {
     beforeEach(async () => {
         poolId = await lockDealNFT.totalSupply()
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
-        await investProvider["createNewPool(uint256,address,address,uint256)"](maxAmount, signer, signer, sourcePoolId)
+        await investProvider["createNewPool(uint256,address,address,uint256,bool)"](maxAmount, signer, signer, sourcePoolId, false)
         signature = await createEIP712Signature(
             poolId,
             await owner.getAddress(),

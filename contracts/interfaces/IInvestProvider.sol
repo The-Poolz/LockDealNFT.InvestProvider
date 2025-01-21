@@ -23,6 +23,19 @@ interface IInvestProvider is IProvider {
     ) external;
 
     /**
+     * @notice Allows an address to invest in a specific IDO (Initial DEX Offering) pool with ETH/BNB.
+     * @dev The function is used to transfer a specified amount of ETH into the pool.
+     * @param poolId The ID of the pool where the investment will occur.
+     * @param validUntil The expiration time for the signature.
+     * @param signature The signature to validate the investment.
+     */
+    function investETH(
+        uint256 poolId,
+        uint256 validUntil,
+        bytes calldata signature
+    ) external payable;
+
+    /**
      * @notice Creates a new investment pool.
      * @dev This function is used to create a new pool with the specified parameters, copying the settings of an existing source pool.
      * It will initialize the new pool with the given details and return its poolId.
@@ -36,7 +49,8 @@ interface IInvestProvider is IProvider {
         uint256 poolAmount,
         address investSigner,
         address dispenserSigner,
-        uint256 sourcePoolId
+        uint256 sourcePoolId,
+        bool isWrapped
     ) external returns (uint256 poolId);
 
     /**
@@ -49,7 +63,8 @@ interface IInvestProvider is IProvider {
      */
     function createNewPool(
         uint256 poolAmount,
-        uint256 sourcePoolId
+        uint256 sourcePoolId,
+        bool isWrapped
     ) external returns (uint256 poolId);
 
     /**
@@ -58,6 +73,7 @@ interface IInvestProvider is IProvider {
     struct Pool {
         uint256 maxAmount; // The maximum amount of tokens that can be invested in the pool
         uint256 leftAmount; // The amount of tokens left to invest in the pool
+        bool isWrapped; // Whether the pool is wrapped
     }
 
     /**
@@ -97,13 +113,15 @@ interface IInvestProvider is IProvider {
     );
 
     error InactivePool(uint256 poolId);
-    error InvalidLockDealNFT();
+    error InvalidWrappedToken();
+    error InvalidERC20Token();
     error InvalidProvider();
     error InvalidPoolId();
     error OnlyLockDealNFT();
     error NoZeroAddress();
     error InvalidParams();
     error NoZeroAmount();
+    error NoZeroValue();
     error ExceededLeftAmount();
     error InvalidParamsLength(uint256 paramsLength, uint256 minLength);
     error InvalidSignature(uint256 poolId, address owner);
