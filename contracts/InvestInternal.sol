@@ -34,24 +34,6 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
     }
 
     /**
-     * @dev Internal function to handle pool creation logic.
-     * @param investSigner The address of the signer for investments.
-     * @param dispenserSigner The address of the signer for dispenses.
-     * @param sourcePoolId The ID of the source pool to token clone.
-     * @return poolId The ID of the newly created pool.
-     */
-    function _createPool(
-        address investSigner,
-        address dispenserSigner,
-        uint256 sourcePoolId
-    ) internal returns (uint256 poolId) {
-        poolId = lockDealNFT.mintForProvider(investSigner, this);
-        lockDealNFT.cloneVaultId(poolId, sourcePoolId);
-
-        _createDispenser(sourcePoolId, dispenserSigner);
-    }
-
-    /**
      * @notice Internal function to process the investment by transferring tokens to the invested provider.
      * @param poolId The ID of the pool being invested in.
      * @param amount The amount being invested.
@@ -74,6 +56,7 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         dispenserProvider.registerPool(dispenserPoolId, dispenserParams);
     }
 
+    /// @notice for dispenser split
     function _createDispenser(uint256 dispenserPoolId) internal {
         // Retrieve the signer of the specified dispenser
         address dispenserSigner = lockDealNFT.ownerOf(dispenserPoolId);
@@ -84,6 +67,11 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
     function _createDispenser(uint256 sourceId, address signer) internal {
         uint256 dispenserPoolId = lockDealNFT.mintForProvider(signer, dispenserProvider);
         lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
+    }
+
+    function _createInvest(address investSigner, uint256 sourcePoolId) internal returns (uint256 poolId) {
+        poolId = lockDealNFT.mintForProvider(investSigner, this);
+        lockDealNFT.cloneVaultId(poolId, sourcePoolId);
     }
 
     /// @notice Internal function to handle the investment process.
@@ -121,10 +109,11 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         uint256 poolAmount,
         bool isWrapped
     ) internal returns (uint256 poolId) {
-        poolId = _createPool(investSigner, dispenserSigner, sourcePoolId);
+        poolId = _createInvest(investSigner, sourcePoolId);
         poolIdToPool[poolId].maxAmount = poolAmount;
         poolIdToPool[poolId].leftAmount = poolAmount;
         poolIdToPool[poolId].isWrapped = isWrapped;
+        _createDispenser(sourcePoolId, dispenserSigner);
     }
     
     /// @notice Internal function to process the investment by transferring tokens.
