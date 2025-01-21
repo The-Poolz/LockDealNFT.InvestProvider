@@ -98,22 +98,22 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
      * @param investSigner The address of the signer for investments.
      * @param dispenserSigner The address of the signer for dispenses.
      * @param sourcePoolId The ID of the source pool to token clone.
-     * @param poolAmount The amount to allocate to the pool.
-     * @param isWrapped Whether the pool uses wrapped tokens.
      * @return poolId The ID of the newly created pool.
      */
     function _initializePool(
         address investSigner,
         address dispenserSigner,
-        uint256 sourcePoolId,
-        uint256 poolAmount,
-        bool isWrapped
+        uint256 sourcePoolId
     ) internal returns (uint256 poolId) {
         poolId = _createInvest(investSigner, sourcePoolId);
-        poolIdToPool[poolId].maxAmount = poolAmount;
-        poolIdToPool[poolId].leftAmount = poolAmount;
-        poolIdToPool[poolId].isWrapped = isWrapped;
         _createDispenser(sourcePoolId, dispenserSigner);
+    }
+
+    ///@notice Internal function to store the investment data.
+    function _storeInvestData(uint256 poolId, uint256 amount, bool isWrapped) internal {
+        poolIdToPool[poolId].maxAmount = amount;
+        poolIdToPool[poolId].leftAmount = amount;
+        poolIdToPool[poolId].isWrapped = isWrapped;
     }
     
     /// @notice Internal function to process the investment by transferring tokens.

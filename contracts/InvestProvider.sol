@@ -54,10 +54,9 @@ abstract contract InvestProvider is InvestModifiers {
         poolId = _initializePool(
             investSigner,
             dispenserSigner,
-            sourcePoolId,
-            poolAmount,
-            isWrapped
+            sourcePoolId
         );
+        _storeInvestData(poolId, poolAmount, isWrapped);
         emit NewPoolCreated(poolId, investSigner, poolAmount);
     }
 
@@ -75,10 +74,9 @@ abstract contract InvestProvider is InvestModifiers {
         poolId = _initializePool(
             msg.sender,
             msg.sender,
-            sourcePoolId,
-            poolAmount,
-            isWrapped
+            sourcePoolId
         );
+        _storeInvestData(poolId, poolAmount, isWrapped);
         emit NewPoolCreated(poolId, msg.sender, poolAmount);
     }
 
