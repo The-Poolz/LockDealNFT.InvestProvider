@@ -3,10 +3,13 @@ pragma solidity ^0.8.0;
 
 import "./InvestProvider.sol";
 import "./interfaces/IWBNB.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 /// @title InvestWrapped
 /// @notice Contract for adding wrapped tokens to the investment pool
-contract InvestWrapped is InvestProvider {
+contract InvestWrapped is InvestProvider, ERC721Holder {
+    receive() external payable {}
+
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
@@ -60,12 +63,17 @@ contract InvestWrapped is InvestProvider {
         external
         firewallProtected
         isValidInvestProvider(poolId)
+        isWrappedToken(poolId)
         isValidTime(validUntil)
-        isValidSignature(poolId, validUntil, amount, signature)
+        notZeroAmount(amount)
+        //isValidSignature(poolId, validUntil, amount, signature)
     {
+        // update states
+        poolIdToPool[poolId].leftAmount += amount;
+        // mint withdraw NFT
         uint256 withdrawPoolID = _mintWithdrawNFT(poolId, amount);
         // withdraw wrapped tokens from vault
-        lockDealNFT.transferFrom(address(this), address(lockDealNFT), withdrawPoolID);
+        lockDealNFT.safeTransferFrom(address(this), address(lockDealNFT), withdrawPoolID);
         // Unwrap tokens to retrieve main coins
         IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
         wToken.withdraw(amount);

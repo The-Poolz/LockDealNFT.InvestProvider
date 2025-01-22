@@ -27,12 +27,12 @@ describe("IDO with wrapped tokens", function () {
 
     before(async () => {
         [owner, signer] = await ethers.getSigners()
-        await deployContracts()
-        await setupInitialConditions()
         signerAddress = await signer.getAddress()
     })
 
     beforeEach(async () => {
+        await deployContracts()
+        await setupInitialConditions()
         signature = await createInvestPool()
     })
 
@@ -89,6 +89,17 @@ describe("IDO with wrapped tokens", function () {
             investWrapped,
             "InvalidERC20Token"
         )
+    })
+
+    it("should update left amount after ETH refund", async () => {
+        // Invest tokens.
+        await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
+        const leftAmountBefore = (await investWrapped.getParams(poolId))[1]
+        // Refund tokens.
+        await investWrapped.refundETH(poolId, amount, validUntil, signature)
+        // Check left amount.
+        const leftAmountAfter = (await investWrapped.getParams(poolId))[1]
+        expect(leftAmountAfter).to.equal(leftAmountBefore + amount)
     })
 
     // Helper Functions

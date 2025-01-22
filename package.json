@@ -17,6 +17,7 @@
     "@truffle/dashboard-hardhat-plugin": "^0.2.15",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
+    "@types/mocha": "^10.0.10",
     "hardhat": "^2.22.15",
     "hardhat-gas-reporter": "^2.1.1",
     "solidity-coverage": "^0.8.13",

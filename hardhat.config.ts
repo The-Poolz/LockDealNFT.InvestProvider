@@ -28,6 +28,10 @@ const config: HardhatUserConfig = {
     networks: {
         hardhat: {
             blockGasLimit: 130_000_000,
+            accounts: {
+                count: 50, // Number of accounts
+                accountsBalance: "10000000000000000000000000", // Balance in wei (e.g., 10000000 ETH)
+            },
         },
         bscTestnet: {
             url: "https://data-seed-prebsc-1-s1.binance.org:8545",
