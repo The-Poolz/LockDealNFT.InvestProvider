@@ -3,13 +3,10 @@ pragma solidity ^0.8.0;
 
 import "./InvestProvider.sol";
 import "./interfaces/IWBNB.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 /// @title InvestWrapped
 /// @notice Contract for adding wrapped tokens to the investment pool
-contract InvestWrapped is InvestProvider, ERC721Holder {
-    receive() external payable {}
-
+contract InvestWrapped is InvestProvider {
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
     /// @param _lockDealNFT The address of the `ILockDealNFT` contract.
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
