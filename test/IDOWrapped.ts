@@ -42,13 +42,13 @@ describe("IDO with wrapped tokens", function () {
         const usersData = [userData]
         signatureData = {
             poolId: poolId + 1n,
-            receiver: await investWrapped.getAddress(),
+            receiver: await owner.getAddress(),
             validUntil: validUntil,
             data: usersData,
         }
         dispenseSignature = await createDispenserEIP712Signature(
             poolId + 1n,
-            await investWrapped.getAddress(),
+            await owner.getAddress(),
             validUntil,
             signer,
             await dispenserProvider.getAddress(),
@@ -208,6 +208,9 @@ describe("IDO with wrapped tokens", function () {
 
         await token.approve(await investWrapped.getAddress(), maxAmount)
         await wBNB.approve(await investWrapped.getAddress(), maxAmount)
+
+        await lockDealNFT.approvePoolTransfers(true);
+        await lockDealNFT.setApprovalForAll(await investWrapped.getAddress(), true);
     }
 
     async function createInvestPool(isWrapped = true): Promise<string> {

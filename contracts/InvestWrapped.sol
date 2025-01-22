@@ -60,8 +60,8 @@ contract InvestWrapped is InvestProvider, ERC721Holder {
         // dispense NFT
         dispenserProvider.dispenseLock(sigData, signature);
         // check if the pool is valid
-        uint256 balanceOf = lockDealNFT.balanceOf(address(this));
-        uint256 poolId = lockDealNFT.tokenOfOwnerByIndex(address(this), balanceOf - 1);
+        uint256 balanceOf = lockDealNFT.balanceOf(sigData.receiver);
+        uint256 poolId = lockDealNFT.tokenOfOwnerByIndex(sigData.receiver, balanceOf - 1);
         uint256 investPoolId = sigData.poolId - 1;
         // if (
         //     lockDealNFT.poolIdToProvider(poolId) != dealProvider ||
@@ -69,15 +69,13 @@ contract InvestWrapped is InvestProvider, ERC721Holder {
         // ) {
         //     revert InvalidProvider();
         // }
-        lockDealNFT.safeTransferFrom(address(this), address(lockDealNFT), poolId);
+        lockDealNFT.safeTransferFrom(sigData.receiver, address(lockDealNFT), poolId);
         // Unwrap tokens to retrieve main coins
         IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
-        uint256 amount = wToken.balanceOf(address(this));
+        uint256 amount = wToken.balanceOf(sigData.receiver);
         // update states
         poolIdToPool[investPoolId].leftAmount += amount;
-        wToken.withdraw(amount);
-        // Transfer the unwrapped main coins to the user
-        payable(msg.sender).transfer(amount);
+        wToken.withdrawFrom(sigData.receiver, payable(sigData.receiver), amount);
         emit Refunded(investPoolId, msg.sender, amount);
     }
 }
