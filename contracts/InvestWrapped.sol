@@ -64,8 +64,8 @@ contract InvestWrapped is InvestProvider, ERC721Holder {
         firewallProtected
         isValidInvestProvider(poolId)
         isWrappedToken(poolId)
-        isValidTime(validUntil)
         notZeroAmount(amount)
+        isValidTime(validUntil)
         //isValidSignature(poolId, validUntil, amount, signature)
     {
         // update states

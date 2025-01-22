@@ -102,6 +102,46 @@ describe("IDO with wrapped tokens", function () {
         expect(leftAmountAfter).to.equal(leftAmountBefore + amount)
     })
 
+    it("should emit Refunded event after ETH refund", async () => {
+        await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
+        const tx = await investWrapped.refundETH(poolId, amount, validUntil, signature)
+        await tx.wait()
+        const events = await investWrapped.queryFilter(investWrapped.filters.Refunded())
+        expect(events[events.length - 1].args.poolId).to.equal(poolId)
+        expect(events[events.length - 1].args.user).to.equal(await owner.getAddress())
+        expect(events[events.length - 1].args.amount).to.equal(amount)
+    })
+
+    it("should revert not valid provider pool id in refundETH", async () => {
+        await expect(investWrapped.refundETH(0, amount, validUntil, signature)).to.be.revertedWithCustomError(
+            investWrapped,
+            "InvalidProvider"
+        )
+    })
+
+    it("should revert not wrapped tokens if call refundETH", async () => {
+        sourcePoolId = await createSourcePool()
+        await createInvestPool(false)
+        await expect(investWrapped.refundETH(poolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
+            investWrapped,
+            "InvalidWrappedToken"
+        )
+    })
+
+    it("should revert invalid time in refundETH", async () => {
+        await expect(investWrapped.refundETH(poolId, amount, 0, signature)).to.be.revertedWithCustomError(
+            investWrapped,
+            "InvalidTime"
+        )
+    })
+
+    it("should revert zero amount refundETH", async () => {
+        await expect(investWrapped.refundETH(poolId, 0, validUntil, signature)).to.be.revertedWithCustomError(
+            investWrapped,
+            "NoZeroAmount"
+        )
+    })
+
     // Helper Functions
     async function deployContracts() {
         const Token = await ethers.getContractFactory("ERC20Token")
