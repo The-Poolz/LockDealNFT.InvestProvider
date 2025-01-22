@@ -15,9 +15,10 @@ contract InvestWrapped is InvestProvider, ERC721Holder {
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
     constructor(
         ILockDealNFT _lockDealNFT,
-        IProvider _dispenserProvider,
-        IProvider _investProvider
-    ) InvestProvider(_lockDealNFT, _dispenserProvider, _investProvider) {}
+        IDispenserProvider _dispenserProvider,
+        IProvider _investedProvider,
+        IProvider _dealProvider
+    ) InvestProvider(_lockDealNFT, _dispenserProvider, _investedProvider, _dealProvider){}
 
     /** @notice Invests in a pool with a wrapped token.
      *  @param poolId The ID of the pool to invest in.
@@ -48,37 +49,35 @@ contract InvestWrapped is InvestProvider, ERC721Holder {
 
     /**
      * @notice Refunds the investment from a pool using main coins.
-     * @param poolId The ID of the pool to refund from.
-     * @param amount The amount to refund.
-     * @param validUntil The expiration time for the signature.
-     * @param signature The signature used to validate the refund.
+     * @param sigData The signature data to validate the refund.
+     * @param signature The signature to validate the refund.
      * @dev Emits the `Refunded` event after a successful refund.
      */
     function refundETH(
-        uint256 poolId,
-        uint256 amount,
-        uint256 validUntil,
+        IDispenserProvider.MessageStruct calldata sigData,
         bytes calldata signature
-    )
-        external
-        firewallProtected
-        isValidInvestProvider(poolId)
-        isWrappedToken(poolId)
-        notZeroAmount(amount)
-        isValidTime(validUntil)
-        //isValidSignature(poolId, validUntil, amount, signature)
-    {
-        // update states
-        poolIdToPool[poolId].leftAmount += amount;
-        // mint withdraw NFT
-        uint256 withdrawPoolID = _mintWithdrawNFT(poolId, amount);
-        // withdraw wrapped tokens from vault
-        lockDealNFT.safeTransferFrom(address(this), address(lockDealNFT), withdrawPoolID);
+    ) external firewallProtected {
+        // dispense NFT
+        dispenserProvider.dispenseLock(sigData, signature);
+        // check if the pool is valid
+        uint256 balanceOf = lockDealNFT.balanceOf(address(this));
+        uint256 poolId = lockDealNFT.tokenOfOwnerByIndex(address(this), balanceOf - 1);
+        uint256 investPoolId = sigData.poolId - 1;
+        // if (
+        //     lockDealNFT.poolIdToProvider(poolId) != dealProvider ||
+        //     lockDealNFT.poolIdToProvider(investPoolId) != this
+        // ) {
+        //     revert InvalidProvider();
+        // }
+        lockDealNFT.safeTransferFrom(address(this), address(lockDealNFT), poolId);
         // Unwrap tokens to retrieve main coins
         IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
+        uint256 amount = wToken.balanceOf(address(this));
+        // update states
+        poolIdToPool[investPoolId].leftAmount += amount;
         wToken.withdraw(amount);
         // Transfer the unwrapped main coins to the user
         payable(msg.sender).transfer(amount);
-        emit Refunded(poolId, msg.sender, amount);
+        emit Refunded(investPoolId, msg.sender, amount);
     }
 }

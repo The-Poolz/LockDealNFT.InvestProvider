@@ -15,8 +15,9 @@ abstract contract InvestProvider is InvestModifiers {
     /// @param _investedProvider The address of the `IProvider` contract for invested providers.
     constructor(
         ILockDealNFT _lockDealNFT,
-        IProvider _dispenserProvider,
-        IProvider _investedProvider
+        IDispenserProvider _dispenserProvider,
+        IProvider _investedProvider,
+        IProvider _dealProvider
     ) EIP712("InvestProvider", "1") {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
@@ -24,6 +25,7 @@ abstract contract InvestProvider is InvestModifiers {
         lockDealNFT = _lockDealNFT;
         dispenserProvider = _dispenserProvider;
         investedProvider = _investedProvider;
+        dealProvider = _dealProvider;
         name = "InvestProvider";
     }
 
