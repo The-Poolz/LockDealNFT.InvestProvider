@@ -101,6 +101,18 @@ interface IInvestProvider is IProvider {
     );
 
     /**
+     * @notice Emitted when a user successfully refunds their investment in a pool.
+     * @param poolId The ID of the pool where the refund was made.
+     * @param user The address of the user who made the refund.
+     * @param amount The amount of tokens that were refunded.
+     */
+    event Refunded(
+        uint256 indexed poolId,
+        address indexed user,
+        uint256 amount
+    );
+
+    /**
      * @notice Emitted when a new pool is created.
      * @param poolId The ID of the newly created pool.
      * @param owner The address of the user who created the pool.

@@ -169,4 +169,13 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         address signer = ECDSA.recover(hash, signature);
         return signer == lockDealNFT.getData(poolId).owner;
     }
+
+    function _mintWithdrawNFT(uint256 poolId, uint256 amount) internal returns (uint256 withdrawPoolID) {
+        withdrawPoolID = lockDealNFT.mintForProvider(address(this), dispenserProvider);
+        lockDealNFT.cloneVaultId(withdrawPoolID, poolId);
+        // register amount
+        uint256[] memory params = new uint256[](1);
+        params[0] = amount;
+        dispenserProvider.registerPool(withdrawPoolID, params);
+    }
 }

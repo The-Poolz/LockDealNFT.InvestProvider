@@ -42,4 +42,35 @@ contract InvestWrapped is InvestProvider {
         uint256 nonce = _handleInvest(poolId, msg.value);
         emit Invested(poolId, msg.sender, msg.value, nonce);
     }
+
+    /**
+     * @notice Refunds the investment from a pool using main coins.
+     * @param poolId The ID of the pool to refund from.
+     * @param amount The amount to refund.
+     * @param validUntil The expiration time for the signature.
+     * @param signature The signature used to validate the refund.
+     * @dev Emits the `Refunded` event after a successful refund.
+     */
+    function refundETH(
+        uint256 poolId,
+        uint256 amount,
+        uint256 validUntil,
+        bytes calldata signature
+    )
+        external
+        firewallProtected
+        isValidInvestProvider(poolId)
+        isValidTime(validUntil)
+        isValidSignature(poolId, validUntil, amount, signature)
+    {
+        uint256 withdrawPoolID = _mintWithdrawNFT(poolId, amount);
+        // withdraw wrapped tokens from vault
+        lockDealNFT.transferFrom(address(this), address(lockDealNFT), withdrawPoolID);
+        // Unwrap tokens to retrieve main coins
+        IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
+        wToken.withdraw(amount);
+        // Transfer the unwrapped main coins to the user
+        payable(msg.sender).transfer(amount);
+        emit Refunded(poolId, msg.sender, amount);
+    }
 }
