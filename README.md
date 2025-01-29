@@ -127,15 +127,30 @@ In this case, both the investment signer and dispenser signer default to the cal
 | `createNewPool(uint256, address, address, uint256, bool)` | Requires explicit signers for investments and dispensations | Full control over signers for customized pool management    |
 | `createNewPool(uint256, uint256, bool)`                   | Uses `msg.sender` for both signers                          | Simpler pool creation where the caller manages both actions |
 
-#
-
 ## Join Pool
 
-The invest functions enable users to participate in investment pools by contributing tokens. They process contributions and update the pool's state.
+The investment functions allow users to participate in investment pools by contributing tokens. These functions process contributions and update the pool’s state accordingly.
+
+To ensure **secure and verifiable investments**, the protocol employs **EIP-712** structured data signing. Investors must send an **InvestMessage** containing their investment details before submitting a transaction.
+
+📌 **Reference JSON Message Format:** [**View message**](https://github.com/The-Poolz/LockDealNFT.InvestProvider/issues/63#issuecomment-2597295898)
+
+```solidity
+/**
+ * @dev Struct that represents a message to be signed by the user for investing in a pool.
+ */
+struct InvestMessage {
+    uint256 poolId;
+    address user;
+    uint256 amount;
+    uint256 validUntil;
+    uint256 nonce;
+}
+```
 
 ### Investing with ERC20 Tokens
 
-Before participating in an investment pool, users must approve the **InvestProvider** address to spend the required amount of the **ERC20** token they intend to invest
+Before participating in an investment pool, users must approve the **InvestProvider** address to spend the required amount of the **ERC20** token they intend to invest.
 
 ```solidity
 /**
@@ -144,7 +159,7 @@ Before participating in an investment pool, users must approve the **InvestProvi
  * @param amount The amount to invest.
  * @param validUntil The timestamp until the signature is valid.
  * @param signature The cryptographic signature validating the investment.
- *      Emits the `Invested` event upon success.
+ * @dev Emits the `Invested` event upon success.
  */
 function invest(
     uint256 poolId,
@@ -156,7 +171,7 @@ function invest(
 
 ### Investing with ETH
 
-Users can invest in a pool using **ETH**, which will be wrapped into a compatible token before being added to the pool.
+Users can invest in a pool using **ETH**, which is automatically wrapped into a **compatible token** before being added to the pool.
 
 ```solidity
 /**
@@ -187,14 +202,14 @@ event Invested(
 
 Emitted when a user successfully invests in a pool.
 
--   **poolId:** The pool's ID.
--   **user:** Address of the investor.
--   **amount:** Tokens invested
--   **newNonce:** Updated nonce after the investment
+-   **poolId →** The pool's ID.
+-   **user →** Address of the investor.
+-   **amount →** Tokens invested
+-   **newNonce →** Updated nonce after the investment
 
 ### InvestedProvider NFT
 
-When an investment is completed, the investor receives an **InvestedProvider NFT**, which serves as proof of participation in the pool.
+Upon completing an investment, the investor receives an **InvestedProvider NFT**, serving as proof of participation in the pool.
 
 #### Key Properties of InvestedProvider NFT
 
