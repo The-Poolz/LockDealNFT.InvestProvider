@@ -33,6 +33,7 @@ abstract contract InvestProvider is InvestModifiers {
      * @param investSigner The address of the signer for investments.
      * @param dispenserSigner The address of the signer for dispenses.
      * @param sourcePoolId The ID of the source pool to token clone.
+     * @param isWrapped The flag to indicate if the pool is using main coins like ETH or BNB.
      * @return poolId The ID of the newly created pool.
      * @dev Emits the `NewPoolCreated` event upon successful creation.
      */
