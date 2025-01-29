@@ -135,7 +135,7 @@ The invest functions enable users to participate in investment pools by contribu
 
 ### Investing with ERC20 Tokens
 
-Before participating in an investment pool, users must approve the contract to spend the required amount of the **ERC20** token they intend to invest.
+Before participating in an investment pool, users must approve the **InvestProvider** address to spend the required amount of the **ERC20** token they intend to invest
 
 ```solidity
 /**
@@ -144,7 +144,7 @@ Before participating in an investment pool, users must approve the contract to s
  * @param amount The amount to invest.
  * @param validUntil The timestamp until the signature is valid.
  * @param signature The cryptographic signature validating the investment.
- * @dev Emits the `Invested` event upon success.
+ *      Emits the `Invested` event upon success.
  */
 function invest(
     uint256 poolId,
@@ -173,7 +173,8 @@ function investETH(
     bytes calldata signature
 ) external payable;
 ```
-### NEvent: Invested
+
+### Event: Invested
 
 ```solidity
 event Invested(
@@ -190,6 +191,20 @@ Emitted when a user successfully invests in a pool.
 -   **user:** Address of the investor.
 -   **amount:** Tokens invested
 -   **newNonce:** Updated nonce after the investment
+
+### InvestedProvider NFT
+
+When an investment is completed, the investor receives an **InvestedProvider NFT**, which serves as proof of participation in the pool.
+
+#### Key Properties of InvestedProvider NFT
+
+-   It represents the investor's participation in the pool.
+-   It may provide additional benefits or governance rights, depending on the pool rules.
+-   It cannot be split into smaller parts, unlike other provider **NFTs**.
+-   It cannot be withdrawn to redeem tokens.
+
+For more details, check out the **InvestedProvider** repository:
+[GitHub: LockDealNFT.InvestedProvider](https://github.com/The-Poolz/LockDealNFT.InvestedProvider)
 
 ## Pool data
 
