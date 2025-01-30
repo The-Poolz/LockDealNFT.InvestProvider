@@ -51,9 +51,16 @@ contract InvestWrapped is InvestProvider {
      * @dev Emits the `Refunded` event after a successful refund.
      */
     function refundETH(
+        uint256 investPoolId,
         IDispenserProvider.MessageStruct calldata sigData,
         bytes calldata signature
-    ) external firewallProtected {
+    )
+        external
+        firewallProtected
+        isWrappedToken(investPoolId)
+        isPoolActive(investPoolId)
+        isRefundApproved
+    {
         // Dispense NFT to validate the refund
         dispenserProvider.dispenseLock(sigData, signature);
         address receiver = sigData.receiver;
@@ -62,12 +69,8 @@ contract InvestWrapped is InvestProvider {
             receiver,
             balanceOf - 1
         );
-        uint256 investPoolId = sigData.poolId - 1;
         // Validate pool providers
-        if (
-            lockDealNFT.poolIdToProvider(poolId) != dealProvider ||
-            lockDealNFT.poolIdToProvider(investPoolId) != this
-        ) {
+        if (lockDealNFT.poolIdToProvider(poolId) != dealProvider) {
             revert InvalidProvider();
         }
         // Transfer NFT back to lockDealNFT

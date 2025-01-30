@@ -115,7 +115,7 @@ describe("IDO with wrapped tokens", function () {
         await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
         const leftAmountBefore = (await investWrapped.getParams(poolId))[1]
         // Refund tokens.
-        await investWrapped.refundETH(signatureData, dispenseSignature)
+        await investWrapped.refundETH(poolId, signatureData, dispenseSignature)
         // Check left amount.
         const leftAmountAfter = (await investWrapped.getParams(poolId))[1]
         expect(leftAmountAfter).to.equal(leftAmountBefore + amount)
@@ -123,7 +123,7 @@ describe("IDO with wrapped tokens", function () {
 
     it("should emit Refunded event after ETH refund", async () => {
         await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
-        const tx = await investWrapped.refundETH(signatureData, dispenseSignature)
+        const tx = await investWrapped.refundETH(poolId, signatureData, dispenseSignature)
         await tx.wait()
         const events = await investWrapped.queryFilter(investWrapped.filters.Refunded())
         expect(events[events.length - 1].args.poolId).to.equal(poolId)
@@ -209,7 +209,6 @@ describe("IDO with wrapped tokens", function () {
         await token.approve(await investWrapped.getAddress(), maxAmount)
         await wBNB.approve(await investWrapped.getAddress(), maxAmount)
 
-        await lockDealNFT.approvePoolTransfers(true);
         await lockDealNFT.setApprovalForAll(await investWrapped.getAddress(), true);
     }
 

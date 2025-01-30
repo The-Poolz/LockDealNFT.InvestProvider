@@ -139,4 +139,5 @@ interface IInvestProvider is IProvider {
     error InvalidSignature(uint256 poolId, address owner);
     error InvalidTime(uint256 currentTime, uint256 validUntil);
     error InvalidSourcePoolId(uint256 sourcePoolId);
+    error RefundNotApproved();
 }

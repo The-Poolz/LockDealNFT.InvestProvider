@@ -22,6 +22,7 @@ abstract contract InvestProvider is InvestModifiers {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
         if (address(_investedProvider) == address(0)) revert NoZeroAddress();
+        if (address(_dealProvider) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
         dispenserProvider = _dispenserProvider;
         investedProvider = _investedProvider;
