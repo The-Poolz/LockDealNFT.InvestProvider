@@ -54,25 +54,31 @@ contract InvestWrapped is InvestProvider {
         IDispenserProvider.MessageStruct calldata sigData,
         bytes calldata signature
     ) external firewallProtected {
-        // dispense NFT
+        // Dispense NFT to validate the refund
         dispenserProvider.dispenseLock(sigData, signature);
-        // check if the pool is valid
-        uint256 balanceOf = lockDealNFT.balanceOf(sigData.receiver);
-        uint256 poolId = lockDealNFT.tokenOfOwnerByIndex(sigData.receiver, balanceOf - 1);
+        address receiver = sigData.receiver;
+        uint256 balanceOf = lockDealNFT.balanceOf(receiver);
+        uint256 poolId = lockDealNFT.tokenOfOwnerByIndex(
+            receiver,
+            balanceOf - 1
+        );
         uint256 investPoolId = sigData.poolId - 1;
-        // if (
-        //     lockDealNFT.poolIdToProvider(poolId) != dealProvider ||
-        //     lockDealNFT.poolIdToProvider(investPoolId) != this
-        // ) {
-        //     revert InvalidProvider();
-        // }
-        lockDealNFT.safeTransferFrom(sigData.receiver, address(lockDealNFT), poolId);
-        // Unwrap tokens to retrieve main coins
+        // Validate pool providers
+        if (
+            lockDealNFT.poolIdToProvider(poolId) != dealProvider ||
+            lockDealNFT.poolIdToProvider(investPoolId) != this
+        ) {
+            revert InvalidProvider();
+        }
+        // Transfer NFT back to lockDealNFT
+        lockDealNFT.safeTransferFrom(receiver, address(lockDealNFT), poolId);
+        // Retrieve the main coins by unwrapping tokens
         IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
-        uint256 amount = wToken.balanceOf(sigData.receiver);
-        // update states
+        uint256 amount = wToken.balanceOf(receiver);
+        // Update pool state
         poolIdToPool[investPoolId].leftAmount += amount;
-        wToken.withdrawFrom(sigData.receiver, payable(sigData.receiver), amount);
+        // Withdraw the unwrapped tokens
+        wToken.withdrawFrom(receiver, payable(receiver), amount);
         emit Refunded(investPoolId, msg.sender, amount);
     }
 }
