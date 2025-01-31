@@ -94,6 +94,11 @@ abstract contract InvestModifiers is InvestInternal {
         _notZeroValue();
         _;
     }
+    
+    modifier isRefundApproved() {
+        _isRefundApproved();
+        _;
+    }
 
     /**
      * @dev Modifier to ensure that the current time is within the valid period specified by `validUntil`.
@@ -224,5 +229,10 @@ abstract contract InvestModifiers is InvestInternal {
 
     function _notZeroValue() internal view {
         if (msg.value == 0) revert NoZeroValue();
+    }
+
+    function _isRefundApproved() internal view {
+        if (!(lockDealNFT.isApprovedForAll(msg.sender, address(this))))
+            revert RefundNotApproved();
     }
 }

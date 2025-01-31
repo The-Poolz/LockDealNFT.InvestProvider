@@ -5,7 +5,6 @@ import "./InvestState.sol";
 import "./InvestNonce.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
-import "./interfaces/IVaultViews.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 

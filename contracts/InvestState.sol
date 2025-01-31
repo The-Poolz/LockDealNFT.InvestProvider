@@ -5,6 +5,7 @@ import "@poolzfinance/lockdeal-nft/contracts/SimpleProviders/Provider/ProviderSt
 import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "./interfaces/IInvestProvider.sol";
+import "@poolzfinance/dispenser-provider/contracts/interfaces/IDispenserProvider.sol";
 
 /// @title InvestState
 /// @notice Manages the state of investment pools and provides common functions for interacting with them.
@@ -15,11 +16,11 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
     mapping(uint256 => Pool) public poolIdToPool;
 
     /// @notice The address of the DispenserProvider contract.
-    IProvider public immutable dispenserProvider;
+    IDispenserProvider public immutable dispenserProvider;
 
     /// @notice The address of the invested provider.
     IProvider public immutable investedProvider;
-
+    
     /// @notice The EIP-712 domain separator for investment types. Represented as:
     ///     keccak256(
     ///         "InvestMessage(uint256 poolId,address user,uint256 amount,uint256 validUntil,uint256 nonce)"

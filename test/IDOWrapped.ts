@@ -1,17 +1,19 @@
-import { VaultManager, InvestWrapped, IWBNB, DispenserProvider, InvestedProvider } from "../typechain-types"
+import { VaultManager, InvestWrapped, IWBNB, DispenserProvider, InvestedProvider, DealProvider, IDispenserProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { LockDealNFT } from "../typechain-types/@poolzfinance/lockdeal-nft/contracts/LockDealNFT/LockDealNFT"
 import { ERC20Token } from "../typechain-types/contracts/mocks/ERC20Token"
 import { loadWBNBArtifact } from "./loadWBNB"
-import {createEIP712Signature} from "./helper"
+import { createEIP712Signature } from "./helper"
+import { createDispenserEIP712Signature } from "./helper"
 
 describe("IDO with wrapped tokens", function () {
     let token: ERC20Token
     let vaultManager: VaultManager
     let investWrapped: InvestWrapped
     let investedProvider: InvestedProvider
+    let dealProvider: DealProvider
     let lockDealNFT: LockDealNFT
     let dispenserProvider: DispenserProvider
     let wBNB: IWBNB
@@ -24,16 +26,34 @@ describe("IDO with wrapped tokens", function () {
     const validUntil = Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour
     let signerAddress: string
     let signature: string
+    let signatureData: IDispenserProvider.MessageStructStruct
+    let dispenseSignature: string
 
     before(async () => {
         [owner, signer] = await ethers.getSigners()
-        await deployContracts()
-        await setupInitialConditions()
         signerAddress = await signer.getAddress()
     })
 
     beforeEach(async () => {
+        await deployContracts()
+        await setupInitialConditions()
         signature = await createInvestPool()
+        const userData = { simpleProvider: await dealProvider.getAddress(), params: [amount] }
+        const usersData = [userData]
+        signatureData = {
+            poolId: poolId + 1n,
+            receiver: await owner.getAddress(),
+            validUntil: validUntil,
+            data: usersData,
+        }
+        dispenseSignature = await createDispenserEIP712Signature(
+            poolId + 1n,
+            await owner.getAddress(),
+            validUntil,
+            signer,
+            await dispenserProvider.getAddress(),
+            usersData
+        )
     })
 
     it("should create wrapped token invest pool", async () => {
@@ -83,13 +103,50 @@ describe("IDO with wrapped tokens", function () {
         ).to.be.revertedWithCustomError(investWrapped, "NoZeroValue")
     })
 
-
     it("should revert wrapped tokens if call invest", async () => {
         await expect(investWrapped.invest(poolId, amount, validUntil, signature)).to.be.revertedWithCustomError(
             investWrapped,
             "InvalidERC20Token"
         )
     })
+
+    it("should update left amount after ETH refund", async () => {
+        // Invest tokens.
+        await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
+        const leftAmountBefore = (await investWrapped.getParams(poolId))[1]
+        // Refund tokens.
+        await investWrapped.refundETH(poolId, signatureData, dispenseSignature)
+        // Check left amount.
+        const leftAmountAfter = (await investWrapped.getParams(poolId))[1]
+        expect(leftAmountAfter).to.equal(leftAmountBefore + amount)
+    })
+
+    it("should emit Refunded event after ETH refund", async () => {
+        await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
+        const tx = await investWrapped.refundETH(poolId, signatureData, dispenseSignature)
+        await tx.wait()
+        const events = await investWrapped.queryFilter(investWrapped.filters.Refunded())
+        expect(events[events.length - 1].args.poolId).to.equal(poolId)
+        expect(events[events.length - 1].args.user).to.equal(await owner.getAddress())
+        expect(events[events.length - 1].args.amount).to.equal(amount)
+    })
+
+    // it("should revert if send invalid provider on RefundETH", async () => {
+    //     signatureData.data[0].simpleProvider = await dispenserProvider.getAddress()
+    //     const usersData = signatureData.data
+    //     dispenseSignature = await createDispenserEIP712Signature(
+    //         poolId + 1n,
+    //         await investWrapped.getAddress(),
+    //         validUntil,
+    //         signer,
+    //         await dispenserProvider.getAddress(),
+    //         usersData
+    //     )
+    //     await expect(investWrapped.refundETH(signatureData, dispenseSignature)).to.be.revertedWithCustomError(
+    //         investWrapped,
+    //         "InvalidProvider"
+    //     )
+    // })
 
     // Helper Functions
     async function deployContracts() {
@@ -110,14 +167,22 @@ describe("IDO with wrapped tokens", function () {
         const InvestedProvider = await ethers.getContractFactory("InvestedProvider")
         investedProvider = await InvestedProvider.deploy(await lockDealNFT.getAddress())
 
+        const DealProvider = await ethers.getContractFactory("DealProvider")
+        dealProvider = await DealProvider.deploy(await lockDealNFT.getAddress())
+
         const InvestWrapped = await ethers.getContractFactory("InvestWrapped")
-        investWrapped = await InvestWrapped.deploy(await lockDealNFT.getAddress(), await dispenserProvider.getAddress(), await investedProvider.getAddress())
+        investWrapped = await InvestWrapped.deploy(
+            await lockDealNFT.getAddress(),
+            await dispenserProvider.getAddress(),
+            await investedProvider.getAddress()
+        )
     }
 
     async function setupInitialConditions() {
         await lockDealNFT.setApprovedContract(await investWrapped.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await investedProvider.getAddress(), true)
+        await lockDealNFT.setApprovedContract(await dealProvider.getAddress(), true)
         await vaultManager.setTrustee(await lockDealNFT.getAddress())
 
         // Initialize vaults
@@ -142,6 +207,8 @@ describe("IDO with wrapped tokens", function () {
 
         await token.approve(await investWrapped.getAddress(), maxAmount)
         await wBNB.approve(await investWrapped.getAddress(), maxAmount)
+
+        await lockDealNFT.setApprovalForAll(await investWrapped.getAddress(), true);
     }
 
     async function createInvestPool(isWrapped = true): Promise<string> {
@@ -192,7 +259,7 @@ describe("IDO with wrapped tokens", function () {
         poolId: bigint
         amount: bigint
         validUntil: number
-        signature: string,
+        signature: string
         isWrapped: boolean
     }): Promise<{ balanceBefore: bigint; balanceAfter: bigint }> {
         await token.approve(await investWrapped.getAddress(), amount)
@@ -202,8 +269,7 @@ describe("IDO with wrapped tokens", function () {
 
         if (isWrapped) {
             await investWrapped.investETH(poolId, validUntil, signature, { value: amount })
-        }
-        else {
+        } else {
             await investWrapped.invest(poolId, amount, validUntil, signature)
         }
 

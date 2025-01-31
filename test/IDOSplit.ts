@@ -1,4 +1,4 @@
-import { VaultManager, InvestWrapped, DispenserProvider, InvestedProvider } from "../typechain-types"
+import { VaultManager, InvestWrapped, DispenserProvider, InvestedProvider, DealProvider } from "../typechain-types"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -27,6 +27,7 @@ describe("IDO split tests", function () {
     let signature: string
     const validUntil = Math.floor(Date.now() / 1000) + 60 * 60
     let investedProvider: InvestedProvider
+    let dealProvider: DealProvider
 
     before(async () => {
         [owner, user, signer] = await ethers.getSigners()
@@ -41,6 +42,8 @@ describe("IDO split tests", function () {
         const DispenserProvider = await ethers.getContractFactory("DispenserProvider")
         dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
         const InvestProvider = await ethers.getContractFactory("InvestWrapped")
+        const DealProvider = await ethers.getContractFactory("DealProvider")
+        dealProvider = await DealProvider.deploy(await lockDealNFT.getAddress())
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
             await dispenserProvider.getAddress(),
