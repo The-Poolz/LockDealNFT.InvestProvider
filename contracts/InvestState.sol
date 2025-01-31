@@ -20,9 +20,7 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
 
     /// @notice The address of the invested provider.
     IProvider public immutable investedProvider;
-
-    IProvider public immutable dealProvider;
-
+    
     /// @notice The EIP-712 domain separator for investment types. Represented as:
     ///     keccak256(
     ///         "InvestMessage(uint256 poolId,address user,uint256 amount,uint256 validUntil,uint256 nonce)"

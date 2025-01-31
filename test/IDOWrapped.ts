@@ -174,8 +174,7 @@ describe("IDO with wrapped tokens", function () {
         investWrapped = await InvestWrapped.deploy(
             await lockDealNFT.getAddress(),
             await dispenserProvider.getAddress(),
-            await investedProvider.getAddress(),
-            await dealProvider.getAddress()
+            await investedProvider.getAddress()
         )
     }
 

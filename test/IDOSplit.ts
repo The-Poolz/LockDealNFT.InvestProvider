@@ -47,8 +47,7 @@ describe("IDO split tests", function () {
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
             await dispenserProvider.getAddress(),
-            await investedProvider.getAddress(),
-            await dealProvider.getAddress()
+            await investedProvider.getAddress()
         )
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)
         await lockDealNFT.setApprovedContract(await dispenserProvider.getAddress(), true)

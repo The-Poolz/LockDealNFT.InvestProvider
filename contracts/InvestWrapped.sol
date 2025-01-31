@@ -13,9 +13,8 @@ contract InvestWrapped is InvestProvider {
     constructor(
         ILockDealNFT _lockDealNFT,
         IDispenserProvider _dispenserProvider,
-        IProvider _investedProvider,
-        IProvider _dealProvider
-    ) InvestProvider(_lockDealNFT, _dispenserProvider, _investedProvider, _dealProvider){}
+        IProvider _investedProvider
+    ) InvestProvider(_lockDealNFT, _dispenserProvider, _investedProvider) {}
 
     /** @notice Invests in a pool with a wrapped token.
      *  @param poolId The ID of the pool to invest in.
@@ -61,27 +60,45 @@ contract InvestWrapped is InvestProvider {
         isPoolActive(investPoolId)
         isRefundApproved
     {
-        // Dispense NFT to validate the refund
-        dispenserProvider.dispenseLock(sigData, signature);
         address receiver = sigData.receiver;
         uint256 balanceOf = lockDealNFT.balanceOf(receiver);
-        uint256 poolId = lockDealNFT.tokenOfOwnerByIndex(
-            receiver,
-            balanceOf - 1
-        );
-        // Validate pool providers
-        if (lockDealNFT.poolIdToProvider(poolId) != dealProvider) {
-            revert InvalidProvider();
-        }
-        // Transfer NFT back to lockDealNFT
-        lockDealNFT.safeTransferFrom(receiver, address(lockDealNFT), poolId);
+        // Dispense the lock
+        dispenserProvider.dispenseLock(sigData, signature);
+        uint256 amount = _processWithdrawals(receiver, balanceOf);
         // Retrieve the main coins by unwrapping tokens
-        IWBNB wToken = IWBNB(lockDealNFT.tokenOf(poolId));
-        uint256 amount = wToken.balanceOf(receiver);
+        IWBNB wToken = IWBNB(lockDealNFT.tokenOf(investPoolId));
         // Update pool state
         poolIdToPool[investPoolId].leftAmount += amount;
         // Withdraw the unwrapped tokens
         wToken.withdrawFrom(receiver, payable(receiver), amount);
         emit Refunded(investPoolId, msg.sender, amount);
+    }
+
+    function _processWithdrawals(
+        address receiver,
+        uint256 balanceBefore
+    ) internal returns (uint256 amount) {
+        uint256 range = lockDealNFT.balanceOf(receiver) - balanceBefore;
+        for (uint256 i = 0; i < range; ++i) {
+            uint256 poolId = lockDealNFT.tokenOfOwnerByIndex(
+                receiver,
+                balanceBefore + i
+            );
+            amount += _withdrawIfAvailiable(poolId, receiver);
+        }
+    }
+
+    function _withdrawIfAvailiable(
+        uint256 poolId,
+        address receiver
+    ) internal returns (uint256 withdrawAmount) {
+        withdrawAmount = lockDealNFT.getWithdrawableAmount(poolId);
+        if (withdrawAmount > 0) {
+            lockDealNFT.safeTransferFrom(
+                receiver,
+                address(lockDealNFT),
+                poolId
+            );
+        }
     }
 }
