@@ -110,7 +110,8 @@ This variant creates a new pool, but the investment signer and dispenser signer 
  */
 function createNewPool(
     uint256 poolAmount,
-    uint256 sourcePoolId
+    uint256 sourcePoolId,
+    bool isWrapped
 ) external;
 ```
 
@@ -118,17 +119,35 @@ In this case, both the investment signer and dispenser signer default to the cal
 
 ### Summary of Differences
 
-| Function                                            | Signer Parameters                                           | Purpose                                                     |
-| --------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| Function                                                  | Signer Parameters                                           | Purpose                                                     |
+| --------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
 | `createNewPool(uint256, address, address, uint256)` | Requires explicit signers for investments and dispensations | Full control over signers for customized pool management    |
 | `createNewPool(uint256, uint256)`                   | Uses `msg.sender` for both signers                          | Simpler pool creation where the caller manages both actions |
 
-#
-
 ## Join Pool
 
-The invest function enables users to participate in investment pools by contributing tokens. It processes contributions and updates the pool's state.
-Before participating in an investment pool, users must approve the contract to spend the required amount of the ERC20 token they intend to invest.
+The investment functions allow users to participate in investment pools by contributing tokens. These functions process contributions and update the pool’s state accordingly.
+
+To ensure **secure and verifiable investments**, the protocol employs **EIP-712** structured data signing. Investors must send an **InvestMessage** containing their investment details before submitting a transaction.
+
+📌 **Reference JSON Message Format:** [**View message**](https://github.com/The-Poolz/LockDealNFT.InvestProvider/issues/63#issuecomment-2597295898)
+
+```solidity
+/**
+ * @dev Struct that represents a message to be signed by the user for investing in a pool.
+ */
+struct InvestMessage {
+    uint256 poolId;
+    address user;
+    uint256 amount;
+    uint256 validUntil;
+    uint256 nonce;
+}
+```
+
+### Investing with ERC20 Tokens
+
+Before participating in an investment pool, users must approve the **InvestProvider** address to spend the required amount of the **ERC20** token they intend to invest.
 
 ```solidity
 /**
@@ -147,19 +166,37 @@ function invest(
 ) external;
 ```
 
+### Event: Invested
+
 ```solidity
 event Invested(
     uint256 indexed poolId,
     address indexed user,
-    uint256 amount
+    uint256 amount,
+    uint256 newNonce
 );
 ```
 
 Emitted when a user successfully invests in a pool.
 
--   **poolId:** The pool's ID.
--   **user:** Address of the investor.
--   **amount:** Tokens invested
+-   **poolId →** The pool's ID.
+-   **user →** Address of the investor.
+-   **amount →** Tokens invested
+-   **newNonce →** Updated nonce after the investment
+
+### InvestedProvider NFT
+
+Upon completing an investment, the investor receives an **InvestedProvider NFT**, serving as proof of participation in the pool.
+
+#### Key Properties of InvestedProvider NFT
+
+-   It represents the investor's participation in the pool.
+-   It may provide additional benefits or governance rights, depending on the pool rules.
+-   It cannot be split into smaller parts, unlike other provider **NFTs**.
+-   It cannot be withdrawn to redeem tokens.
+
+For more details, check out the **InvestedProvider** repository:
+[GitHub: LockDealNFT.InvestedProvider](https://github.com/The-Poolz/LockDealNFT.InvestedProvider)
 
 ## Pool data
 
