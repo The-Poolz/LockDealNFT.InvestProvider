@@ -110,10 +110,9 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
     }
 
     ///@notice Internal function to store the investment data.
-    function _storeInvestData(uint256 poolId, uint256 amount, bool isWrapped) internal {
+    function _storeInvestData(uint256 poolId, uint256 amount) internal {
         poolIdToPool[poolId].maxAmount = amount;
         poolIdToPool[poolId].leftAmount = amount;
-        poolIdToPool[poolId].isWrapped = isWrapped;
     }
     
     /// @notice Internal function to process the investment by transferring tokens.
@@ -121,31 +120,10 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
     /// @param amount The amount being invested.
     function _invested(uint256 investPoolId, uint256 amount) internal {
         address token = lockDealNFT.tokenOf(investPoolId);
-        _transferInvestedFunds(token, amount, poolIdToPool[investPoolId].isWrapped);
-        uint256 poolId = lockDealNFT.mintAndTransfer(
-            msg.sender,
-            token,
-            amount,
-            investedProvider
-        );
+        IERC20(token).safeTransferFrom(msg.sender, address(lockDealNFT), amount);
+        uint256 poolId = lockDealNFT.mintAndTransfer(msg.sender, token, amount, investedProvider);
         // register the amount in the invested provider
         _registerInvested(poolId, investPoolId, amount);
-    }
-
-    function _transferInvestedFunds(
-        address token,
-        uint256 amount,
-        bool isWrapped
-    ) internal {
-        if (isWrapped) {
-            IERC20(token).safeTransfer(address(lockDealNFT), amount);
-        } else {
-            IERC20(token).safeTransferFrom(
-                msg.sender,
-                address(lockDealNFT),
-                amount
-            );
-        }
     }
 
     function _registerInvested(uint256 poolId, uint256 investPoolId, uint256 amount) internal {

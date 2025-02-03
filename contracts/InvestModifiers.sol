@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./InvestNonce.sol";
 import "./InvestInternal.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 /// @title InvestModifiers
 /// @notice Provides various modifiers for validating inputs and conditions in investment-related contracts.
-abstract contract InvestModifiers is InvestInternal {
+abstract contract InvestModifiers is InvestNonce, InvestInternal {
     using ECDSA for bytes32;
 
     /**
@@ -80,21 +81,6 @@ abstract contract InvestModifiers is InvestInternal {
         _;
     }
 
-    modifier isWrappedToken(uint256 poolId) {
-        _isWrappedToken(poolId);
-        _;
-    }
-
-    modifier isERC20Token(uint256 poolId) {
-        _isERC20Token(poolId);
-        _;
-    }
-
-    modifier notZeroValue() {
-        _notZeroValue();
-        _;
-    }
-
     /**
      * @dev Modifier to ensure that the current time is within the valid period specified by `validUntil`.
      * @param validUntil The timestamp until which the operation is valid.
@@ -117,16 +103,7 @@ abstract contract InvestModifiers is InvestInternal {
         uint256 amount,
         bytes calldata signature
     ) {
-        _isValidSignature(poolId, validUntil, amount, signature);
-        _;
-    }
-
-    function _isValidSignature(
-        uint256 poolId,
-        uint256 validUntil,
-        uint256 amount,
-        bytes calldata signature
-    ) internal view {
+        address signer = lockDealNFT.getData(poolId).owner;
         uint256 nonce = _getNonce(poolId, msg.sender);
         InvestMessage memory message = InvestMessage(poolId, msg.sender, amount, validUntil, nonce);
         bytes memory data = abi.encodePacked(
@@ -136,6 +113,7 @@ abstract contract InvestModifiers is InvestInternal {
         if (!_verify(poolId, data, signature)) {
             revert InvalidSignature(poolId, msg.sender);
         }
+        _;
     }
 
     /**
@@ -212,17 +190,5 @@ abstract contract InvestModifiers is InvestInternal {
      */
     function _notZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert NoZeroAddress();
-    }
-
-    function _isWrappedToken(uint256 poolId) internal view {
-        if (!poolIdToPool[poolId].isWrapped) revert InvalidWrappedToken();
-    }
-
-    function _isERC20Token(uint256 poolId) internal view {
-        if (poolIdToPool[poolId].isWrapped) revert InvalidERC20Token();
-    }
-
-    function _notZeroValue() internal view {
-        if (msg.value == 0) revert NoZeroValue();
     }
 }

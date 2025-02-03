@@ -6,7 +6,7 @@ import "./InvestModifiers.sol";
 /// @title InvestProvider
 /// @notice This contract provides functionality for creating investment pools, managing investments.
 /// @dev Inherits from `InvestModifiers` and includes logic to create, invest, and split pools, as well as withdraw funds. It uses `SafeERC20` for token transfers and `CalcUtils` for mathematical operations.
-abstract contract InvestProvider is InvestModifiers {
+contract InvestProvider is InvestModifiers {
     using CalcUtils for uint256;
 
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
@@ -33,7 +33,6 @@ abstract contract InvestProvider is InvestModifiers {
      * @param investSigner The address of the signer for investments.
      * @param dispenserSigner The address of the signer for dispenses.
      * @param sourcePoolId The ID of the source pool to token clone.
-     * @param isWrapped The flag to indicate if the pool is using main coins like ETH or BNB.
      * @return poolId The ID of the newly created pool.
      * @dev Emits the `NewPoolCreated` event upon successful creation.
      */
@@ -41,8 +40,7 @@ abstract contract InvestProvider is InvestModifiers {
         uint256 poolAmount,
         address investSigner,
         address dispenserSigner,
-        uint256 sourcePoolId,
-        bool isWrapped
+        uint256 sourcePoolId
     )
         external
         firewallProtected
@@ -57,14 +55,13 @@ abstract contract InvestProvider is InvestModifiers {
             dispenserSigner,
             sourcePoolId
         );
-        _storeInvestData(poolId, poolAmount, isWrapped);
+        _storeInvestData(poolId, poolAmount);
         emit NewPoolCreated(poolId, investSigner, poolAmount);
     }
 
     function createNewPool(
         uint256 poolAmount,
-        uint256 sourcePoolId,
-        bool isWrapped
+        uint256 sourcePoolId
     )
         external
         firewallProtected
@@ -77,7 +74,7 @@ abstract contract InvestProvider is InvestModifiers {
             msg.sender,
             sourcePoolId
         );
-        _storeInvestData(poolId, poolAmount, isWrapped);
+        _storeInvestData(poolId, poolAmount);
         emit NewPoolCreated(poolId, msg.sender, poolAmount);
     }
 
@@ -101,7 +98,6 @@ abstract contract InvestProvider is InvestModifiers {
         isValidInvestProvider(poolId)
         isPoolActive(poolId)
         isValidTime(validUntil)
-        isERC20Token(poolId)
         isValidSignature(poolId, validUntil, amount, signature)
     {
         uint256 nonce = _handleInvest(poolId, amount);
@@ -159,7 +155,6 @@ abstract contract InvestProvider is InvestModifiers {
         // create a new pool with the new settings
         poolIdToPool[newPoolId].maxAmount = newPoolMaxAmount;
         poolIdToPool[newPoolId].leftAmount = newPoolLeftAmount;
-        poolIdToPool[newPoolId].isWrapped = poolIdToPool[oldPoolId].isWrapped;
         // create dispenser
         _createDispenser(oldPoolId + 1);
     }

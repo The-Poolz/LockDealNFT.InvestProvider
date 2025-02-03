@@ -83,7 +83,6 @@ This function creates a new pool and requires specifying both the investment sig
  * @param investSigner The address of the signer for investments.
  * @param dispenserSigner The address of the signer for dispenses.
  * @param sourcePoolId The ID of the source pool to clone settings from.
- * @param isWrapped The flag to indicate if the pool is using main coins like ETH or BNB
  * @return poolId The ID of the newly created pool.
  * @dev Emits the `NewPoolCreated` event upon successful creation.
  */
@@ -91,8 +90,7 @@ function createNewPool(
     uint256 poolAmount,
     address investSigner,
     address dispenserSigner,
-    uint256 sourcePoolId,
-    bool isWrapped
+    uint256 sourcePoolId
 ) external;
 ```
 
@@ -107,14 +105,12 @@ This variant creates a new pool, but the investment signer and dispenser signer 
  * @notice Creates a new investment pool and registers it.
  * @param poolAmount The amount to allocate to the pool.
  * @param sourcePoolId The ID of the source pool to clone settings from.
- * @param isWrapped The flag to indicate if the pool is using main coins like ETH or BNB
  * @return poolId The ID of the newly created pool.
  * @dev Emits the `NewPoolCreated` event upon successful creation.
  */
 function createNewPool(
     uint256 poolAmount,
-    uint256 sourcePoolId,
-    bool isWrapped
+    uint256 sourcePoolId
 ) external;
 ```
 
@@ -122,10 +118,10 @@ In this case, both the investment signer and dispenser signer default to the cal
 
 ### Summary of Differences
 
-| Function                                                  | Signer Parameters                                           | Purpose                                                     |
-| --------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
-| `createNewPool(uint256, address, address, uint256, bool)` | Requires explicit signers for investments and dispensations | Full control over signers for customized pool management    |
-| `createNewPool(uint256, uint256, bool)`                   | Uses `msg.sender` for both signers                          | Simpler pool creation where the caller manages both actions |
+| Function                                            | Signer Parameters                                           | Purpose                                                     |
+| --------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| `createNewPool(uint256, address, address, uint256)` | Requires explicit signers for investments and dispensations | Full control over signers for customized pool management    |
+| `createNewPool(uint256, uint256)`                   | Uses `msg.sender` for both signers                          | Simpler pool creation where the caller manages both actions |
 
 ## Join Pool
 
@@ -169,25 +165,11 @@ function invest(
 ) external;
 ```
 
-### Investing with ETH
+### Investing with ETH/BNB Coins
 
-Users can invest in a pool using **ETH**, which is automatically wrapped into a **compatible token** before being added to the pool.
+The current version of the contract does not support **ETH** for creating pools or investing. If main coins need to be used, they can be wrapped into **ERC20** tokens manually. Alternatively, a wrapper contract can be created to handle this.
 
-```solidity
-/**
- * @notice Invests in a pool using ETH.
- * @param poolId The ID of the pool to invest in.
- * @param validUntil The expiration time for the signature.
- * @param signature The cryptographic signature validating the investment.
- * @dev Converts ETH into a wrapped token and invests it in the pool.
- *      Emits the `Invested` event upon success.
- */
-function investETH(
-    uint256 poolId,
-    uint256 validUntil,
-    bytes calldata signature
-) external payable;
-```
+There is drafts implementation **InvestProivider** with **ETH**: [link](https://github.com/The-Poolz/LockDealNFT.InvestProvider/pull/66)
 
 ### Event: Invested
 
@@ -233,7 +215,6 @@ function poolIdToPool(uint256 investPoolId) external view returns (Pool data);
     struct Pool {
         uint256 maxAmount; // The maximum amount of tokens that can be invested in the pool
         uint256 leftAmount; // The amount of tokens left to invest in the pool
-        bool isWrapped; // Whether the pool is wrapped
     }
 ```
 
