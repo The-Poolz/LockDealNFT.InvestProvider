@@ -6,7 +6,7 @@ import "./InvestModifiers.sol";
 /// @title InvestProvider
 /// @notice This contract provides functionality for creating investment pools, managing investments.
 /// @dev Inherits from `InvestModifiers` and includes logic to create, invest, and split pools, as well as withdraw funds. It uses `SafeERC20` for token transfers and `CalcUtils` for mathematical operations.
-abstract contract InvestProvider is InvestModifiers {
+contract InvestProvider is InvestModifiers {
     using CalcUtils for uint256;
 
     /// @dev Constructor to initialize the contract with a `lockDealNFT`.
