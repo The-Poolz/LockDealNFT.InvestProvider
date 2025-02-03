@@ -21,11 +21,10 @@ abstract contract InvestNonce {
     /// @param amount The amount to associate with this track.
     function _addInvestTrack(
         uint256 poolId,
-        address user,
         uint256 amount
     ) internal returns(uint256 nonce) {
-        poolIdToInvests[poolId][user].push(UserInvest(block.timestamp, amount));
-        nonce = _getNonce(poolId, user);
+        poolIdToInvests[poolId][msg.sender].push(UserInvest(block.timestamp, amount));
+        nonce = _getNonce(poolId, msg.sender);
     }
 
     /**
