@@ -118,8 +118,8 @@ In this case, both the investment signer and dispenser signer default to the cal
 
 ### Summary of Differences
 
-| Function                                                  | Signer Parameters                                           | Purpose                                                     |
-| --------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| Function                                            | Signer Parameters                                           | Purpose                                                     |
+| --------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
 | `createNewPool(uint256, address, address, uint256)` | Requires explicit signers for investments and dispensations | Full control over signers for customized pool management    |
 | `createNewPool(uint256, uint256)`                   | Uses `msg.sender` for both signers                          | Simpler pool creation where the caller manages both actions |
 
@@ -164,6 +164,12 @@ function invest(
     bytes calldata signature
 ) external;
 ```
+
+### Investing with ETH/BNB Coins
+
+The current version of the contract does not support **ETH** for creating pools or investing. If main coins need to be used, they can be wrapped into **ERC20** tokens manually. Alternatively, a wrapper contract can be created to handle this.
+
+There is drafts implementation **InvestProivider** with **ETH**: [link](https://github.com/The-Poolz/LockDealNFT.InvestProvider/pull/66)
 
 ### Event: Invested
 
