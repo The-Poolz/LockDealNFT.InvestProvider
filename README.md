@@ -110,8 +110,7 @@ This variant creates a new pool, but the investment signer and dispenser signer 
  */
 function createNewPool(
     uint256 poolAmount,
-    uint256 sourcePoolId,
-    bool isWrapped
+    uint256 sourcePoolId
 ) external;
 ```
 
