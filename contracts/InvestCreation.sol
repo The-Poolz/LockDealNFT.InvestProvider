@@ -27,9 +27,12 @@ abstract contract InvestCreation is InvestManagement {
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _initializePool(investSigner, dispenserSigner, sourcePoolId);
-        _storeInvestData(poolId, poolAmount);
-        emit NewPoolCreated(poolId, investSigner, poolAmount);
+        poolId = _createNewPool(
+            poolAmount,
+            investSigner,
+            dispenserSigner,
+            sourcePoolId
+        );
     }
 
     /**
@@ -49,8 +52,28 @@ abstract contract InvestCreation is InvestManagement {
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)
     {
-        poolId = _initializePool(msg.sender, msg.sender, sourcePoolId);
+        poolId = _createNewPool(
+            poolAmount,
+            msg.sender,
+            msg.sender,
+            sourcePoolId
+        );
+    }
+
+    /// @dev Internal function to create a new pool.
+    /// @param poolAmount The amount to allocate to the pool.
+    /// @param investSigner The address of the signer for investments.
+    /// @param dispenserSigner The address of the signer for dispenses.
+    /// @param sourcePoolId The ID of the source pool to token clone.
+    /// @return poolId The ID of the newly created pool.
+    function _createNewPool(
+        uint256 poolAmount,
+        address investSigner,
+        address dispenserSigner,
+        uint256 sourcePoolId
+    ) internal returns (uint256 poolId) {
+        poolId = _initializePool(investSigner, dispenserSigner, sourcePoolId);
         _storeInvestData(poolId, poolAmount);
-        emit NewPoolCreated(poolId, msg.sender, poolAmount);
+        emit NewPoolCreated(poolId, investSigner, poolAmount);
     }
 }
