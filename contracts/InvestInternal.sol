@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import "./InvestState.sol";
 import "./InvestNonce.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@poolzfinance/poolz-helper-v2/contracts/CalcUtils.sol";
-import "./interfaces/IVaultViews.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
@@ -14,24 +12,7 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 /// @dev Extends `InvestState` and includes functionality to register and update pool data.
 abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
     using SafeERC20 for IERC20;
-    using CalcUtils for uint256;
     using ECDSA for bytes32;
-
-    /**
-     * @notice Registers or updates the parameters for a specific investment pool.
-     * @param poolId The ID of the pool to register or update.
-     * @param params An array of parameters to set for the pool. The expected order is:
-     *  - `params[0]` - The maximum amount for the pool (`maxAmount`).
-     *  - `params[1]` - The amount left for the pool (`leftAmount`).
-     * @dev Emits the `UpdateParams` event after updating the pool data.
-     */
-    function _registerPool(uint256 poolId, uint256[] calldata params) internal {
-        if (params[0] < params[1]) revert InvalidParams();
-        Pool storage data = poolIdToPool[poolId];
-        data.maxAmount = params[0];
-        data.leftAmount = params[1];
-        emit UpdateParams(poolId, params);
-    }
 
     /**
      * @notice Internal function to process the investment by transferring tokens to the invested provider.
@@ -54,14 +35,6 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         );
         dispenserParams[0] += amount;
         dispenserProvider.registerPool(dispenserPoolId, dispenserParams);
-    }
-
-    /// @notice for dispenser split
-    function _createDispenser(uint256 dispenserPoolId) internal {
-        // Retrieve the signer of the specified dispenser
-        address dispenserSigner = lockDealNFT.ownerOf(dispenserPoolId);
-        // Create a new dispenser linked to the same signer
-        _createDispenser(dispenserPoolId, dispenserSigner);
     }
 
     function _createDispenser(uint256 sourceId, address signer) internal {
