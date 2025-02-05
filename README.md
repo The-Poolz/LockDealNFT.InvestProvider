@@ -66,7 +66,7 @@ npx hardhat run ./scripts/deploy.ts --network truffleDashboard
 
 ## InvestProvider Diagram
 
-![classDiagram](https://github.com/user-attachments/assets/a8c51951-e14d-4a87-b8c9-37170208d3fc)
+![classDiagram](https://github.com/user-attachments/assets/a23dd01e-e21c-457e-8e84-7dcb8bbf6b2a)
 
 ## Create IDO Pool
 
