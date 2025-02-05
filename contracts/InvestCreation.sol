@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "./InvestManagement.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-abstract contract InvestCreation is InvestManagement {
+abstract contract InvestCreation is InvestManagement, ReentrancyGuard {
     /**
      * @notice Creates a new investment pool and registers it.
      * @param poolAmount The amount to allocate to the pool.
@@ -21,6 +22,7 @@ abstract contract InvestCreation is InvestManagement {
     )
         external
         firewallProtected
+        nonReentrant
         notZeroAddress(investSigner)
         notZeroAddress(dispenserSigner)
         notZeroAmount(poolAmount)
@@ -48,6 +50,7 @@ abstract contract InvestCreation is InvestManagement {
     )
         external
         firewallProtected
+        nonReentrant
         notZeroAmount(poolAmount)
         isValidSourcePoolId(sourcePoolId)
         returns (uint256 poolId)

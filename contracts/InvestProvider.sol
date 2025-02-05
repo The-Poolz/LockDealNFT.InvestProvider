@@ -41,6 +41,7 @@ contract InvestProvider is InvestCreation {
     )
         external
         firewallProtected
+        nonReentrant
         notZeroAmount(amount)
         isValidInvestProvider(poolId)
         isPoolActive(poolId)
