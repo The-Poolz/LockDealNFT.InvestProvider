@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./InvestState.sol";
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 
-abstract contract InvestNonce {
+abstract contract InvestNonce is FirewallConsumer {
     /// @notice Maps pool IDs to the investments made in the pool.
     /// @dev Each pool ID corresponds to an array of `UserInvest` structs containing investment details.
     mapping(uint256 => mapping(address => UserInvest[])) public poolIdToInvests;
@@ -19,10 +19,11 @@ abstract contract InvestNonce {
     /// @dev Adds a new track item for the specified ID and address.
     /// @param poolId The ID associated with the address.
     /// @param amount The amount to associate with this track.
+    /// 0x31f1a01e - bytes4(keccak256("_addInvestTrack(uint256,uint256)"))
     function _addInvestTrack(
         uint256 poolId,
         uint256 amount
-    ) internal returns (uint256 nonce) {
+    ) internal firewallProtectedSig(0x31f1a01e) returns (uint256 nonce) {
         poolIdToInvests[poolId][msg.sender].push(UserInvest(block.timestamp, amount));
         nonce = _getNonce(poolId, msg.sender);
     }
