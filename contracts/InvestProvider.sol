@@ -51,4 +51,32 @@ contract InvestProvider is InvestCreation {
         uint256 nonce = _handleInvest(poolId, amount);
         emit Invested(poolId, msg.sender, amount, nonce);
     }
+
+    /**
+     * @notice Allows an address to invest a specified amount into a pool.
+     * @param poolId The ID of the pool to invest in.
+     * @param amount The amount to invest.
+     * @param eip712Signature The signature to validate the investment.
+     * @param validUntil The expiration time for the signature.
+     * @dev Emits the `Invested` event after a successful investment.
+     */
+    function invest(
+        uint256 poolId,
+        uint256 amount,
+        uint256 validUntil,
+        bytes calldata eip712Signature,
+        bytes calldata tokenSignature 
+    )
+        external
+        firewallProtected
+        nonReentrant
+        notZeroAmount(amount)
+        isValidInvestProvider(poolId)
+        isPoolActive(poolId)
+        isValidTime(validUntil)
+        isValidSignature(poolId, validUntil, amount, eip712Signature)
+    {
+        uint256 nonce = _handleInvest(poolId, amount, tokenSignature);
+        emit Invested(poolId, msg.sender, amount, nonce);
+    }
 }

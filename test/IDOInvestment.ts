@@ -21,6 +21,7 @@ describe("IDO investment tests", function () {
     const validUntil = Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour
     let poolId: bigint
     let signature: string
+    let tokenSignature: string
     let investedProvider: InvestedProvider
 
     before(async () => {
@@ -63,7 +64,7 @@ describe("IDO investment tests", function () {
         // create source pool
         await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
 
-        await USDT.approve(await investProvider.getAddress(), maxAmount)
+        await USDT.approve(await investProvider.getAddress(), maxAmount * 10n)
         signerAddress = await signer.getAddress()
     })
 
@@ -80,12 +81,47 @@ describe("IDO investment tests", function () {
             signer,
             await investProvider.getAddress()
         )
+        
+        await USDT.approve(await vaultManager.getAddress(), amount * 100n)
+        const VaultNonce = await vaultManager.nonces(owner)
+        const packedData = ethers.solidityPackedKeccak256(
+            ["address", "uint256", "uint256"],
+            [await USDT.getAddress(), amount, VaultNonce]
+        )
+        tokenSignature = await owner.signMessage(ethers.getBytes(packedData))
     })
 
     it("should deacrease left amount after invest", async () => {
         await investProvider.invest(poolId, amount, validUntil, signature)
         const poolData = await investProvider.getParams(poolId)
         expect(poolData[1]).to.equal(maxAmount - amount)
+    })
+
+    it("should deacrease left amount after invest with double signature", async () => {
+        await investProvider["invest(uint256,uint256,uint256,bytes,bytes)"](
+            poolId,
+            amount,
+            validUntil,
+            signature,
+            tokenSignature
+        )
+        const poolData = await investProvider.getParams(poolId)
+        expect(poolData[1]).to.equal(maxAmount - amount)
+    })
+
+    it("should emit Invested event after invest with double signature", async () => {
+        const tx = await investProvider["invest(uint256,uint256,uint256,bytes,bytes)"](
+            poolId,
+            amount,
+            validUntil,
+            signature,
+            tokenSignature
+        )
+        await tx.wait()
+        const events = await investProvider.queryFilter(investProvider.filters.Invested())
+        expect(events[events.length - 1].args.poolId).to.equal(poolId)
+        expect(events[events.length - 1].args.user).to.equal(await owner.getAddress())
+        expect(events[events.length - 1].args.amount).to.equal(amount)
     })
 
     it("should emit Invested event", async () => {
