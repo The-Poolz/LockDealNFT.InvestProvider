@@ -21,6 +21,7 @@ describe("IDO investment tests", function () {
     const validUntil = Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour
     let poolId: bigint
     let signature: string
+    let tokenSignature: string
     let investedProvider: InvestedProvider
 
     before(async () => {
@@ -80,6 +81,14 @@ describe("IDO investment tests", function () {
             signer,
             await investProvider.getAddress()
         )
+        
+        await USDT.approve(await vaultManager.getAddress(), amount * 100n)
+        const VaultNonce = await vaultManager.nonces(owner)
+        const packedData = ethers.solidityPackedKeccak256(
+            ["address", "uint256", "uint256"],
+            [await USDT.getAddress(), amount, VaultNonce]
+        )
+        tokenSignature = await owner.signMessage(ethers.getBytes(packedData))
     })
 
     it("should deacrease left amount after invest", async () => {
@@ -89,13 +98,6 @@ describe("IDO investment tests", function () {
     })
 
     it("should deacrease left amount after invest with double signature", async () => {
-        await USDT.approve(await vaultManager.getAddress(), amount)
-        const nonce = await vaultManager.nonces(owner)
-        const packedData = ethers.solidityPackedKeccak256(
-            ["address", "uint256", "uint256"],
-            [await USDT.getAddress(), amount, nonce]
-        )
-        const tokenSignature = await owner.signMessage(ethers.getBytes(packedData))
         await investProvider["invest(uint256,uint256,uint256,bytes,bytes)"](
             poolId,
             amount,
@@ -108,13 +110,6 @@ describe("IDO investment tests", function () {
     })
 
     it("should emit Invested event after invest with double signature", async () => {
-        await USDT.approve(await vaultManager.getAddress(), amount)
-        const nonce = await vaultManager.nonces(owner)
-        const packedData = ethers.solidityPackedKeccak256(
-            ["address", "uint256", "uint256"],
-            [await USDT.getAddress(), amount, nonce]
-        )
-        const tokenSignature = await owner.signMessage(ethers.getBytes(packedData))
         const tx = await investProvider["invest(uint256,uint256,uint256,bytes,bytes)"](
             poolId,
             amount,
