@@ -63,7 +63,7 @@ describe("IDO investment tests", function () {
         // create source pool
         await dispenserProvider.connect(owner).createNewPool(addresses, params, tokenSignature)
 
-        await USDT.approve(await investProvider.getAddress(), maxAmount)
+        await USDT.approve(await investProvider.getAddress(), maxAmount * 10n)
         signerAddress = await signer.getAddress()
     })
 
@@ -86,6 +86,47 @@ describe("IDO investment tests", function () {
         await investProvider.invest(poolId, amount, validUntil, signature)
         const poolData = await investProvider.getParams(poolId)
         expect(poolData[1]).to.equal(maxAmount - amount)
+    })
+
+    it("should deacrease left amount after invest with double signature", async () => {
+        await USDT.approve(await vaultManager.getAddress(), amount)
+        const nonce = await vaultManager.nonces(owner)
+        const packedData = ethers.solidityPackedKeccak256(
+            ["address", "uint256", "uint256"],
+            [await USDT.getAddress(), amount, nonce]
+        )
+        const tokenSignature = await owner.signMessage(ethers.getBytes(packedData))
+        await investProvider["invest(uint256,uint256,uint256,bytes,bytes)"](
+            poolId,
+            amount,
+            validUntil,
+            signature,
+            tokenSignature
+        )
+        const poolData = await investProvider.getParams(poolId)
+        expect(poolData[1]).to.equal(maxAmount - amount)
+    })
+
+    it("should emit Invested event after invest with double signature", async () => {
+        await USDT.approve(await vaultManager.getAddress(), amount)
+        const nonce = await vaultManager.nonces(owner)
+        const packedData = ethers.solidityPackedKeccak256(
+            ["address", "uint256", "uint256"],
+            [await USDT.getAddress(), amount, nonce]
+        )
+        const tokenSignature = await owner.signMessage(ethers.getBytes(packedData))
+        const tx = await investProvider["invest(uint256,uint256,uint256,bytes,bytes)"](
+            poolId,
+            amount,
+            validUntil,
+            signature,
+            tokenSignature
+        )
+        await tx.wait()
+        const events = await investProvider.queryFilter(investProvider.filters.Invested())
+        expect(events[events.length - 1].args.poolId).to.equal(poolId)
+        expect(events[events.length - 1].args.user).to.equal(await owner.getAddress())
+        expect(events[events.length - 1].args.amount).to.equal(amount)
     })
 
     it("should emit Invested event", async () => {
@@ -128,7 +169,7 @@ describe("IDO investment tests", function () {
         ).to.be.revertedWithCustomError(USDT, "ERC20InsufficientAllowance")
     })
 
-    xit("should revert if invested amount is more than left amount", async () => {
+    it("should revert if invested amount is more than left amount", async () => {
         const nonce = await investProvider.getNonce(poolId, await owner.getAddress())
         const signature = await createEIP712Signature(
             poolId,
