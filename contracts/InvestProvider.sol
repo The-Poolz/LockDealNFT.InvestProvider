@@ -42,12 +42,8 @@ contract InvestProvider is InvestCreation {
         external
         firewallProtected
         nonReentrant
-        notZeroAmount(amount)
-        isValidInvestProvider(poolId)
-        isPoolActive(poolId)
-        isValidTime(validUntil)
-        isValidSignature(poolId, validUntil, amount, signature)
     {
+        _validateInvest(poolId, amount, validUntil, signature);
         uint256 nonce = _handleInvest(poolId, amount);
         emit Invested(poolId, msg.sender, amount, nonce);
     }
