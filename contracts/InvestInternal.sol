@@ -6,6 +6,7 @@ import "./InvestNonce.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import "./interfaces/IVaultViews.sol";
 
 /// @title InvestInternal
 /// @notice Provides internal functions for managing investment pools and parameters.
@@ -40,6 +41,14 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         );
         dispenserParams[0] += amount;
         dispenserProvider.registerPool(dispenserPoolId, dispenserParams);
+    }
+
+    function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
+        address token = lockDealNFT.tokenOf(poolId);
+        IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
+        uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
+        address vault = vaultManager.vaultIdToVault(vaultId);
+        IERC20(token).safeTransferFrom(msg.sender, vault, amount);
     }
 
     /// @notice Internal fucntion to mint a new dispenser pool.
@@ -124,9 +133,8 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         uint256 investPoolId,
         uint256 amount
     ) internal firewallProtectedSig(0x772f6c82) {
-        address token = lockDealNFT.tokenOf(investPoolId);
-        IERC20(token).safeTransferFrom(msg.sender, address(lockDealNFT), amount);
-        lockDealNFT.mintAndTransfer(msg.sender, token, amount, investedProvider);
+        _transferERC20Tokens(investPoolId, amount);
+        lockDealNFT.mintForProvider(msg.sender, investedProvider);
     }
 
     /// @notice Verifies the cryptographic signature for a given pool and data.
