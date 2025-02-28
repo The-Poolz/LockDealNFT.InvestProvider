@@ -6,6 +6,7 @@ import "./InvestNonce.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import "./interfaces/IVaultViews.sol";
 
 /// @title InvestInternal
 /// @notice Provides internal functions for managing investment pools and parameters.
@@ -25,7 +26,7 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         uint256 poolId,
         uint256 amount
     ) internal firewallProtectedSig(0x4a345075) {
-        _invested(poolId, amount);
+        _transferERC20Tokens(poolId, amount);
         _registerDispenser(poolId + 1, amount);
     }
 
@@ -116,17 +117,13 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         poolIdToPool[poolId].leftAmount = amount;
     }
 
-    /// @notice Internal function to process the investment by transferring tokens.
-    /// @param investPoolId The ID of the pool being invested in.
-    /// @param amount The amount being invested.
-    /// 0x772f6c82 - represent the bytes4(keccak256("_invested(uint256,uint256)"))
-    function _invested(
-        uint256 investPoolId,
-        uint256 amount
-    ) internal firewallProtectedSig(0x772f6c82) {
-        address token = lockDealNFT.tokenOf(investPoolId);
-        IERC20(token).safeTransferFrom(msg.sender, address(lockDealNFT), amount);
-        lockDealNFT.mintAndTransfer(msg.sender, token, amount, investedProvider);
+    /// @notice Internal function to add an investment track.
+    function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
+        address token = lockDealNFT.tokenOf(poolId);
+        IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
+        uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
+        address vault = vaultManager.vaultIdToVault(vaultId);
+        IERC20(token).safeTransferFrom(msg.sender, vault, amount);
     }
 
     /// @notice Verifies the cryptographic signature for a given pool and data.
