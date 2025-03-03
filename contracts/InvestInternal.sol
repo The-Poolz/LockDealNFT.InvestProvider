@@ -117,8 +117,14 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         poolIdToPool[poolId].leftAmount = amount;
     }
 
-    /// @notice Internal function to add an investment track.
-    function _transferERC20Tokens(uint256 poolId, uint256 amount) internal {
+    /// @notice Internal function to transfer ERC20 tokens to the vault.
+    /// @param poolId The unique identifier for the pool.
+    /// @param amount The amount of tokens to transfer.
+    /// 0xb12177bc - represent the bytes4(keccak256("_transferERC20Tokens(uint256,uint256)"))
+    function _transferERC20Tokens(
+        uint256 poolId,
+        uint256 amount
+    ) internal firewallProtectedSig(0xb12177bc) {
         address token = lockDealNFT.tokenOf(poolId);
         IVaultViews vaultManager = IVaultViews(address(lockDealNFT.vaultManager()));
         uint256 vaultId = vaultManager.getCurrentVaultIdByToken(token);
