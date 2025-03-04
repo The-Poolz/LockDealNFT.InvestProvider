@@ -189,20 +189,6 @@ Emitted when a user successfully invests in a pool.
 -   **amount →** Tokens invested
 -   **newNonce →** Updated nonce after the investment
 
-### InvestedProvider NFT
-
-Upon completing an investment, the investor receives an **InvestedProvider NFT**, serving as proof of participation in the pool.
-
-#### Key Properties of InvestedProvider NFT
-
--   It represents the investor's participation in the pool.
--   It may provide additional benefits or governance rights, depending on the pool rules.
--   It cannot be split into smaller parts, unlike other provider **NFTs**.
--   It cannot be withdrawn to redeem tokens.
-
-For more details, check out the **InvestedProvider** repository:
-[GitHub: LockDealNFT.InvestedProvider](https://github.com/The-Poolz/LockDealNFT.InvestedProvider)
-
 ## Pool data
 
 **InvestProvider** contract provides a convenient way to monitor the details of investment pools, including the maximum amount of tokens that can be invested and the remaining tokens available for investment. This is achieved using the `poolIdToPool` view function.
