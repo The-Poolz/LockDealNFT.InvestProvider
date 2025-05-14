@@ -206,6 +206,72 @@ function poolIdToPool(uint256 investPoolId) external view returns (Pool data);
 
 This function allows users to retrieve information about a specific pool by its poolId.
 
+## User Investment History
+
+The `InvestProvider` contract includes functionality to track and retrieve all investments made by a user in a specific pool.
+
+```solidity
+// The outer uint256 key represents the pool ID.
+// The inner address key represents the user address.
+// The value is an array of UserInvest structs, allowing for multiple investments over time.
+mapping(uint256 => mapping(address => UserInvest[])) public poolIdToInvests;
+```
+
+This mapping stores a list of all investments made by each user for every pool. It enables tracking historical contributions, including multiple investments from the same user.
+
+```solidity
+struct UserInvest {
+    uint256 blockTimestamp;
+    uint256 amount;
+}
+```
+
+-   **blockTimestamp** → The block timestamp when the investment was made.
+-   **amount** → The amount of tokens invested in that transaction.
+
+This mapping allows viewing the complete investment history of a specific user in a given pool.
+
+```solidity
+UserInvest[] memory invests = poolIdToInvests[poolId][userAddress];
+```
+
+This is useful for analytics, auditing, or visualizing user engagement in **IDO** pools.
+
+The contract exposes a view function to fetch a user's investment history in a given pool:
+
+```solidity
+/**
+ * @notice Retrieves the investments made in a pool by a user.
+ * @param poolId The ID of the pool to fetch investments for.
+ * @param user The address of the user whose investments are being retrieved.
+ * @return invests An array of `UserInvest` structs containing investment details.
+ */
+function getUserInvests(
+    uint256 poolId,
+    address user
+) external view returns (UserInvest[] memory)
+
+```
+
+Returns an array of all investments associated with a specified user in a given pool. Allows external access to historical contribution data.
+
+```solidity
+UserInvest[] memory invests = investProvider.getUserInvests(poolId, userAddress);
+```
+
+#### Example Usage (JavaScript / Ethers.js)
+
+```js
+const userInvests = await investProvider.getUserInvests(poolId, userAddress)
+userInvests.forEach((invest, i) => {
+    console.log(
+        `Investment ${i + 1}: ${ethers.utils.formatEther(invest.amount)} ETH at ${new Date(
+            invest.blockTimestamp * 1000
+        )}`
+    )
+})
+```
+
 ## License
 
 [The-Poolz](https://poolz.finance/) Contracts is released under the [MIT License](https://github.com/The-Poolz/LockDealNFT.InvestProvider/blob/master/LICENSE).
