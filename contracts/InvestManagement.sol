@@ -98,6 +98,6 @@ abstract contract InvestManagement is InvestModifiers {
         // Retrieve the signer of the specified dispenser
         address dispenserSigner = lockDealNFT.ownerOf(dispenserPoolId);
         // Create a new dispenser linked to the same signer
-        _createDispenser(dispenserPoolId, dispenserSigner);
+        _createDispenser(dispenserSigner, dispenserPoolId);
     }
 }
