@@ -44,16 +44,16 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
     }
 
     /// @notice Internal fucntion to mint a new dispenser pool.
-    /// 0x51eedd08 - represent the bytes4(keccak256("_createDispenser(uint256,address)"))
+    /// 0x899589df - represent the bytes4(keccak256("_createDispenser(address,uint256)"))
     function _createDispenser(
-        uint256 sourceId,
-        address signer
-    ) internal firewallProtectedSig(0x51eedd08) {
+        address dispenserSigner,
+        uint256 sourcePoolId
+    ) internal firewallProtectedSig(0x899589df) {
         uint256 dispenserPoolId = lockDealNFT.mintForProvider(
-            signer,
+            dispenserSigner,
             dispenserProvider
         );
-        lockDealNFT.cloneVaultId(dispenserPoolId, sourceId);
+        lockDealNFT.cloneVaultId(dispenserPoolId, sourcePoolId);
     }
 
     /// @notice Internal function to create a new investment pool.
@@ -104,7 +104,7 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
         uint256 sourcePoolId
     ) internal firewallProtectedSig(0xf95354e5) returns (uint256 poolId) {
         poolId = _createInvest(investSigner, sourcePoolId);
-        _createDispenser(sourcePoolId, dispenserSigner);
+        _createDispenser(dispenserSigner, sourcePoolId);
     }
 
     ///@notice Internal function to store the investment data.
