@@ -49,9 +49,6 @@ async function main() {
 
     const solcConfig = cacheJson.files[cacheFileEntryKey].solcConfig
     const compilerSettings = {
-        evm_version: {
-            EVMVersion: solcConfig?.settings?.evmVersion || "default", // With EVMVersion field
-        },
         supported_pragma_version: solcConfig?.version || "unknown",
         optimizerEnabled: solcConfig?.settings?.optimizer?.enabled ?? false,
         runs: solcConfig?.settings?.optimizer?.runs ?? 0,
@@ -73,9 +70,6 @@ mutation CreateContract($data: ContractInput!) {
       optimizerEnabled
       runs
       viaIR
-      evm_version {
-        EVMVersion
-      }
     }
   }
 }
