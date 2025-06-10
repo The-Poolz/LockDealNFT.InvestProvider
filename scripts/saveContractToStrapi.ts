@@ -60,54 +60,47 @@ async function main() {
 
     // GraphQL mutation string
     const mutation = `
-        mutation CreateContract($input: createContractInput!) {
-            createContract(input: $input) {
-                contract {
-                    documentId
-                    NameVersion
-                }
-            }
-        }
-    `
+  mutation CreateContract($data: ContractInput!) {
+    createContract(data: $data) {
+      id
+      documentId
+      NameVersion
+      createdAt
+    }
+  }
+`
 
-    // Variables for mutation
     const variables = {
-        input: {
-            data: {
-                NameVersion: `${CONTRACT_NAME}@${RELEASE_VERSION}`,
-                ABI: abi,
-                ByteCode: bytecode,
-                ReleaseNotes: "Initial release",
-                GitLink: GIT_LINK,
-                CompilerSetting: compilerSettings,
-            },
+        data: {
+            NameVersion: `${CONTRACT_NAME}@${RELEASE_VERSION}`,
+            ABI: abi,
+            ByteCode: bytecode,
+            ReleaseNotes: "Initial release",
+            GitLink: GIT_LINK,
+            CompilerSetting: compilerSettings,
         },
     }
 
-    try {
-        const res = await axios.post(
-            graphqlEndpoint,
-            {
-                query: mutation,
-                variables: variables,
+    const res = await axios.post(
+        graphqlEndpoint,
+        {
+            query: mutation,
+            variables,
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${STRAPI_TOKEN}`,
+                "Content-Type": "application/json",
             },
-            {
-                headers: {
-                    Authorization: `Bearer ${STRAPI_TOKEN}`,
-                    "Content-Type": "application/json",
-                },
-            }
-        )
-
-        if (res.data.errors) {
-            console.error("❌ GraphQL errors:", res.data.errors)
-            return
         }
+    )
 
-        console.log("✅ Contract uploaded to Strapi:", res.data.data.createContract.contract)
-    } catch (err: any) {
-        console.error("❌ Failed to upload to Strapi:", err.response?.data || err.message)
+    if (res.data.errors) {
+        console.error("❌ GraphQL errors:", res.data.errors)
+        return
     }
+
+    console.log("✅ Contract uploaded to Strapi:", res.data.data.createContract)
 }
 
 main()
