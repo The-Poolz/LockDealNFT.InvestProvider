@@ -56,26 +56,55 @@ async function main() {
         viaIR: !!solcConfig?.settings?.viaIR,
     }
 
-    const payload = {
-        data: {
-            NameVersion: `${CONTRACT_NAME}@${RELEASE_VERSION}`,
-            ABI: abi,
-            ByteCode: bytecode,
-            ReleaseNotes: "Initial release",
-            GitLink: GIT_LINK,
-            CompilerSetting: compilerSettings,
+    const graphqlEndpoint = STRAPI_API_URL.replace(/\/$/, "") + "/graphql"
+
+    // GraphQL mutation string
+    const mutation = `
+        mutation CreateContract($input: createContractInput!) {
+            createContract(input: $input) {
+                contract {
+                    documentId
+                    NameVersion
+                }
+            }
+        }
+    `
+
+    // Variables for mutation
+    const variables = {
+        input: {
+            data: {
+                NameVersion: `${CONTRACT_NAME}@${RELEASE_VERSION}`,
+                ABI: abi,
+                ByteCode: bytecode,
+                ReleaseNotes: "Initial release",
+                GitLink: GIT_LINK,
+                CompilerSetting: compilerSettings,
+            },
         },
     }
 
     try {
-        const res = await axios.post(STRAPI_API_URL, payload, {
-            headers: {
-                Authorization: `Bearer ${STRAPI_TOKEN}`,
-                "Content-Type": "application/json",
+        const res = await axios.post(
+            graphqlEndpoint,
+            {
+                query: mutation,
+                variables: variables,
             },
-        })
+            {
+                headers: {
+                    Authorization: `Bearer ${STRAPI_TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        )
 
-        console.log("✅ Contract uploaded to Strapi:", res.data)
+        if (res.data.errors) {
+            console.error("❌ GraphQL errors:", res.data.errors)
+            return
+        }
+
+        console.log("✅ Contract uploaded to Strapi:", res.data.data.createContract.contract)
     } catch (err: any) {
         console.error("❌ Failed to upload to Strapi:", err.response?.data || err.message)
     }
