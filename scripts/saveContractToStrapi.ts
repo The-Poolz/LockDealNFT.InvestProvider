@@ -62,7 +62,6 @@ async function main() {
     const mutation = `
   mutation CreateContract($data: ContractInput!) {
     createContract(data: $data) {
-      id
       documentId
       NameVersion
       createdAt
