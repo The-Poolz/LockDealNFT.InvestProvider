@@ -49,7 +49,9 @@ async function main() {
 
     const solcConfig = cacheJson.files[cacheFileEntryKey].solcConfig
     const compilerSettings = {
-        evm_version: solcConfig?.settings?.evmVersion || "default",
+        evm_version: {
+            EVMVersion: solcConfig?.settings?.evmVersion || "default", // With EVMVersion field
+        },
         supported_pragma_version: solcConfig?.version || "unknown",
         optimizerEnabled: solcConfig?.settings?.optimizer?.enabled ?? false,
         runs: solcConfig?.settings?.optimizer?.runs ?? 0,
@@ -58,29 +60,26 @@ async function main() {
 
     const graphqlEndpoint = STRAPI_API_URL.replace(/\/$/, "") + "/graphql"
 
-    // Corrected GraphQL mutation
+    // GraphQL mutation
     const mutation = `
-        mutation CreateContract($data: ContractInput!) {
-            createContract(data: $data) {
-                data {
-                    attributes {
-                        NameVersion
-                        ABI
-                        ByteCode
-                        ReleaseNotes
-                        GitLink
-                        CompilerSetting {
-                            evm_version
-                            supported_pragma_version
-                            optimizerEnabled
-                            runs
-                            viaIR
-                        }
-                    }
-                }
-            }
-        }
-    `
+mutation CreateContract($data: ContractInput!) {
+  createContract(data: $data) {
+    NameVersion
+    ABI
+    ByteCode
+    ReleaseNotes
+    GitLink
+    CompilerSetting {
+      optimizerEnabled
+      runs
+      viaIR
+      evm_version {
+        EVMVersion
+      }
+    }
+  }
+}
+`
 
     const variables = {
         data: {
