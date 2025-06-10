@@ -27,7 +27,7 @@ jobs:
             - name: 📤 Upload to Strapi
               run: |
                   echo "Uploading contract to Strapi..."
-                  npx hardhat run scripts/saveContractToStrapi.ts
+                  npx ts-node scripts/saveContractToStrapi.ts
               env:
                   STRAPI_API_URL: ${{ vars.STRAPI_API_URL }}
                   STRAPI_TOKEN: ${{ secrets.STRAPI_TOKEN }}
