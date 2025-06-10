@@ -58,21 +58,34 @@ async function main() {
 
     const graphqlEndpoint = STRAPI_API_URL.replace(/\/$/, "") + "/graphql"
 
-    // GraphQL mutation string
+    // Corrected GraphQL mutation
     const mutation = `
-  mutation CreateContract($data: ContractInput!) {
-    createContract(data: $data) {
-      documentId
-      NameVersion
-      createdAt
-    }
-  }
-`
+        mutation CreateContract($data: ContractInput!) {
+            createContract(data: $data) {
+                data {
+                    attributes {
+                        NameVersion
+                        ABI
+                        ByteCode
+                        ReleaseNotes
+                        GitLink
+                        CompilerSetting {
+                            evm_version
+                            supported_pragma_version
+                            optimizerEnabled
+                            runs
+                            viaIR
+                        }
+                    }
+                }
+            }
+        }
+    `
 
     const variables = {
         data: {
             NameVersion: `${CONTRACT_NAME}@${RELEASE_VERSION}`,
-            ABI: abi,
+            ABI: JSON.stringify(abi),
             ByteCode: bytecode,
             ReleaseNotes: "Initial release",
             GitLink: GIT_LINK,
@@ -104,7 +117,11 @@ async function main() {
 
         console.log("✅ Contract uploaded to Strapi:", res.data.data.createContract)
     } catch (error) {
-        console.error("❌ Error uploading contract:", error)
+        if (axios.isAxiosError(error)) {
+            console.error("❌ Axios error:", error.response?.data || error.message)
+        } else {
+            console.error("❌ Unexpected error:", error)
+        }
     }
 }
 
