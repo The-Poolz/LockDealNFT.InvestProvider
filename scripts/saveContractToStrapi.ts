@@ -18,24 +18,50 @@ const CONTRACT_NAME = "InvestProvider"
 
 async function main() {
     const artifactPath = path.join(__dirname, `../artifacts/contracts/${CONTRACT_NAME}.sol/${CONTRACT_NAME}.json`)
+    const metadataPath = path.join(__dirname, `../cache/solidity-files-cache.json`)
 
     if (!fs.existsSync(artifactPath)) {
         console.error(`❌ Artifact not found at ${artifactPath}`)
         return
     }
-
-    const artifactRaw = fs.readFileSync(artifactPath, "utf8")
-    const artifact = JSON.parse(artifactRaw)
-    const { abi, bytecode, metadata } = artifact
-
-    if (!metadata) {
-        console.error("❌ Missing metadata in artifact. Did you run `npx hardhat compile`?")
+    if (!fs.existsSync(metadataPath)) {
+        console.error(`❌ Metadata cache not found at ${metadataPath}`)
         return
     }
 
-    let parsedMetadata
+    // Read the artifact (for abi, bytecode)
+    const artifactRaw = fs.readFileSync(artifactPath, "utf8")
+    const artifact = JSON.parse(artifactRaw)
+    const { abi, bytecode } = artifact
+
+    // Read the solidity-files-cache.json
+    const cacheRaw = fs.readFileSync(metadataPath, "utf8")
+    const cacheJson = JSON.parse(cacheRaw)
+
+    // Type assertion: output.contracts is a nested record
+    type ContractMetadata = { metadata: string }
+    const outputContracts = (cacheJson.output?.contracts ?? {}) as Record<string, Record<string, ContractMetadata>>
+
+    // Find the contract metadata by filename and contract name
+    const contractCacheEntry = Object.entries(outputContracts).find(([file, contracts]) => {
+        return file.endsWith(`${CONTRACT_NAME}.sol`) && contracts[CONTRACT_NAME] !== undefined
+    })
+
+    if (!contractCacheEntry) {
+        console.error(`❌ Metadata for ${CONTRACT_NAME} not found in solidity-files-cache.json`)
+        return
+    }
+
+    const [, contractsObj] = contractCacheEntry
+    const contractMetadataRaw = contractsObj[CONTRACT_NAME].metadata
+    if (!contractMetadataRaw) {
+        console.error(`❌ Missing metadata JSON string in solidity-files-cache.json for contract ${CONTRACT_NAME}`)
+        return
+    }
+
+    let parsedMetadata: any
     try {
-        parsedMetadata = JSON.parse(metadata)
+        parsedMetadata = JSON.parse(contractMetadataRaw)
     } catch (e) {
         console.error("❌ Failed to parse metadata JSON:", e)
         return
