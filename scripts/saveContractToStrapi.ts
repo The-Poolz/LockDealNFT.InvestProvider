@@ -3,7 +3,6 @@ import path from "path"
 import axios from "axios"
 import { exit } from "process"
 
-// Load environment variables
 const STRAPI_API_URL = process.env.STRAPI_API_URL || ""
 const STRAPI_TOKEN = process.env.STRAPI_TOKEN
 const GIT_LINK = process.env.GIT_LINK || ""
@@ -18,61 +17,43 @@ const CONTRACT_NAME = "InvestProvider"
 
 async function main() {
     const artifactPath = path.join(__dirname, `../artifacts/contracts/${CONTRACT_NAME}.sol/${CONTRACT_NAME}.json`)
-    const metadataPath = path.join(__dirname, `../cache/solidity-files-cache.json`)
+    const cachePath = path.join(__dirname, `../cache/solidity-files-cache.json`)
 
     if (!fs.existsSync(artifactPath)) {
         console.error(`❌ Artifact not found at ${artifactPath}`)
         return
     }
-    if (!fs.existsSync(metadataPath)) {
-        console.error(`❌ Metadata cache not found at ${metadataPath}`)
+    if (!fs.existsSync(cachePath)) {
+        console.error(`❌ Cache not found at ${cachePath}`)
         return
     }
 
-    // Read the artifact (for abi, bytecode)
+    // Read artifact JSON (has ABI, bytecode, metadata)
     const artifactRaw = fs.readFileSync(artifactPath, "utf8")
     const artifact = JSON.parse(artifactRaw)
     const { abi, bytecode } = artifact
 
-    // Read the solidity-files-cache.json
-    const cacheRaw = fs.readFileSync(metadataPath, "utf8")
+    // Read cache JSON to get compiler settings
+    const cacheRaw = fs.readFileSync(cachePath, "utf8")
     const cacheJson = JSON.parse(cacheRaw)
 
-    // Type assertion: output.contracts is a nested record
-    type ContractMetadata = { metadata: string }
-    const outputContracts = (cacheJson.output?.contracts ?? {}) as Record<string, Record<string, ContractMetadata>>
+    // Find the cache file entry that corresponds to this contract's source file
+    // We look for a key in cacheJson.files that ends with the contract's source file name
+    const sourceFileName = `${CONTRACT_NAME}.sol`
+    const cacheFileEntryKey = Object.keys(cacheJson.files || {}).find((filePath) => filePath.endsWith(sourceFileName))
 
-    // Find the contract metadata by filename and contract name
-    const contractCacheEntry = Object.entries(outputContracts).find(([file, contracts]) => {
-        return file.endsWith(`${CONTRACT_NAME}.sol`) && contracts[CONTRACT_NAME] !== undefined
-    })
-
-    if (!contractCacheEntry) {
-        console.error(`❌ Metadata for ${CONTRACT_NAME} not found in solidity-files-cache.json`)
+    if (!cacheFileEntryKey) {
+        console.error(`❌ Source file ${sourceFileName} not found in cache files`)
         return
     }
 
-    const [, contractsObj] = contractCacheEntry
-    const contractMetadataRaw = contractsObj[CONTRACT_NAME].metadata
-    if (!contractMetadataRaw) {
-        console.error(`❌ Missing metadata JSON string in solidity-files-cache.json for contract ${CONTRACT_NAME}`)
-        return
-    }
-
-    let parsedMetadata: any
-    try {
-        parsedMetadata = JSON.parse(contractMetadataRaw)
-    } catch (e) {
-        console.error("❌ Failed to parse metadata JSON:", e)
-        return
-    }
-
+    const solcConfig = cacheJson.files[cacheFileEntryKey].solcConfig
     const compilerSettings = {
-        evm_version: parsedMetadata.settings?.evmVersion || "default",
-        supported_pragma_version: parsedMetadata.compiler?.version || "unknown",
-        optimizerEnabled: parsedMetadata.settings?.optimizer?.enabled ?? false,
-        runs: parsedMetadata.settings?.optimizer?.runs ?? 0,
-        viaIR: !!parsedMetadata.settings?.viaIR,
+        evm_version: solcConfig?.settings?.evmVersion || "default",
+        supported_pragma_version: solcConfig?.version || "unknown",
+        optimizerEnabled: solcConfig?.settings?.optimizer?.enabled ?? false,
+        runs: solcConfig?.settings?.optimizer?.runs ?? 0,
+        viaIR: !!solcConfig?.settings?.viaIR,
     }
 
     const payload = {
