@@ -6,7 +6,7 @@ import { exit } from "process"
 // Load environment variables
 const STRAPI_API_URL = process.env.STRAPI_API_URL || ""
 const STRAPI_TOKEN = process.env.STRAPI_TOKEN
-const GIT_LINK = process.env.GIT_LINK || "" // Fallback
+const GIT_LINK = process.env.GIT_LINK || ""
 const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.0.0"
 
 if (!STRAPI_API_URL || !STRAPI_TOKEN) {
@@ -14,7 +14,6 @@ if (!STRAPI_API_URL || !STRAPI_TOKEN) {
     exit(1)
 }
 
-// Define the contract to upload
 const CONTRACT_NAME = "InvestProvider"
 
 async function main() {
@@ -25,16 +24,29 @@ async function main() {
         return
     }
 
-    const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"))
+    const artifactRaw = fs.readFileSync(artifactPath, "utf8")
+    const artifact = JSON.parse(artifactRaw)
     const { abi, bytecode, metadata } = artifact
-    const parsedMetadata = JSON.parse(metadata)
+
+    if (!metadata) {
+        console.error("❌ Missing metadata in artifact. Did you run `npx hardhat compile`?")
+        return
+    }
+
+    let parsedMetadata
+    try {
+        parsedMetadata = JSON.parse(metadata)
+    } catch (e) {
+        console.error("❌ Failed to parse metadata JSON:", e)
+        return
+    }
 
     const compilerSettings = {
-        evm_version: parsedMetadata.settings.evmVersion || "default",
-        supported_pragma_version: parsedMetadata.compiler.version,
-        optimizerEnabled: parsedMetadata.settings.optimizer.enabled,
-        runs: parsedMetadata.settings.optimizer.runs,
-        viaIR: !!parsedMetadata.settings.viaIR,
+        evm_version: parsedMetadata.settings?.evmVersion || "default",
+        supported_pragma_version: parsedMetadata.compiler?.version || "unknown",
+        optimizerEnabled: parsedMetadata.settings?.optimizer?.enabled ?? false,
+        runs: parsedMetadata.settings?.optimizer?.runs ?? 0,
+        viaIR: !!parsedMetadata.settings?.viaIR,
     }
 
     const payload = {
