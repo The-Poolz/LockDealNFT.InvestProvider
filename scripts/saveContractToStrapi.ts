@@ -6,6 +6,8 @@ import { exit } from "process"
 // Load environment variables
 const STRAPI_API_URL = process.env.STRAPI_API_URL || ""
 const STRAPI_TOKEN = process.env.STRAPI_TOKEN
+const GIT_LINK = process.env.GIT_LINK || "" // Fallback
+const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.0.0"
 
 if (!STRAPI_API_URL || !STRAPI_TOKEN) {
     console.error("❌ Missing STRAPI_API_URL or STRAPI_TOKEN in environment variables")
@@ -37,11 +39,11 @@ async function main() {
 
     const payload = {
         data: {
-            NameVersion: `${CONTRACT_NAME} v${parsedMetadata.compiler.version}`,
+            NameVersion: `${CONTRACT_NAME}@${RELEASE_VERSION}`,
             ABI: abi,
             ByteCode: bytecode,
             ReleaseNotes: "Initial release",
-            GitLink: "https://github.com/your-org/your-repo", // Optional
+            GitLink: GIT_LINK,
             CompilerSetting: compilerSettings,
         },
     }
