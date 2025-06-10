@@ -78,29 +78,35 @@ async function main() {
             ReleaseNotes: "Initial release",
             GitLink: GIT_LINK,
             CompilerSetting: compilerSettings,
+            // Optionally add publishedAt, e.g., new Date().toISOString()
+            // publishedAt: new Date().toISOString(),
         },
     }
 
-    const res = await axios.post(
-        graphqlEndpoint,
-        {
-            query: mutation,
-            variables,
-        },
-        {
-            headers: {
-                Authorization: `Bearer ${STRAPI_TOKEN}`,
-                "Content-Type": "application/json",
+    try {
+        const res = await axios.post(
+            graphqlEndpoint,
+            {
+                query: mutation,
+                variables,
             },
+            {
+                headers: {
+                    Authorization: `Bearer ${STRAPI_TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        )
+
+        if (res.data.errors) {
+            console.error("❌ GraphQL errors:", res.data.errors)
+            return
         }
-    )
 
-    if (res.data.errors) {
-        console.error("❌ GraphQL errors:", res.data.errors)
-        return
+        console.log("✅ Contract uploaded to Strapi:", res.data.data.createContract)
+    } catch (error) {
+        console.error("❌ Error uploading contract:", error)
     }
-
-    console.log("✅ Contract uploaded to Strapi:", res.data.data.createContract)
 }
 
 main()
