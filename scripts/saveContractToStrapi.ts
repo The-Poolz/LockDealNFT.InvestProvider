@@ -78,8 +78,8 @@ mutation CreateContract($data: ContractInput!) {
     const variables = {
         data: {
             NameVersion: `${CONTRACT_NAME}@${RELEASE_VERSION}`,
-            ABI: JSON.stringify(abi),
-            ByteCode: bytecode,
+            ABI: abi,
+            ByteCode: { bytecode: bytecode },
             ReleaseNotes: "Initial release",
             GitLink: GIT_LINK,
             CompilerSetting: compilerSettings,
