@@ -12,14 +12,12 @@ contract InvestProvider is InvestCreation {
     /// @param _dispenserProvider The address of the `IProvider` contract for dispensers.
     constructor(
         ILockDealNFT _lockDealNFT,
-        IVaultView _vaultManager,
         IProvider _dispenserProvider
     ) EIP712("InvestProvider", "1") {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
-        if (address(_vaultManager) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
-        vaultManager = _vaultManager;
+        vaultManager = IVaultView(address(lockDealNFT.vaultManager()));
         dispenserProvider = _dispenserProvider;
         name = "InvestProvider";
     }
