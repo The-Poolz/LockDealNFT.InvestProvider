@@ -15,6 +15,9 @@ const config: HardhatUserConfig = {
             {
                 version: "0.8.28",
                 settings: {
+                    metadata: {
+                        bytecodeHash: "none",
+                    },
                     evmVersion: "cancun",
                     optimizer: {
                         enabled: true,
