@@ -137,14 +137,15 @@ abstract contract InvestInternal is InvestState, InvestNonce, EIP712 {
     /// @param poolId The unique identifier for the pool.
     /// @param data The data associated with the transaction.
     /// @param signature The cryptographic signature verifying the transaction.
-    /// @return bool True if the signature is valid for the given data, otherwise false.
     function _verify(
         uint256 poolId,
         bytes memory data,
         bytes calldata signature
-    ) internal view returns (bool) {
+    ) internal view {
         bytes32 hash = _hashTypedDataV4(keccak256(data));
         address signer = ECDSA.recover(hash, signature);
-        return signer == lockDealNFT.getData(poolId).owner;
+        if (signer != lockDealNFT.ownerOf(poolId)) {
+            revert InvalidSignature(poolId, msg.sender);
+        }
     }
 }
