@@ -17,6 +17,7 @@ contract InvestProvider is InvestCreation {
         if (address(_lockDealNFT) == address(0)) revert NoZeroAddress();
         if (address(_dispenserProvider) == address(0)) revert NoZeroAddress();
         lockDealNFT = _lockDealNFT;
+        vaultManager = IVaultView(address(lockDealNFT.vaultManager()));
         dispenserProvider = _dispenserProvider;
         name = "InvestProvider";
     }
