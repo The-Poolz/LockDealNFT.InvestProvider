@@ -15,10 +15,6 @@ const config: HardhatUserConfig = {
             {
                 version: "0.8.28",
                 settings: {
-                    metadata: {
-                        // This makes sure metadata is stored in the artifact JSON
-                        bytecodeHash: "none",
-                    },
                     evmVersion: "cancun",
                     optimizer: {
                         enabled: true,

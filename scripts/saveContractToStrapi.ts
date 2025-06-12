@@ -16,8 +16,9 @@ if (!STRAPI_API_URL || !STRAPI_TOKEN) {
 const CONTRACT_NAME = "InvestProvider"
 
 async function main() {
-    const artifactPath = path.join(__dirname, `../artifacts/contracts/${CONTRACT_NAME}.sol/${CONTRACT_NAME}.json`)
-    const cachePath = path.join(__dirname, `../cache/solidity-files-cache.json`)
+    const projectRoot = path.resolve(__dirname, "..")
+    const artifactPath = path.join(projectRoot, `artifacts/contracts/${CONTRACT_NAME}.sol/${CONTRACT_NAME}.json`)
+    const cachePath = path.join(projectRoot, `cache/solidity-files-cache.json`)
 
     if (!fs.existsSync(artifactPath)) {
         console.error(`❌ Artifact not found at ${artifactPath}`)
@@ -78,13 +79,12 @@ mutation CreateContract($data: ContractInput!) {
     const variables = {
         data: {
             NameVersion: `${CONTRACT_NAME}@${RELEASE_VERSION}`,
-            ABI: abi,
+            ABI: abi, // or JSON.stringify(abi) if it causes serialization issues
             ByteCode: { bytecode: bytecode },
             ReleaseNotes: "Initial release",
             GitLink: GIT_LINK,
             CompilerSetting: compilerSettings,
-            // Optionally add publishedAt, e.g., new Date().toISOString()
-            // publishedAt: new Date().toISOString(),
+            // Optionally: publishedAt: new Date().toISOString()
         },
     }
 
