@@ -5,6 +5,7 @@ import "@poolzfinance/lockdeal-nft/contracts/SimpleProviders/Provider/ProviderSt
 import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "./interfaces/IInvestProvider.sol";
+import "./interfaces/IVaultView.sol";
 
 /// @title InvestState
 /// @notice Manages the state of investment pools and provides common functions for interacting with them.
@@ -16,6 +17,10 @@ abstract contract InvestState is IInvestProvider, IERC165, FirewallConsumer, Pro
 
     /// @notice The address of the DispenserProvider contract.
     IProvider public immutable dispenserProvider;
+
+    /// @notice The address of the VaultManager contract.
+    /// @dev This contract is used to manage vaults and their associated views.
+    IVaultView public immutable vaultManager;
 
     /// @notice The EIP-712 domain separator for investment types. Represented as:
     ///     keccak256(

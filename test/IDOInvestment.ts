@@ -34,6 +34,7 @@ describe("IDO investment tests", function () {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
+            await vaultManager.getAddress(),
             await dispenserProvider.getAddress()
         )
         await lockDealNFT.setApprovedContract(await investProvider.getAddress(), true)

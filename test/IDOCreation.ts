@@ -34,6 +34,7 @@ describe("IDO creation tests", function () {
         dispenserProvider = await DispenserProvider.deploy(await lockDealNFT.getAddress())
         investProvider = await InvestProvider.deploy(
             await lockDealNFT.getAddress(),
+            await vaultManager.getAddress(),
             await dispenserProvider.getAddress()
         )
         const ProviderMock = await ethers.getContractFactory("ProviderMock")
@@ -168,16 +169,24 @@ describe("IDO creation tests", function () {
     it("should revert zero lockDealNFT address", async () => {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         await expect(
-            InvestProvider.deploy(ethers.ZeroAddress, await dispenserProvider.getAddress())
+            InvestProvider.deploy(ethers.ZeroAddress, await vaultManager.getAddress(), await dispenserProvider.getAddress())
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
 
     it("should revert zero dispenserProvider address", async () => {
         const InvestProvider = await ethers.getContractFactory("InvestProvider")
         await expect(
-            InvestProvider.deploy(await lockDealNFT.getAddress(), ethers.ZeroAddress)
+            InvestProvider.deploy(await lockDealNFT.getAddress(), await vaultManager.getAddress(), ethers.ZeroAddress)
         ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
     })
+
+    it("should revert zero vaultManager address", async () => {
+        const InvestProvider = await ethers.getContractFactory("InvestProvider")
+        await expect(
+            InvestProvider.deploy(await lockDealNFT.getAddress(), ethers.ZeroAddress, await dispenserProvider.getAddress())
+        ).to.be.revertedWithCustomError(investProvider, "NoZeroAddress")
+    })
+
 
     it("should revert zero invest signer address", async () => {
         await expect(
