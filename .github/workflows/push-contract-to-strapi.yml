@@ -22,7 +22,7 @@ jobs:
               run: npm i --frozen-lockfile
 
             - name: ⚒️ Compile contracts
-              run: npx hardhat compile
+              run: npx hardhat compile --verbose
 
             - name: 📤 Upload to Strapi
               run: |
