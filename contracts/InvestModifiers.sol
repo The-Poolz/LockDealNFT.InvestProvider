@@ -61,4 +61,23 @@ abstract contract InvestModifiers is InvestValidation {
         _isValidSourcePoolId(sourcePoolId);
         _;
     }
+
+    /// @notice validates the invest action
+    modifier validateInvest(
+        uint256 poolId,
+        uint256 amount,
+        uint256 validUntil,
+        bytes calldata signature
+    ) {
+        _notZeroAmount(amount);
+        _isValidInvestProvider(poolId);
+        _isPoolActive(poolId);
+        _isValidSignature(poolId, validUntil, amount, signature);
+        _;
+    }
+
+    modifier isValidTime(uint256 validUntil) {
+        if (validUntil < block.timestamp) revert InvalidTime(block.timestamp, validUntil);
+        _;
+    }
 }

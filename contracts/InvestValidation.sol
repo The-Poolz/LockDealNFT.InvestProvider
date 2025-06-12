@@ -9,25 +9,6 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 abstract contract InvestValidation is InvestInternal {
     using ECDSA for bytes32;
 
-    /// @notice validates the invest action
-    function _validateInvest(
-        uint256 poolId,
-        uint256 amount,
-        uint256 validUntil,
-        bytes calldata signature
-    ) internal view {
-        _notZeroAmount(amount);
-        _isValidInvestProvider(poolId);
-        _isPoolActive(poolId);
-        _isValidTime(validUntil);
-        _isValidSignature(poolId, validUntil, amount, signature);
-    }
-
-    /// @dev check is valid time or not
-    function _isValidTime(uint256 validUntil) internal view {
-        if (validUntil < block.timestamp) revert InvalidTime(block.timestamp, validUntil);
-    }
-
     /// @notice Validates the signature provided for the dispense action.
     /// @dev Reverts with an `InvalidSignature` error if the signature is not valid.
     /// @param poolId The pool ID for the dispensation.
