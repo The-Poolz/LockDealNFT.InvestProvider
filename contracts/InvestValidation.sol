@@ -46,9 +46,7 @@ abstract contract InvestValidation is InvestInternal {
             INVEST_TYPEHASH,
             abi.encode(message)
         );
-        if (!_verify(poolId, data, signature)) {
-            revert InvalidSignature(poolId, msg.sender);
-        }
+        _verify(poolId, data, signature);
     }
 
     /**
